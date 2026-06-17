@@ -1,0 +1,3 @@
+# Generated GOL fixtures and their source PBFs are not committed (large, regenerable).
+*.gol
+*.osm.pbf

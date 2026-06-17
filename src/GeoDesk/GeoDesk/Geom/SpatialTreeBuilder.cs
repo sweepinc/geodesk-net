@@ -1,0 +1,17 @@
+/*
+ * Copyright (c) Clarisma / GeoDesk contributors
+ *
+ * This source code is licensed under the Apache 2.0 license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+using System.Collections.Generic;
+
+namespace GeoDesk.Geom;
+
+// NOTE: Java declares the parameter as ArrayList<? extends Bounds>. C# lacks
+// use-site covariance for mutable lists, so this straight port uses IList<Bounds>.
+public interface ISpatialTreeBuilder<B> where B : Bounds
+{
+    B Build(IList<Bounds> items);
+}

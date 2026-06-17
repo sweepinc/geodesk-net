@@ -1,0 +1,6 @@
+[submodule "ext/geodesk"]
+	path = ext/geodesk
+	url = https://github.com/clarisma/geodesk.git
+[submodule "ext/geodesk-tests"]
+	path = ext/geodesk-tests
+	url = https://github.com/clarisma/geodesk-tests.git

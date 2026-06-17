@@ -1,0 +1,327 @@
+// Sample tag sets used for testing
+
+highway_no2:
+    highway=no
+    tracktype=grade2
+    access=agricultural
+    bicycle=yes
+    motorcar=no
+    sac_scale=hiking
+    hiking=yes
+    motorcycle=no
+    mtb=yes
+
+highway3:
+	highway=primary
+	maxspeed=30
+	name="Hühnerstraße"
+	surface=paved
+	// TODO? crc: 12345
+
+highway3_uncommon:
+    highway=primary
+    maxspeed=30
+    name="Hühnerstraße"
+    surface=paved
+    uncommon_key=some_value
+
+highway3_uncommon2:
+    highway=primary
+    maxspeed=30
+    name="Hühnerstraße"
+    surface=paved
+    uncommon_key=other_value
+
+highway_residential:
+    highway=residential
+    maxspeed=25
+    name="Via Capri"
+    lit=yes
+
+highway_motorway:
+    highway=motorway
+    maxspeed=130
+    ref="A8"
+    lit=yes
+
+highway_residential2:
+    highway=residential
+    name="Via Capri"
+    lit=yes
+
+highway_track:
+    highway=track
+    maxspeed=15
+    tracktype=grade2
+    surface=gravel
+
+highway4:
+	highway=primary
+	maxspeed=83.13
+
+highway5:
+	highway=primary
+	maxspeed=99.9999999999999999999
+
+highway6:
+	highway=primary
+	maxspeed=100.000
+
+highway7:
+	highway=primary
+	maxspeed=100.000000000000
+
+highway8:
+	highway=primary
+	maxspeed=100.000001
+
+restaurant4:
+	building=commercial
+	amenity=restaurant
+	name="Zum Goldenen Huhn"
+	cuisine=chicken
+	addr:housenumber=139
+	addr:street="Hühnerstraße"
+	addr:postcode=67891
+	addr:city=Entenhausen
+
+restaurant_cuisine_numeric:
+	amenity=restaurant
+	cuisine=47
+
+hotel1:
+	tourism=hotel
+	name="Park Inn"
+	restaurant=no
+
+hotel2:
+	tourism=hotel
+	name="Hotel Paradiso"
+	addr:housenumber=100
+	addr:street="Via della Pace"
+	addr:postcode=99981
+	addr:city=Monterosso
+
+church1:
+	amenity=place_of_worship
+	addr:housenumber=8
+	addr:postcode="321ANZ"
+
+track:
+    highway=track
+
+track_grade3:
+    highway=track
+    tracktype=grade3
+
+track_grade5:
+    highway=track
+    tracktype=grade5
+
+highway_no:
+    highway=no
+
+highway_numeric:
+    highway=1234
+
+highway_numeric_wide:
+    highway=9999999999999999999999999
+
+highway_local_string:
+    highway=local_string_test_value
+
+single_uncommon_key:
+    uncommon_key=uncommon_value
+
+single_uncommon_key_no:
+    uncommon_key=no
+
+single_uncommon_key_999:
+    uncommon_key=999
+
+double_uncommon_key:
+    uncommon_key=uncommon_value
+    uncommon_key2=uncommon_value
+
+amenity_uncommon_key:
+    amenity=toilets
+    uncommon_key=uncommon_value
+
+not_a_bridge:
+    highway=track
+    surface=ground
+    tracktype=grade4
+    width=3
+    bridge=no
+
+highway_bridge_uncommon:
+    highway=primary
+    bridge=movable
+    maxspeed=30
+    name="Hühnerstraße"
+    surface=paved
+    uncommon_key=some_value
+
+museum_no_locals:
+    tourism=museum
+    name="Museum of Modern Art"
+    addr:city="New York"
+
+museum_multi_locals:
+    tourism=museum
+    apple_local=some_value
+    banana_local=some_other_value
+    cherry_local=yet_another_value
+
+only_locals:
+    apple_local=some_value
+    banana_local=some_other_value
+    cherry_local=yet_another_value
+
+// make sure "V" is not in strings.txt
+short_local_name:
+    highway=primary
+    name=V
+
+bad_random1:
+    name="De Utkieker"
+    wheelchair=no
+    tourism=artwork
+    height=3.5
+    start_date=2007-06-10
+    inscription="„De Utkieker“; "
+    artist="Hannes Helmke"
+
+bad_random2:
+    building=yes
+    addr:street="Reedestraße"
+    addr:housenumber=227
+    addr:city=Borkum
+    addr:postcode=26757
+    addr:country=DE
+    roof:shape=gabled
+
+bad_random3:
+    name="Via Romea - Deutschland - Bayern"
+    ref=VR
+    type=route
+    network=iwn
+    wikidata=Q2521677
+    route=hiking
+    wikipedia="de:Via Romea"
+    osmc:symbol="blue:blue::VR:yellow"
+    symbol="Goldener Pilgerstab auf blauem Grund;rote Inschrift \"Via Romea\""
+    url="https://www.viaromea.de/"
+    reference="Via Romea"
+
+global_local:
+    reference=primary
+    network=primary
+
+bad_random4:
+    name="Binnenhafen, Unterfeuer"
+    source="US NGA Pub. 114. 2011-04-02"
+    description="Rot-weißer Mast (7 m); Richtfeuerlinie 302,2°"
+    seamark:type="light_minor"
+    light=yes
+    seamark=beacon
+    seamark:light:colour=red
+    seamark:light:character=Oc
+    seamark:light:period=6
+    beacon:colour=white
+    seamark:light:height=8
+    seamark:light:reference="B 1324"
+    seamark:light:category=front
+    seamark:light:range=7
+    seamark:light:sequence="5+(1)"
+
+highway_speed_mph:
+    highway=primary
+    maxspeed="50 mph"
+
+bad_random5:
+    name="Kleingartenkolonie \"Till Eulenspiegel\""
+    landuse=allotments
+
+bad_random6:
+    building=yes
+    addr:street="Lina\'s Diek"
+    addr:housenumber=21
+    addr:city="Schönkirchen"
+    addr:postcode=24232
+
+name_with_quotes:
+    name="\"Buena Vista\""
+
+address_with_quotes:
+    addr:street="Wulff\'sche Kehre"
+
+name_with_quotes2:
+    name="Dodo\'s Style Friseursalon"
+
+address_with_quotes2:
+    addr:street="An\'t Holt"
+
+// node/7462554925
+bad_random7:
+    name="Alter Omnibus"
+    material=stone
+    historic=memorial
+    memorial=plaque
+    inscription="Hier stand jahrelang der Bus, in dem während der letzten Tage des zweiten Weltkriegs im Mai 1945 das Stabspersonal der damaligen Regierung aus Berlin geflüchtet war und hier Unterschlupf gefunden hatte!"
+
+wildcard1:
+    name=Light
+
+wildcard2:
+    name=Lighthouse
+
+wildcard3:
+    name=Brewhouse
+
+long_name:
+    name="This is a long name, lots of text here, lots and lots, lots and lots, lots and lots, lots and lots, lots of text here, and some more, wow so much text, whoa this is long, so long, lots and lots, lots and lots, lots of text here, and some more, wow so much text, whoa this is long, so long, finally we come to the end."
+
+highway_applecherry:
+    highway=applecherry
+
+bad_random_zurich:
+    operator=Zurich
+    ref=1
+    leisure=fitness_station
+    tourism=information
+    information=route_marker
+    opening_hours="24/7"
+    wheelchair=no
+    sport=fitness
+    fitness_station_local=rings
+    fitness_trail=yes
+
+bad_random_zurich_single_local:
+    operator=Zurich
+    ref=1
+    leisure=fitness_station
+    tourism=information
+    information=route_marker
+    opening_hours="24/7"
+    wheelchair=no
+    sport=fitness
+    fitness_trail=yes
+
+local_keys1:
+    highway=primary
+    apple_local=yes
+    banana_local=yes
+
+local_keys2:
+    highway=primary
+    apple_local=yes
+    banana_local=yes
+    fitness_station_local=yes
+
+// TODO: test does not check if multiple tags with same name!
+
+jarbour:
+    name="Java Harbor"
+    natural=water
+    jarbour=yes
