@@ -13,8 +13,9 @@ namespace GeoDesk.Feature.Match;
 /// Compiles GOQL query strings into <see cref="Matcher"/> instances and caches them.
 ///
 /// PORT NOTE: the Java original generates JVM bytecode (via ASM) per query. This port uses
-/// the AST-interpreting <see cref="InterpretedMatcher"/> (see BYTECODE_PORT_PLAN.md). A
-/// System.Linq.Expressions-based compiler can later be swapped in here without changing callers.
+/// the AST-interpreting <see cref="InterpretedMatcher"/> (see PORT.md). A runtime compiler
+/// (System.Linq.Expressions or Reflection.Emit — undecided) can later be swapped in here
+/// behind GetMatcher without changing callers.
 /// </summary>
 public class MatcherCompiler
 {

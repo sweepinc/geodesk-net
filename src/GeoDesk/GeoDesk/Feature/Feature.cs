@@ -7,6 +7,7 @@
 
 using System;
 using System.Collections.Generic;
+using GeoDesk.Feature.Query;
 using GeoDesk.Geom;
 using NetTopologySuite.Geometries;
 
@@ -107,26 +108,25 @@ public interface Feature : IEnumerable<Feature>
     /// <summary>Returns the way's nodes.</summary>
     Features Nodes()
     {
-        // PORT (Phase 6): should return EmptyView.ANY
-        throw new NotImplementedException("PORT (Phase 6): Feature.Nodes default view");
+        return EmptyView.Any;
     }
 
     /// <summary>Returns the way's nodes that match the given query.</summary>
     Features Nodes(string query)
     {
-        throw new NotImplementedException("PORT (Phase 6): Feature.Nodes default view");
+        return EmptyView.Any;
     }
 
     /// <summary>Returns the members of this Relation.</summary>
     Features Members()
     {
-        throw new NotImplementedException("PORT (Phase 6): Feature.Members default view");
+        return EmptyView.Any;
     }
 
     /// <summary>Returns the members of this Relation that match the given query.</summary>
     Features Members(string query)
     {
-        throw new NotImplementedException("PORT (Phase 6): Feature.Members default view");
+        return EmptyView.Any;
     }
 
     /// <summary>Returns all ways and relations to which this Feature belongs.</summary>

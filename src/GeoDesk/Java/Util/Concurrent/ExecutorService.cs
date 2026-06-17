@@ -7,21 +7,26 @@
 
 namespace Java.Util.Concurrent;
 
-// PORT: subset of java.util.concurrent.ExecutorService. Only the lifecycle methods
-// the port actually calls (shutdown / awaitTermination) are represented here;
-// task submission lives on the concrete ForkJoinPool, matching how the Java code
-// casts the executor back to ForkJoinPool before submitting.
+// PORT: subset of java.util.concurrent.ExecutorService. Only the lifecycle methods the port
+// actually calls (shutdown / awaitTermination) are represented here; task submission lives on
+// the concrete ForkJoinPool, matching how the Java code casts the executor back to ForkJoinPool
+// before submitting.
+/// <remarks>Ported from Java <c>java.util.concurrent.ExecutorService</c>.</remarks>
 public abstract class ExecutorService
 {
+
     /// <summary>
-    /// Initiates an orderly shutdown in which previously submitted tasks are
-    /// executed, but no new tasks will be accepted.
+    /// Initiates an orderly shutdown in which previously submitted tasks are executed, but no
+    /// new tasks will be accepted.
     /// </summary>
+    /// <remarks>Ported from Java <c>java.util.concurrent.ExecutorService.shutdown()</c>.</remarks>
     public abstract void Shutdown();
 
     /// <summary>
-    /// Blocks until all tasks have completed execution after a shutdown request,
-    /// or the timeout occurs, whichever happens first.
+    /// Blocks until all tasks have completed execution after a shutdown request, or the timeout
+    /// occurs, whichever happens first.
     /// </summary>
+    /// <remarks>Ported from Java <c>java.util.concurrent.ExecutorService.awaitTermination(long, TimeUnit)</c>.</remarks>
     public abstract bool AwaitTermination(long timeout, TimeUnit unit);
+
 }

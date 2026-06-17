@@ -12,89 +12,98 @@ using Clarisma.Common.Util;
 using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Store;
 using GeoDesk.Geom;
+
 using Java.Util.Concurrent;
-using NioBuffer = Clarisma.Common.Nio.ByteBuffer;
+using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace GeoDesk.Feature.Query;
 
 // TODO: Rename to "Cursor"?
 
 // PORT: Java's Query implements Iterator<Feature> and Bounds. In .NET it implements
-// IEnumerator<Feature> (so it can back a foreach over a view) and Bounds. The Java
-// Iterator surface (HasNext()/Next()) is preserved as well, because other ported
-// iterators (e.g. NodeParentView) call Query.Next() directly and rely on it returning
-// null once the query is exhausted.
+// IEnumerator<Feature> (so it can back a foreach over a view) and Bounds. The Java Iterator
+// surface (HasNext()/Next()) is preserved as well, because other ported iterators (e.g.
+// NodeParentView) call Query.Next() directly and rely on it returning null once the query is
+// exhausted.
+/// <remarks>Ported from Java <c>com.geodesk.feature.query.Query</c>.</remarks>
 public class Query : IEnumerator<Feature>, Bounds
 {
-    private readonly FeatureStore store;
-    private int minX;
-    private readonly int minY;
-    private int maxX;
-    private readonly int maxY;
-    private readonly int types;
-    private readonly Matcher matcher;
-    private ExecutorService executor;
-    private TileIndexWalker tileWalker;
-    private QueryResults currentResults;
-    private int currentPos;
-    private Feature? nextFeature;
-    private int pendingTiles;
-    private bool allTilesRequested;
-    private BlockingQueue<TileQueryTask> queue;
-    private volatile Exception? error;
 
-    private Feature? enumeratorCurrent;
+    readonly FeatureStore _store;
+    int _minX;
+    readonly int _minY;
+    int _maxX;
+    readonly int _maxY;
+    readonly int _types;
+    readonly Matcher _matcher;
+    readonly ExecutorService _executor;
+    readonly TileIndexWalker _tileWalker;
+    QueryResults _currentResults;
+    int _currentPos;
+    Feature? _nextFeature;
+    int _pendingTiles;
+    bool _allTilesRequested;
+    readonly BlockingQueue<TileQueryTask> _queue;
+    volatile Exception? _error;
 
+    Feature? _enumeratorCurrent;
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query(WorldView)</c>.</remarks>
     public Query(WorldView view)
     {
-        this.store = view.store;
-        this.executor = store.Executor();
-        this.types = view.types;
-        this.matcher = view.matcher;
-        Bounds bbox = view.bounds;
-        minX = bbox.MinX;
-        minY = bbox.MinY;
-        maxX = bbox.MaxX;
-        maxY = bbox.MaxY;
-        queue = new LinkedBlockingQueue<TileQueryTask>();
-        tileWalker = new TileIndexWalker(store);
-        currentResults = QueryResults.EMPTY;
+        _store = view.store;
+        _executor = _store.Executor();
+        _types = view.types;
+        _matcher = view.matcher;
+        var bbox = view.bounds;
+        _minX = bbox.MinX;
+        _minY = bbox.MinY;
+        _maxX = bbox.MaxX;
+        _maxY = bbox.MaxY;
+        _queue = new LinkedBlockingQueue<TileQueryTask>();
+        _tileWalker = new TileIndexWalker(_store);
+        _currentResults = QueryResults.Empty;
         Start(view.filter);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.store()</c>.</remarks>
     public FeatureStore Store()
     {
-        return store;
+        return _store;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.types()</c>.</remarks>
     public int Types()
     {
-        return types;
+        return _types;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.matcher()</c>.</remarks>
     public Matcher Matcher()
     {
-        return matcher;
+        return _matcher;
     }
 
-    public int MinX => minX;
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.minX()</c>.</remarks>
+    public int MinX => _minX;
 
-    public int MinY => minY;
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.minY()</c>.</remarks>
+    public int MinY => _minY;
 
-    public int MaxX => maxX;
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.maxX()</c>.</remarks>
+    public int MaxX => _maxX;
 
-    public int MaxY => maxY;
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.maxY()</c>.</remarks>
+    public int MaxY => _maxY;
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.put(TileQueryTask)</c>.</remarks>
     internal void Put(TileQueryTask task)
     {
         // TODO
 
         try
         {
-            if (!queue.Add(task))
-            {
-                Log.Error("Couldn't add");
-            }
+            if (!_queue.Add(task)) Log.Error("Couldn't add");
         }
         catch (Exception e)
         {
@@ -102,17 +111,19 @@ public class Query : IEnumerator<Feature>, Bounds
         }
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.setError(Throwable)</c>.</remarks>
     internal void SetError(Exception error)
     {
-        this.error = error;
+        _error = error;
             // TODO: proper type for query-related exceptions
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.take()</c>.</remarks>
     internal TileQueryTask? Take()
     {
         try
         {
-            return queue.Take();
+            return _queue.Take();
         }
         catch (InterruptedException)
         {
@@ -120,132 +131,137 @@ public class Query : IEnumerator<Feature>, Bounds
         }
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.start(Filter)</c>.</remarks>
     public void Start(Filter? filter)
     {
-        tileWalker.Start(this, filter);
-        currentResults = QueryResults.EMPTY;
-        currentPos = -1;
+        _tileWalker.Start(this, filter);
+        _currentResults = QueryResults.Empty;
+        _currentPos = -1;
 
         // Submit initial tasks
-        int maxPendingTiles = store.MaxPendingTiles();
-        while (pendingTiles < maxPendingTiles)
+        var maxPendingTiles = _store.MaxPendingTiles();
+        while (_pendingTiles < maxPendingTiles)
         {
             RequestTile();
-            if (!tileWalker.Next())
+            if (!_tileWalker.Next())
             {
                 // We've traversed all tiles
-                allTilesRequested = true;
+                _allTilesRequested = true;
                 break;
             }
         }
         FetchNext();
     }
 
-    private void RequestTile()
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.requestTile()</c>.</remarks>
+    void RequestTile()
     {
-        ForkJoinPool pool = (ForkJoinPool)executor; // TODO!
-        int entry = store.TileIndexEntry(tileWalker.Tip());
+        var pool = (ForkJoinPool)_executor; // TODO!
+        var entry = _store.TileIndexEntry(_tileWalker.Tip());
         if ((entry & 2) != 0)
         {
             pool.Submit(new TileQueryTask(this, (int)((uint)entry >> 2),
-                tileWalker.NorthwestFlags(), tileWalker.CurrentFilter()));
-            pendingTiles++;
+                _tileWalker.NorthwestFlags(), _tileWalker.CurrentFilter()));
+            _pendingTiles++;
         }
         else
         {
-            tileWalker.SkipChildren();
+            _tileWalker.SkipChildren();
         }
     }
 
-    private void FetchNext()
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.fetchNext()</c>.</remarks>
+    void FetchNext()
     {
-        currentPos++;
+        _currentPos++;
         for (; ; )
         {
-            if (currentPos >= currentResults.size)
+            if (_currentPos >= _currentResults.size)
             {
                 // We're finished with the current batch of results
 
-                currentPos = 0;
-                if (currentResults.next == null)
+                _currentPos = 0;
+                if (_currentResults.next == null)
                 {
                     // We've consumed all retrieved results
 
-                    if (pendingTiles == 0)
+                    if (_pendingTiles == 0)
                     {
                         // no further tasks are pending, we're done
-                        nextFeature = null;
+                        _nextFeature = null;
                         return;
                     }
 
                     // Retrieve the next task from the queue, blocking if necessary
 
-                    TileQueryTask task = Take()!;
-                    pendingTiles -= task.TilesProcessed();
-                    while (!allTilesRequested)
+                    var task = Take()!;
+                    _pendingTiles -= task.TilesProcessed();
+                    while (!_allTilesRequested)
                     {
                         RequestTile();
-                        if (tileWalker.Next())
+                        if (_tileWalker.Next())
                         {
-                            if (pendingTiles == store.MaxPendingTiles()) break;
+                            if (_pendingTiles == _store.MaxPendingTiles()) break;
                         }
                         else
                         {
-                            allTilesRequested = true;
+                            _allTilesRequested = true;
                         }
                     }
 
-                    currentResults = task.GetRawResult();
+                    _currentResults = task.GetRawResult();
                     continue;    // go back to loop since batch could be empty
                 }
-                currentResults = currentResults.next;
+                _currentResults = _currentResults.next;
                 continue;   // go back to loop since batch could be empty
             }
 
-            NioBuffer buf = currentResults.buf!;
-            int pFeature = currentResults.pointers[currentPos];
-            int type = pFeature & 3;
+            var buf = _currentResults.buf!;
+            var pFeature = _currentResults.pointers[_currentPos];
+            var type = pFeature & 3;
             pFeature ^= type;
             if (type == 1)
             {
-                nextFeature = new StoredWay(store, buf, pFeature);
+                _nextFeature = new StoredWay(_store, buf, pFeature);
                 return;
             }
             if (type == 0)
             {
-                nextFeature = new StoredNode(store, buf, pFeature);
+                _nextFeature = new StoredNode(_store, buf, pFeature);
                 return;
             }
             System.Diagnostics.Debug.Assert(type == 2);
-            nextFeature = new StoredRelation(store, buf, pFeature);
+            _nextFeature = new StoredRelation(_store, buf, pFeature);
             return;
         }
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.hasNext()</c>.</remarks>
     public bool HasNext()
     {
-        if (nextFeature != null) return true;
-        if (error != null) throw error;
+        if (_nextFeature != null) return true;
+        if (_error != null) throw _error;
         return false;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.next()</c>.</remarks>
     public Feature? Next()
     {
-        Feature? f = nextFeature;
+        var f = _nextFeature;
         FetchNext();
         return f;
     }
 
     // --- IEnumerator<Feature> adapter over the Java Iterator surface ---
 
-    public Feature Current => enumeratorCurrent!;
+    public Feature Current => _enumeratorCurrent!;
 
-    object IEnumerator.Current => enumeratorCurrent!;
+    object IEnumerator.Current => _enumeratorCurrent!;
 
     public bool MoveNext()
     {
         if (!HasNext()) return false;
-        enumeratorCurrent = Next();
+        _enumeratorCurrent = Next();
         return true;
     }
 
@@ -257,4 +273,5 @@ public class Query : IEnumerator<Feature>, Bounds
     public void Dispose()
     {
     }
+
 }

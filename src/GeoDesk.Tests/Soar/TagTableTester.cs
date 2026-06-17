@@ -12,8 +12,8 @@ using Clarisma.Common.Fab;
 using Clarisma.Common.Parser;
 using Clarisma.Common.Soar;
 using GeoDesk.Gol.Compiler;
-using NioBuffer = Clarisma.Common.Nio.ByteBuffer;
-using NioOrder = Clarisma.Common.Nio.ByteOrder;
+using NioBuffer = Java.Nio.ByteBuffer;
+using NioOrder = Java.Nio.ByteOrder;
 
 namespace GeoDesk.Feature.Query;
 

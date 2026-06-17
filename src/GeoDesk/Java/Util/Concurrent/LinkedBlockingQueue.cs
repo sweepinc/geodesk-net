@@ -9,21 +9,26 @@ using System.Collections.Concurrent;
 
 namespace Java.Util.Concurrent;
 
-// PORT: java.util.concurrent.LinkedBlockingQueue backed by .NET BlockingCollection.
-// Used unbounded (Java's no-arg constructor), so Add() always succeeds and Take()
-// blocks until an element is available.
+// PORT: java.util.concurrent.LinkedBlockingQueue backed by .NET BlockingCollection. Used
+// unbounded (Java's no-arg constructor), so Add() always succeeds and Take() blocks until an
+// element is available.
+/// <remarks>Ported from Java <c>java.util.concurrent.LinkedBlockingQueue</c>.</remarks>
 public class LinkedBlockingQueue<E> : BlockingQueue<E>
 {
-    private readonly BlockingCollection<E> queue = new BlockingCollection<E>();
 
+    readonly BlockingCollection<E> _queue = new BlockingCollection<E>();
+
+    /// <remarks>Ported from Java <c>java.util.concurrent.LinkedBlockingQueue.add(E)</c>.</remarks>
     public bool Add(E e)
     {
-        queue.Add(e);
+        _queue.Add(e);
         return true;
     }
 
+    /// <remarks>Ported from Java <c>java.util.concurrent.LinkedBlockingQueue.take()</c>.</remarks>
     public E Take()
     {
-        return queue.Take();
+        return _queue.Take();
     }
+
 }

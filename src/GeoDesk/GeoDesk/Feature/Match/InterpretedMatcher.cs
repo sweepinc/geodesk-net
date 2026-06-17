@@ -14,7 +14,7 @@ using Clarisma.Common.Ast;
 using Clarisma.Common.Math;
 using Clarisma.Common.Util;
 using GeoDesk.Feature.Store;
-using NioBuffer = Clarisma.Common.Nio.ByteBuffer;
+using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace GeoDesk.Feature.Match;
 
@@ -23,9 +23,8 @@ namespace GeoDesk.Feature.Match;
 /// <see cref="Selector"/>/<see cref="TagClause"/>/Expression to bytecode (as the Java original
 /// does), it walks the parsed query at runtime against a feature's tag table.
 ///
-/// This is the interpreter strategy from BYTECODE_PORT_PLAN.md (B1) — the functional,
-/// reference implementation. A <c>System.Linq.Expressions</c> compiler (B3) can later be
-/// validated against it.
+/// This is the functional, reference implementation (see PORT.md). A runtime compiler
+/// (System.Linq.Expressions or Reflection.Emit — undecided) can later be validated against it.
 /// </summary>
 public class InterpretedMatcher : TagMatcher
 {

@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-namespace Clarisma.Common.Nio;
+namespace Java.Nio;
 
 /// <summary>
 /// .NET stand-in for <c>java.nio.ByteOrder</c>.

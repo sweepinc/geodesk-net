@@ -8,138 +8,149 @@
 using System.Collections.Generic;
 using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Store;
-using NioBuffer = Clarisma.Common.Nio.ByteBuffer;
+using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace GeoDesk.Feature.Query;
 
+/// <remarks>Ported from Java <c>com.geodesk.feature.query.ParentRelationView</c>.</remarks>
 public class ParentRelationView : TableView
 {
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.ParentRelationView(FeatureStore, ByteBuffer, int)</c>.</remarks>
     public ParentRelationView(FeatureStore store, NioBuffer buf, int ptr)
         : this(store, buf, ptr, TypeBits.RELATIONS, Matcher.ALL, null)
     {
     }
 
-    public ParentRelationView(FeatureStore store, NioBuffer buf, int ptr,
-        int types, Matcher matcher, Filter? filter)
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.ParentRelationView(FeatureStore, ByteBuffer, int, int, Matcher, Filter)</c>.</remarks>
+    public ParentRelationView(FeatureStore store, NioBuffer buf, int ptr, int types, Matcher matcher, Filter? filter)
         : base(store, buf, ptr, types, matcher, filter)
     {
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.ParentRelationView.newWith(int, Matcher, Filter)</c>.</remarks>
     protected override Features NewWith(int types, Matcher matcher, Filter? filter)
     {
         return new ParentRelationView(store, buf, ptr, types, matcher, filter);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.ParentRelationView.isEmpty()</c>.</remarks>
     public bool IsEmpty()
     {
         // can never be empty
         return false;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.ParentRelationView.iterator()</c>.</remarks>
     public override IEnumerator<Feature> GetEnumerator()
     {
         return new Iter(this);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.ParentRelationView.Iter</c>.</remarks>
     protected class Iter : FeatureIterator
     {
+
+        const int LastFlag = 1;
+        const int ForeignFlag = 2;
+        const int DifferentTileFlag = 4;
+        const int WideTexFlag = 8;
+
         protected readonly ParentRelationView view;
         protected int tip = FeatureConstants.START_TIP;
         protected int tex = FeatureConstants.RELATIONS_START_TEX;
         protected NioBuffer? foreignBuf;
-        private int pExports;
-        private int p;
-        private int rel;
-        private Feature? current;
+        int _pExports;
+        int _p;
+        int _rel;
+        Feature? _current;
 
-        private const int LAST_FLAG = 1;
-        private const int FOREIGN_FLAG = 2;
-        private const int DIFFERENT_TILE_FLAG = 4;
-        private const int WIDE_TEX_FLAG = 8;
-
+        /// <remarks>Ported from Java <c>com.geodesk.feature.query.ParentRelationView.Iter()</c>.</remarks>
         public Iter(ParentRelationView view)
         {
             this.view = view;
-            p = view.ptr;
+            _p = view.ptr;
             FetchNext();
         }
 
-        private void FetchNext()
+        /// <remarks>Ported from Java <c>com.geodesk.feature.query.ParentRelationView.Iter.fetchNext()</c>.</remarks>
+        void FetchNext()
         {
             for (; ; )
             {
                 NioBuffer relBuf;
                 int pRel;
-                if ((rel & LAST_FLAG) != 0)
+                if ((_rel & LastFlag) != 0)
                 {
-                    current = null;
+                    _current = null;
                     return;
                 }
-                int pCurrent = p;
-                rel = view.buf.GetInt(pCurrent);
-                p += 4;
-                if ((rel & FOREIGN_FLAG) != 0)
+                var pCurrent = _p;
+                _rel = view.buf.GetInt(pCurrent);
+                _p += 4;
+                if ((_rel & ForeignFlag) != 0)
                 {
-                    if ((rel & WIDE_TEX_FLAG) == 0)
+                    if ((_rel & WideTexFlag) == 0)
                     {
-                        rel = (short)rel;
-                        p -= 2;
+                        _rel = (short)_rel;
+                        _p -= 2;
                     }
-                    tex += rel >> 4;
-                    if ((rel & DIFFERENT_TILE_FLAG) != 0)
+                    tex += _rel >> 4;
+                    if ((_rel & DifferentTileFlag) != 0)
                     {
-                        int tipDelta = view.buf.GetShort(p);
+                        int tipDelta = view.buf.GetShort(_p);
                         if ((tipDelta & 1) != 0)
                         {
                             // wide TIP delta
-                            tipDelta = view.buf.GetInt(p);
-                            p += 2;
+                            tipDelta = view.buf.GetInt(_p);
+                            _p += 2;
                         }
                         tipDelta >>= 1;     // signed
                         tip += tipDelta;
-                        p += 2;
-                        int entry = view.store.TileIndexEntry(tip);
-                        if (!FeatureStore.IsTileLoadedAndCurrent(entry))
-                        {
-                            throw new MissingTileException(tip);
-                        }
-                        int tilePage = FeatureStore.PageFromEntry(entry);
+                        _p += 2;
+                        var entry = view.store.TileIndexEntry(tip);
+                        if (!FeatureStore.IsTileLoadedAndCurrent(entry)) throw new MissingTileException(tip);
+                        var tilePage = FeatureStore.PageFromEntry(entry);
                         foreignBuf = view.store.BufferOfPage(tilePage);
-                        int ppExports = view.store.OffsetOfPage(tilePage) + 24;
-                        pExports = ppExports + foreignBuf.GetInt(ppExports);
+                        var ppExports = view.store.OffsetOfPage(tilePage) + 24;
+                        _pExports = ppExports + foreignBuf.GetInt(ppExports);
                     }
                     relBuf = foreignBuf!;
-                    int ppExported = pExports + (tex << 2);
+                    var ppExported = _pExports + (tex << 2);
                     pRel = ppExported + foreignBuf!.GetInt(ppExported);
                 }
                 else
                 {
                     relBuf = view.buf;
-                    pRel = (int)((uint)pCurrent & 0xffff_fffe) + ((rel >> 2) << 1);
+                    pRel = (int)((uint)pCurrent & 0xffff_fffe) + ((_rel >> 2) << 1);
                         // TODO: simplify alignment rules!
                 }
                 if (view.matcher.Accept(relBuf, pRel))
                 {
-                    StoredRelation r = new StoredRelation(view.store, relBuf, pRel);
+                    var r = new StoredRelation(view.store, relBuf, pRel);
                     if (view.filter == null || view.filter.Accept(r))
                     {
-                        current = r;
+                        _current = r;
                         return;
                     }
                 }
             }
         }
 
+        /// <remarks>Ported from Java <c>com.geodesk.feature.query.ParentRelationView.Iter.hasNext()</c>.</remarks>
         public override bool HasNext()
         {
-            return current != null;
+            return _current != null;
         }
 
+        /// <remarks>Ported from Java <c>com.geodesk.feature.query.ParentRelationView.Iter.next()</c>.</remarks>
         public override Feature? Next()
         {
-            Feature? next = current;
+            var next = _current;
             FetchNext();
             return next;
         }
+
     }
+
 }

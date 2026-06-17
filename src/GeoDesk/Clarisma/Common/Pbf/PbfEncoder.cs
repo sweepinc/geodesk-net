@@ -6,7 +6,7 @@
  */
 
 using System.Numerics;
-using Clarisma.Common.Nio;
+using Java.Nio;
 
 namespace Clarisma.Common.Pbf;
 

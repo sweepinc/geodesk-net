@@ -7,8 +7,9 @@
 
 namespace Java.Util.Concurrent;
 
-// PORT: faithful mirror of java.util.concurrent.TimeUnit (subset). Only the units
-// used by the port are represented; ToMillis() backs the .NET wait primitives.
+// PORT: faithful mirror of java.util.concurrent.TimeUnit (subset). Only the units used by the
+// port are represented; ToMillis() backs the .NET wait primitives.
+/// <remarks>Ported from Java <c>java.util.concurrent.TimeUnit</c>.</remarks>
 public enum TimeUnit
 {
     Nanoseconds,
@@ -20,8 +21,12 @@ public enum TimeUnit
     Days
 }
 
+// PORT-only: C# enums cannot carry methods, so TimeUnit.toMillis(long) is provided here as an
+// extension method.
 public static class TimeUnitExtensions
 {
+
+    /// <remarks>Ported from Java <c>java.util.concurrent.TimeUnit.toMillis(long)</c>.</remarks>
     public static long ToMillis(this TimeUnit unit, long duration)
     {
         return unit switch
@@ -36,4 +41,5 @@ public static class TimeUnitExtensions
             _ => duration,
         };
     }
+
 }

@@ -14,7 +14,7 @@ using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Query;
 using GeoDesk.Geom;
 using NetTopologySuite.Geometries;
-using NioBuffer = Clarisma.Common.Nio.ByteBuffer;
+using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace GeoDesk.Feature.Store;
 
@@ -153,19 +153,22 @@ public class StoredWay : StoredFeature, Way
         return total;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.nodes()</c>.</remarks>
     public Features Nodes()
     {
         return new WayNodeView(store, buf, ptr);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.nodes(String)</c>.</remarks>
     public Features Nodes(string query)
     {
-        if ((buf.Get(ptr) & IFeatureFlags.WAYNODE_FLAG) == 0) return EmptyView.ANY;
+        if ((buf.Get(ptr) & IFeatureFlags.WAYNODE_FLAG) == 0) return EmptyView.Any;
         Matcher matcher = store.GetMatcher(query);
-        if ((matcher.AcceptedTypes() & TypeBits.NODES) == 0) return EmptyView.ANY;
+        if ((matcher.AcceptedTypes() & TypeBits.NODES) == 0) return EmptyView.Any;
         return new WayNodeView(store, buf, ptr, TypeBits.NODES, matcher, null);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.iterator()</c>.</remarks>
     public override IEnumerator<Feature> GetEnumerator()
     {
         int flags = buf.GetInt(ptr);
@@ -176,6 +179,7 @@ public class StoredWay : StoredFeature, Way
             (flags & IFeatureFlags.RELATION_MEMBER_FLAG), Matcher.ALL);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.fastFeatureNodeIterator(Matcher)</c>.</remarks>
     internal FeatureIterator FastFeatureNodeIterator(Matcher matcher)
     {
         int flags = buf.GetInt(ptr);
@@ -187,110 +191,114 @@ public class StoredWay : StoredFeature, Way
     }
 
     // TODO: matcher vs filter!
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.Iter</c>.</remarks>
     public class Iter : FeatureIterator
     {
-        private readonly FeatureStore store;
-        private readonly NioBuffer buf;
-        private readonly Matcher filter;
-        private int pNext;
-        private Feature? featureNode;
-        private int tip = FeatureConstants.START_TIP;
-        private int tex = FeatureConstants.WAYNODES_START_TEX;
-        private NioBuffer? foreignBuf;
-        private int pExports;
 
         // TODO: consolidate these flags
-        private const int NF_LAST = 1;
-        private const int NF_FOREIGN = 2;
-        private const int NF_DIFFERENT_TILE = 4;
-        private const int NF_WIDE_TEX = 8;
+        const int NfLast = 1;
+        const int NfForeign = 2;
+        const int NfDifferentTile = 4;
+        const int NfWideTex = 8;
 
+        readonly FeatureStore _store;
+        readonly NioBuffer _buf;
+        readonly Matcher _filter;
+        int _pNext;
+        Feature? _featureNode;
+        int _tip = FeatureConstants.START_TIP;
+        int _tex = FeatureConstants.WAYNODES_START_TEX;
+        NioBuffer? _foreignBuf;
+        int _pExports;
+
+        /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.Iter(FeatureStore, ByteBuffer, int, Matcher)</c>.</remarks>
         public Iter(FeatureStore store, NioBuffer buf, int pFirst, Matcher filter)
         {
-            this.store = store;
-            this.buf = buf;
-            this.pNext = pFirst;
-            this.filter = filter;
+            _store = store;
+            _buf = buf;
+            _pNext = pFirst;
+            _filter = filter;
             FetchNext();
         }
 
-        private void FetchNext()
+        /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.Iter.fetchNext()</c>.</remarks>
+        void FetchNext()
         {
-            while (pNext != 0)
+            while (_pNext != 0)
             {
                 NioBuffer nodeBuf;
                 int pNode;
-                int node = buf.GetInt(pNext);
-                if ((node & (NF_FOREIGN << 16)) != 0)
+                var node = _buf.GetInt(_pNext);
+                if ((node & (NfForeign << 16)) != 0)
                 {
-                    if ((node & (NF_WIDE_TEX << 16)) == 0)
+                    if ((node & (NfWideTex << 16)) == 0)
                     {
                         node >>= 16;    // signed
-                        pNext += 2;
+                        _pNext += 2;
                     }
                     else
                     {
                         node = (int)BitOperations.RotateLeft((uint)node, 16);
                     }
-                    tex += (node >> 4);
-                    if ((node & NF_DIFFERENT_TILE) != 0)
+                    _tex += (node >> 4);
+                    if ((node & NfDifferentTile) != 0)
                     {
                         // TODO: test wide tip delta
-                        pNext -= 2;
-                        int tipDelta = buf.GetShort(pNext);
+                        _pNext -= 2;
+                        int tipDelta = _buf.GetShort(_pNext);
                         if ((tipDelta & 1) != 0)
                         {
                             // wide TIP delta
-                            pNext -= 2;
-                            tipDelta = (buf.GetShort(pNext) << 15) |
-                                ((tipDelta >> 1) & 0x7fff);
+                            _pNext -= 2;
+                            tipDelta = (_buf.GetShort(_pNext) << 15) | ((tipDelta >> 1) & 0x7fff);
                         }
                         else
                         {
                             tipDelta >>= 1;     // signed
                         }
-                        tip += tipDelta;
-                        int entry = store.TileIndexEntry(tip);
-                        if (!FeatureStore.IsTileLoadedAndCurrent(entry))
-                        {
-                            throw new MissingTileException(tip);
-                        }
-                        int tilePage = FeatureStore.PageFromEntry(entry);
-                        foreignBuf = store.BufferOfPage(tilePage);
-                        int ppExports = store.OffsetOfPage(tilePage) + 24;
-                        pExports = ppExports + foreignBuf.GetInt(ppExports);
+                        _tip += tipDelta;
+                        var entry = _store.TileIndexEntry(_tip);
+                        if (!FeatureStore.IsTileLoadedAndCurrent(entry)) throw new MissingTileException(_tip);
+                        var tilePage = FeatureStore.PageFromEntry(entry);
+                        _foreignBuf = _store.BufferOfPage(tilePage);
+                        var ppExports = _store.OffsetOfPage(tilePage) + 24;
+                        _pExports = ppExports + _foreignBuf.GetInt(ppExports);
                     }
-                    nodeBuf = foreignBuf!;
-                    int ppExported = pExports + (tex << 2);
-                    pNode = ppExported + foreignBuf!.GetInt(ppExported);
+                    nodeBuf = _foreignBuf!;
+                    var ppExported = _pExports + (_tex << 2);
+                    pNode = ppExported + _foreignBuf!.GetInt(ppExported);
                 }
                 else
                 {
                     node = (int)BitOperations.RotateLeft((uint)node, 16);
-                    nodeBuf = buf;
-                    pNode = pNext + (node >> 1) + 2;
+                    nodeBuf = _buf;
+                    pNode = _pNext + (node >> 1) + 2;
                 }
-                pNext -= 4;
-                pNext &= -1 + (node & NF_LAST);     // set pNext to 0 if this is the last node
-                if (filter.Accept(nodeBuf, pNode))
+                _pNext -= 4;
+                _pNext &= -1 + (node & NfLast);     // set _pNext to 0 if this is the last node
+                if (_filter.Accept(nodeBuf, pNode))
                 {
-                    featureNode = new StoredNode(store, nodeBuf, pNode);
+                    _featureNode = new StoredNode(_store, nodeBuf, pNode);
                     return;
                 }
             }
-            featureNode = null;
+            _featureNode = null;
         }
 
+        /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.Iter.hasNext()</c>.</remarks>
         public override bool HasNext()
         {
-            return featureNode != null;
+            return _featureNode != null;
         }
 
+        /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.Iter.next()</c>.</remarks>
         public override Feature? Next()
         {
-            Feature? next = featureNode;
+            var next = _featureNode;
             FetchNext();
             return next;
         }
+
     }
+
 }

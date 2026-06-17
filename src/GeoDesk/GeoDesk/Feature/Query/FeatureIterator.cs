@@ -13,24 +13,27 @@ namespace GeoDesk.Feature.Query;
 
 // PORT: helper base (no Java counterpart) that bridges Java's Iterator<Feature> contract
 // (HasNext()/Next(), where Next() yields null once exhausted) to .NET's IEnumerator<Feature>.
-// The ported table iterators express their logic via HasNext()/Next() exactly as in Java;
-// this base supplies the IEnumerator adapter so a view can be enumerated with foreach.
+// The ported table iterators express their logic via HasNext()/Next() exactly as in Java; this
+// base supplies the IEnumerator adapter so a view can be enumerated with foreach.
+/// <remarks>Port-only adapter (no direct Java counterpart): bridges Java's
+/// <c>java.util.Iterator&lt;Feature&gt;</c> contract to .NET <c>IEnumerator&lt;Feature&gt;</c>.</remarks>
 public abstract class FeatureIterator : IEnumerator<Feature>
 {
-    private Feature? current;
+
+    Feature? _current;
 
     public abstract bool HasNext();
 
     public abstract Feature? Next();
 
-    public Feature Current => current!;
+    public Feature Current => _current!;
 
-    object IEnumerator.Current => current!;
+    object IEnumerator.Current => _current!;
 
     public bool MoveNext()
     {
         if (!HasNext()) return false;
-        current = Next();
+        _current = Next();
         return true;
     }
 
@@ -42,4 +45,5 @@ public abstract class FeatureIterator : IEnumerator<Feature>
     public virtual void Dispose()
     {
     }
+
 }

@@ -10,33 +10,241 @@ using System.Numerics;
 using GeoDesk.Feature;
 using GeoDesk.Feature.Filters;
 using GeoDesk.Geom;
-using NioBuffer = Clarisma.Common.Nio.ByteBuffer;
+using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace GeoDesk.Feature.Store;
 
 /// <summary>
-/// A class that traverses the Tile Index Tree of a FeatureStore in an
-/// iterator-like fashion, returning all tiles that intersect a given
-/// bounding box.
+/// A class that traverses the Tile Index Tree of a FeatureStore in an iterator-like fashion,
+/// returning all tiles that intersect a given bounding box.
 /// </summary>
+/// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker</c>.</remarks>
 // TODO: no need to create top level (leaf)
 public class TileIndexWalker
 {
-    private Bounds? bounds;
-    private readonly NioBuffer buf;
-    private readonly Level root;
-    private Level current;
-    private int currentTile;
-    private int currentTip;
-    private Filter? filter;
-    private int northwestFlags;
-    private HashSet<int>? acceptedTiles;
-    private bool tileBasedAcceleration;
-    private int pTileIndex;
+
+    Bounds? _bounds;
+    readonly NioBuffer _buf;
+    readonly Level _root;
+    Level _current;
+    int _currentTile;
+    int _currentTip;
+    Filter? _filter;
+    int _northwestFlags;
+    HashSet<int>? _acceptedTiles;
+    bool _tileBasedAcceleration;
+    int _pTileIndex;
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker(ByteBuffer, int, int)</c>.</remarks>
+    public TileIndexWalker(NioBuffer buf, int pTileIndex, int zoomLevels)
+    {
+        _buf = buf;
+        _pTileIndex = pTileIndex;
+
+        _current = _root = new Level();
+        var level = _root;
+        zoomLevels >>= 1;
+        var zoom = 0;
+        for (; ; )
+        {
+            var step = BitOperations.TrailingZeroCount((uint)zoomLevels) + 1;
+            zoom += step;
+            level.topLeftChildTile = Tile.FromColumnRowZoom(0, 0, zoom);
+            level.extent = 1 << step;
+            zoomLevels = (int)((uint)zoomLevels >> step);
+            if (zoomLevels == 0) break;
+            var child = new Level();
+            level.child = child;
+            child.parent = level;
+            level = child;
+        }
+    }
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker(FeatureStore)</c>.</remarks>
+    public TileIndexWalker(FeatureStore store)
+        : this(store.TileIndexBuf(), store.TileIndexOfs(), store.ZoomLevels())
+    {
+    }
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker.start(Bounds)</c>.</remarks>
+    public void Start(Bounds bounds)
+    {
+        Start(bounds, null);
+    }
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker.start(Bounds, Filter)</c>.</remarks>
+    public void Start(Bounds bounds, Filter? filter)
+    {
+        _bounds = bounds;
+        _filter = filter;
+        _currentTip = 1;
+        _root.Init(_buf, _pTileIndex + 4, 0, bounds, filter);
+        _current = _root;
+        _acceptedTiles = null;
+        if (filter != null)
+        {
+            var strategy = filter.Strategy();
+            if ((strategy & FilterStrategy.FastTileFilter) != 0)
+            {
+                _tileBasedAcceleration = true;
+                if ((strategy & FilterStrategy.StrictBbox) == 0) _acceptedTiles = new HashSet<int>();
+            }
+        }
+    }
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker.tileIndexPointer()</c>.</remarks>
+    protected int TileIndexPointer()
+    {
+        return _pTileIndex;
+    }
+
+    // PORT: Java's tile() and filter() are renamed CurrentTile()/CurrentFilter() to avoid colliding
+    // with the GeoDesk.Geom.Tile type and the Filter type referenced in this file.
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker.tile()</c>.</remarks>
+    public int CurrentTile()
+    {
+        return _currentTile;
+    }
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker.tip()</c>.</remarks>
+    public int Tip()
+    {
+        return _currentTip;
+    }
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker.filter()</c>.</remarks>
+    public Filter? CurrentFilter()
+    {
+        return _filter;
+    }
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker.northwestFlags()</c>.</remarks>
+    public int NorthwestFlags()
+    {
+        return _northwestFlags;
+    }
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker.tilePage()</c>.</remarks>
+    public int TilePage()
+    {
+        var p = TileIndexPointer() + _currentTip * 4;
+        var entry = _buf.GetInt(p);
+        System.Diagnostics.Debug.Assert((entry & 3) != 1);
+        return (int)((uint)entry >> 2);
+    }
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker.next()</c>.</remarks>
+    public bool Next()
+    {
+        var level = _current;
+        var childTileMask = level.childTileMask;
+        for (; ; )
+        {
+            level.currentCol++;
+            if (level.currentCol > level.endCol)
+            {
+                level.currentRow++;
+                if (level.currentRow > level.endRow)
+                {
+                    // we are done with this level
+                    _current = level = level.parent!;
+                    if (level == null) return false;     // We've completed the root; we are done
+                    // continue with parent level
+                    childTileMask = level.childTileMask;
+                    continue;
+                }
+                level.currentCol = level.startCol;
+            }
+            var childNumber = level.currentRow * level.extent + level.currentCol;
+            if ((childTileMask & (1L << childNumber)) != 0)
+            {
+                // If the bit in the childTileMask is set, this means that there is actually a tile
+                // at this cell in the matrix. In the tile index, empty cells are skipped; if we have
+                // a 4x4 matrix, and the mask bits are 0b0000_0000_0011_0100, this means the record
+                // is laid out like this:
+                //
+                // [parent tile]
+                // [childTileMask]
+                // [child at row0, col2]
+                // [child at row1, col0]
+                // [child at row1, col1]
+
+                var childEntry = BitOperations.PopCount((ulong)(childTileMask << (63 - childNumber))) - 1;
+                // cannot shift by 64; only the lowest 5 bits count
+                // TODO: could avoid -1 by setting pChildEntries one word earlier
+
+                // by counting how many bits are set in the mask before the bit at childNumber, we
+                // determine the position of this child's entry (This should be a very fast operation
+                // on modern CPUs)
+
+                _currentTile = Tile.Relative(level.topLeftChildTile, level.currentCol, level.currentRow);
+
+                if (_tileBasedAcceleration)
+                {
+                    // If the Filter allows for tile-based acceleration (rejecting a tile, waiving the
+                    // filter, or substituting the filter for a cheaper one), create a polygon for the
+                    // current tile and check with the Filter
+
+                    if (level.filter != null && (level.filter.Strategy() & FilterStrategy.FastTileFilter) != 0)
+                    {
+                        _filter = level.filter.FilterForTile(_currentTile, Tile.Polygon(_currentTile));
+                        if (_filter == FalseFilter.Instance) continue;
+                    }
+                    if (_acceptedTiles != null)
+                    {
+                        _northwestFlags =
+                            (_acceptedTiles.Contains(Tile.Neighbor(_currentTile, Heading.North)) ?
+                                IFeatureFlags.MULTITILE_NORTH : 0) |
+                            (_acceptedTiles.Contains(Tile.Neighbor(_currentTile, Heading.West)) ?
+                                IFeatureFlags.MULTITILE_WEST : 0);
+                        _acceptedTiles.Add(_currentTile);
+                    }
+                    else
+                    {
+                        // If we're not tracking accepted NW tiles (for filters that use a strict
+                        // bbox), pretend that NW tiles exist
+                        _northwestFlags = IFeatureFlags.MULTITILE_NORTH | IFeatureFlags.MULTITILE_WEST;
+                    }
+                }
+                else
+                {
+                    // If we're processing a dense set of tiles, calculate the northwestFlags based
+                    // on query bbox
+                    // TODO: There's probably a cheaper way to calculate this
+
+                    _northwestFlags =
+                        ((_bounds!.MaxY > Tile.TopY(_currentTile)) ? IFeatureFlags.MULTITILE_NORTH : 0) |
+                        ((_bounds.MinX < Tile.LeftX(_currentTile)) ? IFeatureFlags.MULTITILE_WEST : 0);
+                }
+                var pEntry = level.pChildEntries + childEntry * 4;
+                var pageOrPtr = _buf.GetInt(pEntry);
+                if ((pageOrPtr & 3) == 1)
+                {
+                    // Changed for v2: The lowest 2 bits are flags. A value of 01 indicates a pointer
+                    // to a child level. Current tile has children: prepare to move up to the next
+                    // level in the tile tree
+
+                    _current = level = level.child!;
+                    pEntry += pageOrPtr ^ 1;
+                    level.Init(_buf, pEntry, _currentTile, _bounds!, _filter);
+                }
+                _currentTip = (pEntry - TileIndexPointer()) / 4;
+                return true;
+            }
+        }
+    }
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker.skipChildren()</c>.</remarks>
+    public void SkipChildren()
+    {
+        _current = _current.parent != null ? _current.parent : _current;
+    }
 
     // TODO: could the col/rows be shorts? Performance impact?
-    private class Level
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker.Level</c>.</remarks>
+    class Level
     {
+
         internal Level? parent;
         internal Level? child;
         internal long childTileMask;
@@ -51,21 +259,21 @@ public class TileIndexWalker
         internal int currentRow;
         internal Filter? filter;
 
+        /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker.Level.init(ByteBuffer, int, int, Bounds, Filter)</c>.</remarks>
         internal void Init(NioBuffer buf, int pEntry, int parentTile, Bounds bounds, Filter? filter)
         {
             this.filter = filter;
-            int zoom = Tile.Zoom(topLeftChildTile);
+            var zoom = Tile.Zoom(topLeftChildTile);
                 // TODO: check this, it has not been initialized?
                 //  OK, this is set by TIW's constructor (This could be cleaner)
-            int step = zoom - Tile.Zoom(parentTile);
-            // int extent = 1 << step;     // TODO: could take it from Level object
-            int tileTop = Tile.Row(parentTile) << step;
-            int tileLeft = Tile.Column(parentTile) << step;
+            var step = zoom - Tile.Zoom(parentTile);
+            var tileTop = Tile.Row(parentTile) << step;
+            var tileLeft = Tile.Column(parentTile) << step;
             topLeftChildTile = Tile.FromColumnRowZoom(tileLeft, tileTop, zoom);
-            int left = Tile.ColumnFromXZ(bounds.MinX, zoom);
-            int right = Tile.ColumnFromXZ(bounds.MaxX, zoom);
-            int top = Tile.RowFromYZ(bounds.MaxY, zoom);
-            int bottom = Tile.RowFromYZ(bounds.MinY, zoom);
+            var left = Tile.ColumnFromXZ(bounds.MinX, zoom);
+            var right = Tile.ColumnFromXZ(bounds.MaxX, zoom);
+            var top = Tile.RowFromYZ(bounds.MaxY, zoom);
+            var bottom = Tile.RowFromYZ(bounds.MinY, zoom);
             startCol = System.Math.Max(left - tileLeft, 0);
             startRow = System.Math.Max(top - tileTop, 0);
             endCol = System.Math.Min(right - tileLeft, extent - 1);
@@ -76,219 +284,7 @@ public class TileIndexWalker
                 // TODO: This fails before gol-tool#7 is fixed
             pChildEntries = pEntry + (extent == 8 ? 12 : 8);
         }
+
     }
 
-    public TileIndexWalker(NioBuffer buf, int pTileIndex, int zoomLevels)
-    {
-        this.buf = buf;
-        this.pTileIndex = pTileIndex;
-
-        current = root = new Level();
-        Level level = root;
-        zoomLevels >>= 1;
-        int zoom = 0;
-        for (; ; )
-        {
-            int step = BitOperations.TrailingZeroCount((uint)zoomLevels) + 1;
-            zoom += step;
-            level.topLeftChildTile = Tile.FromColumnRowZoom(0, 0, zoom);
-            level.extent = 1 << step;
-            zoomLevels = (int)((uint)zoomLevels >> step);
-            if (zoomLevels == 0) break;
-            Level child = new Level();
-            level.child = child;
-            child.parent = level;
-            level = child;
-        }
-    }
-
-    public TileIndexWalker(FeatureStore store)
-        : this(store.TileIndexBuf(), store.TileIndexOfs(), store.ZoomLevels())
-    {
-    }
-
-    public void Start(Bounds bounds)
-    {
-        Start(bounds, null);
-    }
-
-    public void Start(Bounds bounds, Filter? filter)
-    {
-        this.bounds = bounds;
-        this.filter = filter;
-        currentTip = 1;
-        root.Init(buf, pTileIndex + 4, 0, bounds, filter);
-        current = root;
-        acceptedTiles = null;
-        if (filter != null)
-        {
-            int strategy = filter.Strategy();
-            if ((strategy & FilterStrategy.FAST_TILE_FILTER) != 0)
-            {
-                tileBasedAcceleration = true;
-                if ((strategy & FilterStrategy.STRICT_BBOX) == 0)
-                {
-                    acceptedTiles = new HashSet<int>();
-                }
-            }
-        }
-    }
-
-    protected int TileIndexPointer()
-    {
-        return pTileIndex;
-    }
-
-    // PORT: Java's tile() and filter() are renamed CurrentTile()/CurrentFilter() to avoid
-    // colliding with the GeoDesk.Geom.Tile type and the Filter type referenced in this file.
-    public int CurrentTile()
-    {
-        return currentTile;
-    }
-
-    public int Tip()
-    {
-        return currentTip;
-    }
-
-    public Filter? CurrentFilter()
-    {
-        return filter;
-    }
-
-    public int NorthwestFlags()
-    {
-        return northwestFlags;
-    }
-
-    public int TilePage()
-    {
-        int p = TileIndexPointer() + currentTip * 4;
-        int entry = buf.GetInt(p);
-        System.Diagnostics.Debug.Assert((entry & 3) != 1);
-        return (int)((uint)entry >> 2);
-    }
-
-    public bool Next()
-    {
-        Level level = current;
-        long childTileMask = level.childTileMask;
-        for (; ; )
-        {
-            level.currentCol++;
-            if (level.currentCol > level.endCol)
-            {
-                level.currentRow++;
-                if (level.currentRow > level.endRow)
-                {
-                    // we are done with this level
-                    current = level = level.parent!;
-                    if (level == null)
-                    {
-                        // We've completed the root; we are done
-                        return false;
-                    }
-                    // continue with parent level
-                    childTileMask = level.childTileMask;
-                    continue;
-                }
-                level.currentCol = level.startCol;
-            }
-            int childNumber = level.currentRow * level.extent + level.currentCol;
-            if ((childTileMask & (1L << childNumber)) != 0)
-            {
-                // If the bit in the childTileMask is set,
-                // this means that there is actually a tile
-                // at this cell in the matrix
-                // In the tile index, empty cells are skipped;
-                // if we have a 4x4 matrix, and the mask bits
-                // are 0b0000_0000_0011_0100, this means the
-                // record is laid out like this:
-                //
-                // [parent tile]
-                // [childTileMask]
-                // [child at row0, col2]
-                // [child at row1, col0]
-                // [child at row1, col1]
-
-                int childEntry = BitOperations.PopCount(
-                    (ulong)(childTileMask << (63 - childNumber))) - 1;
-                // cannot shift by 64; only the lowest 5 bits count
-                // TODO: could avoid -1 by setting pChildEntries one word earlier
-
-                // by counting how many bits are set in the
-                // mask before the bit at childNumber, we
-                // determine the position of this child's
-                // entry (This should be a very fast operation
-                // on modern CPUs)
-
-                currentTile = Tile.Relative(level.topLeftChildTile,
-                    level.currentCol, level.currentRow);
-                // Log.debug("TIW: Current tile %s, Filter = %s", Tile.toString(currentTile), filter);
-
-                if (tileBasedAcceleration)
-                {
-                    // If the Filter allows for tile-based acceleration (rejecting
-                    // a tile, waiving the filter, or substituting the filter for
-                    // a cheaper one), create a polygon for the current tile and
-                    // check with the Filter
-
-                    if (level.filter != null && (level.filter.Strategy() & FilterStrategy.FAST_TILE_FILTER) != 0)
-                    {
-                        filter = level.filter.FilterForTile(currentTile, GeoDesk.Geom.Tile.Polygon(currentTile));
-                        if (filter == FalseFilter.INSTANCE) continue;
-                    }
-                    if (acceptedTiles != null)
-                    {
-                        northwestFlags =
-                            (acceptedTiles.Contains(GeoDesk.Geom.Tile.Neighbor(currentTile, Heading.North)) ?
-                                IFeatureFlags.MULTITILE_NORTH : 0) |
-                            (acceptedTiles.Contains(GeoDesk.Geom.Tile.Neighbor(currentTile, Heading.West)) ?
-                                IFeatureFlags.MULTITILE_WEST : 0);
-                        acceptedTiles.Add(currentTile);
-                    }
-                    else
-                    {
-                        // If we're not tracking accepted NW tiles (for filters that
-                        // use a strict bbox), pretend that NW tiles exist
-                        northwestFlags = IFeatureFlags.MULTITILE_NORTH | IFeatureFlags.MULTITILE_WEST;
-                    }
-                }
-                else
-                {
-                    // If we're processing a dense set of tiles, calculate the
-                    // northwestFlags based on query bbox
-                    // TODO: There's probably a cheaper way to calculate this
-
-                    northwestFlags =
-                        ((bounds!.MaxY > GeoDesk.Geom.Tile.TopY(currentTile)) ?
-                            IFeatureFlags.MULTITILE_NORTH : 0) |
-                        ((bounds.MinX < GeoDesk.Geom.Tile.LeftX(currentTile)) ?
-                            IFeatureFlags.MULTITILE_WEST : 0);
-                }
-                int pEntry = level.pChildEntries + childEntry * 4;
-                int pageOrPtr = buf.GetInt(pEntry);
-                if ((pageOrPtr & 3) == 1)
-                {
-                    // Changed for v2: The lowest 2 bits
-                    //  are flags. A value of 01 indicates a pointer
-                    //  to a child level
-
-                    // current tile has children: prepare to move up to the
-                    // next level in the tile tree
-
-                    current = level = level.child!;
-                    pEntry += pageOrPtr ^ 1;
-                    level.Init(buf, pEntry, currentTile, bounds!, filter);
-                }
-                currentTip = (pEntry - TileIndexPointer()) / 4;
-                return true;
-            }
-        }
-    }
-
-    public void SkipChildren()
-    {
-        current = current.parent != null ? current.parent : current;
-    }
 }

@@ -8,39 +8,42 @@
 using System;
 using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Store;
-using NioBuffer = Clarisma.Common.Nio.ByteBuffer;
+using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace GeoDesk.Feature.Query;
 
 // TODO: Maybe give task the tile page instead of TIP
+/// <remarks>Ported from Java <c>com.geodesk.feature.query.TileQueryTask</c>.</remarks>
 public class TileQueryTask : QueryTask
 {
-    private readonly int tilePage;
-    // PORT: accessed by sibling RTreeQueryTask instances (parent.buf etc.), which C#
-    // protected does not allow across sibling types, so these are internal.
+
+    readonly int _tilePage;
+    // PORT: accessed by sibling RTreeQueryTask instances (parent.buf etc.), which C# protected
+    // does not allow across sibling types, so these are internal.
     internal int bboxFlags;
-    private int tilesProcessed;
+    int _tilesProcessed;
     internal NioBuffer? buf;
     internal Filter? filter;
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.TileQueryTask(Query, int, int, Filter)</c>.</remarks>
     public TileQueryTask(Query query, int tilePage, int northwestFlags, Filter? filter)
         : base(query)
     {
-        this.tilePage = tilePage;
-        this.bboxFlags = northwestFlags;
+        _tilePage = tilePage;
+        bboxFlags = northwestFlags;
         this.filter = filter;
-        // Log.debug("Tile %s with filter %s", Tile.toString(tile), filter);
     }
 
-    private RTreeQueryTask? SearchRTree(int ppTree, Matcher matcher, RTreeQueryTask? task)
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.TileQueryTask.searchRTree(int, Matcher, RTreeQueryTask)</c>.</remarks>
+    RTreeQueryTask? SearchRTree(int ppTree, Matcher matcher, RTreeQueryTask? task)
     {
-        int p = buf!.GetInt(ppTree);
+        var p = buf!.GetInt(ppTree);
         if (p == 0) return task;
         p = ppTree + p;
         for (; ; )
         {
-            int last = buf.GetInt(p) & 1;
-            int keyBits = buf.GetInt(p + 4);
+            var last = buf.GetInt(p) & 1;
+            var keyBits = buf.GetInt(p + 4);
             if (matcher.AcceptIndex(keyBits))
             {
                 task = new RTreeQueryTask(this, p, matcher, task);
@@ -52,15 +55,16 @@ public class TileQueryTask : QueryTask
         return task;
     }
 
-    private RTreeQueryTask? SearchNodeRTree(int ppTree, Matcher matcher, RTreeQueryTask? task)
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.TileQueryTask.searchNodeRTree(int, Matcher, RTreeQueryTask)</c>.</remarks>
+    RTreeQueryTask? SearchNodeRTree(int ppTree, Matcher matcher, RTreeQueryTask? task)
     {
-        int p = buf!.GetInt(ppTree);
+        var p = buf!.GetInt(ppTree);
         if (p == 0) return task;
         p = ppTree + p;
         for (; ; )
         {
-            int last = buf.GetInt(p) & 1;
-            int keyBits = buf.GetInt(p + 4);
+            var last = buf.GetInt(p) & 1;
+            var keyBits = buf.GetInt(p + 4);
             if (matcher.AcceptIndex(keyBits))
             {
                 task = new RTreeQueryTask.Nodes(this, p, matcher, task);
@@ -72,38 +76,25 @@ public class TileQueryTask : QueryTask
         return task;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.TileQueryTask.exec()</c>.</remarks>
     protected override bool Exec()
     {
-        // System.out.format("Searching tile at page %d\n", tilePage);
-
         try
         {
-            FeatureStore store = query.Store();
-            buf = store.BufferOfPage(tilePage);
-            int pTile = store.OffsetOfPage(tilePage);
+            var store = query.Store();
+            buf = store.BufferOfPage(_tilePage);
+            var pTile = store.OffsetOfPage(_tilePage);
 
-            Matcher matcher = query.Matcher();
+            var matcher = query.Matcher();
             RTreeQueryTask? task = null;
 
-            int types = query.Types();
-            if ((types & TypeBits.NODES) != 0)
-            {
-                task = SearchNodeRTree(pTile + 8, matcher, task);
-            }
-            if ((types & TypeBits.NONAREA_WAYS) != 0)
-            {
-                task = SearchRTree(pTile + 12, matcher, task);
-            }
-            if ((types & TypeBits.AREAS) != 0)
-            {
-                task = SearchRTree(pTile + 16, matcher, task);
-            }
-            if ((types & TypeBits.NONAREA_RELATIONS) != 0)
-            {
-                task = SearchRTree(pTile + 20, matcher, task);
-            }
+            var types = query.Types();
+            if ((types & TypeBits.NODES) != 0) task = SearchNodeRTree(pTile + 8, matcher, task);
+            if ((types & TypeBits.NONAREA_WAYS) != 0) task = SearchRTree(pTile + 12, matcher, task);
+            if ((types & TypeBits.AREAS) != 0) task = SearchRTree(pTile + 16, matcher, task);
+            if ((types & TypeBits.NONAREA_RELATIONS) != 0) task = SearchRTree(pTile + 20, matcher, task);
 
-            QueryResults res = QueryResults.EMPTY;
+            var res = QueryResults.Empty;
             while (task != null)
             {
                 res = QueryResults.Merge(res, task.Join());
@@ -114,15 +105,17 @@ public class TileQueryTask : QueryTask
         catch (Exception ex)
         {
             query.SetError(ex);
-            results = QueryResults.EMPTY;
+            results = QueryResults.Empty;
         }
-        tilesProcessed = 1;
+        _tilesProcessed = 1;
         query.Put(this);
         return true;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.TileQueryTask.tilesProcessed()</c>.</remarks>
     public int TilesProcessed()
     {
-        return tilesProcessed;
+        return _tilesProcessed;
     }
+
 }

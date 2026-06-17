@@ -8,7 +8,7 @@
 using System;
 using System.IO.MemoryMappedFiles;
 
-namespace Clarisma.Common.Nio;
+namespace Java.Nio;
 
 /// <summary>
 /// A <see cref="ByteBuffer"/> backed by a memory-mapped file segment — the .NET stand-in

@@ -8,24 +8,28 @@
 using System.Collections.Generic;
 using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Store;
-using NioBuffer = Clarisma.Common.Nio.ByteBuffer;
+using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace GeoDesk.Feature.Query;
 
 /// <summary>
 /// A view that contains the parent ways/relations of a specific node.
 /// </summary>
+/// <remarks>Ported from Java <c>com.geodesk.feature.query.NodeParentView</c>.</remarks>
 public class NodeParentView : ParentRelationView
 {
+
     internal readonly StoredNode node;
 
-    public NodeParentView(FeatureStore store, NioBuffer buf,
-        StoredNode node, int pRelations, int types, Matcher matcher, Filter? filter)
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.NodeParentView(FeatureStore, ByteBuffer, StoredNode, int, int, Matcher, Filter)</c>.</remarks>
+    public NodeParentView(FeatureStore store, NioBuffer buf, StoredNode node, int pRelations, int types,
+        Matcher matcher, Filter? filter)
         : base(store, buf, pRelations, types, matcher, filter)
     {
         this.node = node;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.NodeParentView.newWith(int, Matcher, Filter)</c>.</remarks>
     protected override Features NewWith(int types, Matcher matcher, Filter? filter)
     {
         if ((types & TypeBits.RELATIONS) == 0)
@@ -41,50 +45,58 @@ public class NodeParentView : ParentRelationView
         return new NodeParentView(store, buf, node, ptr, types, matcher, filter);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.NodeParentView.iterator()</c>.</remarks>
     public override IEnumerator<Feature> GetEnumerator()
     {
         return new NodeParentIter(this);
     }
 
-    private class NodeParentIter : Iter
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.NodeParentView.Iter</c>.</remarks>
+    class NodeParentIter : Iter
     {
-        private readonly NodeParentView npView;
-        private readonly Query wayQuery;
-        private Feature? nextFeature;
-        private int phase;
 
+        readonly NodeParentView _npView;
+        readonly Query _wayQuery;
+        Feature? _nextFeature;
+        int _phase;
+
+        /// <remarks>Ported from Java <c>com.geodesk.feature.query.NodeParentView.Iter()</c>.</remarks>
         public NodeParentIter(NodeParentView view)
             : base(view)
         {
-            this.npView = view;
-            wayQuery = new Query(npView.node.ParentWays(npView.types, npView.matcher, npView.filter));
-            // TODO: To improve performance, we could start the query so it
-            //  can fetch the parent ways in the background, while the caller
-            //  is iterating over the parent relations
+            _npView = view;
+            _wayQuery = new Query(_npView.node.ParentWays(_npView.types, _npView.matcher, _npView.filter));
+            // TODO: To improve performance, we could start the query so it can fetch the parent
+            //  ways in the background, while the caller is iterating over the parent relations
             FetchNext();
         }
 
-        private void FetchNext()
+        /// <remarks>Ported from Java <c>com.geodesk.feature.query.NodeParentView.Iter.fetchNext()</c>.</remarks>
+        void FetchNext()
         {
-            if (phase == 0)
+            if (_phase == 0)
             {
-                nextFeature = base.Next();
-                if (nextFeature != null) return;
-                phase++;
+                _nextFeature = base.Next();
+                if (_nextFeature != null) return;
+                _phase++;
             }
-            nextFeature = wayQuery.Next();
+            _nextFeature = _wayQuery.Next();
         }
 
+        /// <remarks>Ported from Java <c>com.geodesk.feature.query.NodeParentView.Iter.hasNext()</c>.</remarks>
         public override bool HasNext()
         {
-            return nextFeature != null;
+            return _nextFeature != null;
         }
 
+        /// <remarks>Ported from Java <c>com.geodesk.feature.query.NodeParentView.Iter.next()</c>.</remarks>
         public override Feature? Next()
         {
-            Feature? next = nextFeature;
+            var next = _nextFeature;
             FetchNext();
             return next;
         }
+
     }
+
 }

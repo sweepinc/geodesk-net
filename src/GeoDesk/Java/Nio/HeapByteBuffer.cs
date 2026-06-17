@@ -7,7 +7,7 @@
 
 using System;
 
-namespace Clarisma.Common.Nio;
+namespace Java.Nio;
 
 /// <summary>
 /// A <see cref="ByteBuffer"/> backed by a managed <c>byte[]</c>.

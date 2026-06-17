@@ -13,7 +13,7 @@ using Clarisma.Common.Store;
 using GeoDesk.Feature.Match;
 using Java.Util.Concurrent;
 using NetTopologySuite.Geometries;
-using NioBuffer = Clarisma.Common.Nio.ByteBuffer;
+using NioBuffer = Java.Nio.ByteBuffer;
 using ZoomLevelsUtil = GeoDesk.Feature.Store.ZoomLevels;
 
 namespace GeoDesk.Feature.Store;
@@ -121,11 +121,13 @@ public class FeatureStore : FreeStore
         geometryFactory = new GeometryFactory();
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.executor()</c>.</remarks>
     public ExecutorService Executor()
     {
         return executor!;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.maxPendingTiles()</c>.</remarks>
     public int MaxPendingTiles()
     {
         return maxPendingTiles;
@@ -207,6 +209,7 @@ public class FeatureStore : FreeStore
     }
 
     // TODO: create an awaitOperations() method
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.close()</c>.</remarks>
     public new void Close()
     {
         if (executor != null)

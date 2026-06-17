@@ -9,7 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Clarisma.Common.Util;
-using NioBuffer = Clarisma.Common.Nio.ByteBuffer;
+using NioBuffer = Java.Nio.ByteBuffer;
 using static Clarisma.Common.Store.BlobStoreConstants;
 
 namespace Clarisma.Common.Store;

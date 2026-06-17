@@ -7,7 +7,7 @@
 
 using Xunit;
 
-namespace Clarisma.Common.Nio;
+namespace Java.Nio;
 
 // Validates the ByteBuffer abstraction introduced for the .NET port (no direct
 // Java counterpart test).

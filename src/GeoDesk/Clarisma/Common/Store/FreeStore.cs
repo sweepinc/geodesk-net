@@ -9,9 +9,9 @@ using System;
 using System.Globalization;
 using System.IO;
 using System.IO.MemoryMappedFiles;
-using Clarisma.Common.Nio;
-using ByteOrder = Clarisma.Common.Nio.ByteOrder;
-using NioBuffer = Clarisma.Common.Nio.ByteBuffer;
+using Java.Nio;
+using ByteOrder = Java.Nio.ByteOrder;
+using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace Clarisma.Common.Store;
 

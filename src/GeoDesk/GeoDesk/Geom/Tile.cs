@@ -9,6 +9,8 @@ using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.Numerics;
+using GeoDesk.Feature.Store;
+using GeoDesk.Util;
 using NetTopologySuite.Geometries;
 
 namespace GeoDesk.Geom;
@@ -174,12 +176,16 @@ public static class Tile
         return new Box(left, bottom, (int)(left + extent - 1), (int)(bottom + extent - 1));
     }
 
-    // PORT-DEFERRED (Phase 5/7): depends on com.geodesk.feature.store.BoxCoordinateSequence
-    // and com.geodesk.util.GeometryBuilder.
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Tile.polygon(int)</c>.</remarks>
     public static Polygon Polygon(int tile)
     {
-        throw new NotImplementedException(
-            "PORT-DEFERRED: Tile.Polygon depends on BoxCoordinateSequence and GeometryBuilder.");
+        int zoom = Zoom(tile);
+        int left = LeftX(tile);
+        int bottom = BottomY(tile);
+        long extent = 1L << (32 - zoom);
+        return GeometryBuilder.Instance.CreatePolygon(
+            new BoxCoordinateSequence(left, bottom,
+                (int)(left + extent - 1), (int)(bottom + extent - 1)));
     }
 
     /// <summary>

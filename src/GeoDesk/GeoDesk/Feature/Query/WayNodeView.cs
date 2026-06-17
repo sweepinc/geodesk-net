@@ -11,98 +11,103 @@ using System.Collections.Generic;
 using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Store;
 using GeoDesk.Geom;
-using NioBuffer = Clarisma.Common.Nio.ByteBuffer;
+using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace GeoDesk.Feature.Query;
 
+/// <remarks>Ported from Java <c>com.geodesk.feature.query.WayNodeView</c>.</remarks>
 public class WayNodeView : TableView
 {
-    private readonly int flags;
 
-    private const int INCLUDE_GEOMETRY_NODES = 256;
+    const int IncludeGeometryNodes = 256;
 
+    readonly int _flags;
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.WayNodeView(FeatureStore, ByteBuffer, int)</c>.</remarks>
     public WayNodeView(FeatureStore store, NioBuffer buf, int ptr)
         : this(store, buf, ptr, TypeBits.NODES, Matcher.ALL, null)
     {
     }
 
-    public WayNodeView(FeatureStore store, NioBuffer buf, int ptr,
-        int types, Matcher matcher, Filter? filter)
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.WayNodeView(FeatureStore, ByteBuffer, int, int, Matcher, Filter)</c>.</remarks>
+    public WayNodeView(FeatureStore store, NioBuffer buf, int ptr, int types, Matcher matcher, Filter? filter)
         : base(store, buf, ptr, types, matcher, filter)
     {
-        flags = (buf.Get(ptr) & 0xff) |
-            ((matcher == Matcher.ALL) ? INCLUDE_GEOMETRY_NODES : 0);
+        _flags = (buf.Get(ptr) & 0xff) | ((matcher == Matcher.ALL) ? IncludeGeometryNodes : 0);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.WayNodeView.newWith(int, Matcher, Filter)</c>.</remarks>
     protected override Features NewWith(int types, Matcher matcher, Filter? filter)
     {
         return new WayNodeView(store, buf, ptr, types, matcher, filter);
     }
 
-    private int BodyPtr()
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.WayNodeView.bodyPtr()</c>.</remarks>
+    int BodyPtr()
     {
-        int ppBody = ptr + 12;
+        var ppBody = ptr + 12;
         return buf.GetInt(ppBody) + ppBody;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.WayNodeView.iterator()</c>.</remarks>
     public override IEnumerator<Feature> GetEnumerator()
     {
-        if ((flags & INCLUDE_GEOMETRY_NODES) == 0)
-        {
-            return new StoredWay.Iter(store, buf, BodyPtr() - 4 -
-                (flags & IFeatureFlags.RELATION_MEMBER_FLAG), matcher);
-        }
+        if ((_flags & IncludeGeometryNodes) == 0)
+            return new StoredWay.Iter(store, buf, BodyPtr() - 4 - (_flags & IFeatureFlags.RELATION_MEMBER_FLAG), matcher);
         return new AllNodesIter(this, BodyPtr());
     }
 
     // TODO: apply spatial filters to geometric nodes
     // TODO: inverse this: derive from feature iterator instead?
-    private class AllNodesIter : StoredWay.XYIterator, IEnumerator<Feature>
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.WayNodeView.AllNodesIter</c>.</remarks>
+    class AllNodesIter : StoredWay.XYIterator, IEnumerator<Feature>
     {
-        private readonly WayNodeView owner;
-        private Feature? nextFeatureNode;
-        private StoredWay.Iter? featureNodeIter;
-        private Feature? current;
 
+        readonly WayNodeView _owner;
+        Feature? _nextFeatureNode;
+        StoredWay.Iter? _featureNodeIter;
+        Feature? _current;
+
+        /// <remarks>Ported from Java <c>com.geodesk.feature.query.WayNodeView.AllNodesIter(int)</c>.</remarks>
         public AllNodesIter(WayNodeView owner, int pBody)
-            : base(owner.buf, pBody, owner.buf.GetInt(owner.ptr - 16),
-                owner.buf.GetInt(owner.ptr - 12), owner.flags)
+            : base(owner.buf, pBody, owner.buf.GetInt(owner.ptr - 16), owner.buf.GetInt(owner.ptr - 12), owner._flags)
         {
-            this.owner = owner;
-            if ((owner.flags & IFeatureFlags.WAYNODE_FLAG) != 0)
+            _owner = owner;
+            if ((owner._flags & IFeatureFlags.WAYNODE_FLAG) != 0)
             {
-                featureNodeIter = new StoredWay.Iter(owner.store, owner.buf, pBody - 4 -
-                    (owner.flags & IFeatureFlags.RELATION_MEMBER_FLAG), Matcher.ALL);
+                _featureNodeIter = new StoredWay.Iter(owner.store, owner.buf,
+                    pBody - 4 - (owner._flags & IFeatureFlags.RELATION_MEMBER_FLAG), Matcher.ALL);
                     // TODO: filters must apply to anonymous nodes as well!
-                if (featureNodeIter.HasNext()) nextFeatureNode = featureNodeIter.Next();
+                if (_featureNodeIter.HasNext()) _nextFeatureNode = _featureNodeIter.Next();
             }
         }
 
-        private Feature NextFeature()
+        /// <remarks>Ported from Java <c>com.geodesk.feature.query.WayNodeView.AllNodesIter.next()</c>.</remarks>
+        Feature NextFeature()
         {
-            long xy = NextXY();
-            int x = XY.X(xy);
-            int y = XY.Y(xy);
-            if (nextFeatureNode != null)
+            var xy = NextXY();
+            var x = XY.X(xy);
+            var y = XY.Y(xy);
+            if (_nextFeatureNode != null)
             {
-                if (nextFeatureNode.X() == x && nextFeatureNode.Y() == y)
+                if (_nextFeatureNode.X() == x && _nextFeatureNode.Y() == y)
                 {
-                    Feature node = nextFeatureNode;
-                    nextFeatureNode = featureNodeIter!.HasNext() ? featureNodeIter.Next() : null;
+                    var node = _nextFeatureNode;
+                    _nextFeatureNode = _featureNodeIter!.HasNext() ? _featureNodeIter.Next() : null;
                     return node;
                 }
             }
-            return new AnonymousWayNode(owner.store, x, y);
+            return new AnonymousWayNode(_owner.store, x, y);
         }
 
-        public Feature Current => current!;
+        public Feature Current => _current!;
 
-        object IEnumerator.Current => current!;
+        object IEnumerator.Current => _current!;
 
         public bool MoveNext()
         {
             if (!HasNext()) return false;
-            current = NextFeature();
+            _current = NextFeature();
             return true;
         }
 
@@ -114,5 +119,7 @@ public class WayNodeView : TableView
         public void Dispose()
         {
         }
+
     }
+
 }

@@ -8,7 +8,7 @@
 using System;
 using System.Buffers.Binary;
 
-namespace Clarisma.Common.Nio;
+namespace Java.Nio;
 
 /// <summary>
 /// A faithful subset of <c>java.nio.ByteBuffer</c>: an indexable region of bytes with a

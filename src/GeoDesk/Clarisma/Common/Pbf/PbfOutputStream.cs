@@ -8,7 +8,7 @@
 using System;
 using System.IO;
 using System.Text;
-using Clarisma.Common.Nio;
+using Java.Nio;
 
 namespace Clarisma.Common.Pbf;
 

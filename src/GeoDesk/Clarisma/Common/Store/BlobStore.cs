@@ -12,8 +12,8 @@ using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Numerics;
-using ByteOrder = Clarisma.Common.Nio.ByteOrder;
-using NioBuffer = Clarisma.Common.Nio.ByteBuffer;
+using ByteOrder = Java.Nio.ByteOrder;
+using NioBuffer = Java.Nio.ByteBuffer;
 using static Clarisma.Common.Store.BlobStoreConstants;
 
 namespace Clarisma.Common.Store;
@@ -29,7 +29,7 @@ public class BlobStore : Store
     /// The number of bits to shift left to turn number of pages into number of bytes
     /// (Page size is always a power of two).
     /// </summary>
-    protected int pageSizeShift = 12; // 4KB default page
+    protected internal int pageSizeShift = 12; // 4KB default page
     protected Downloader? downloader;
 
     private static int Ushr(int v, int n) => (int)((uint)v >> n);
@@ -89,7 +89,7 @@ public class BlobStore : Store
     /// <summary>
     /// Checks whether this BlobStore is *empty*. An empty store is valid, but has no contents.
     /// </summary>
-    protected bool IsEmpty()
+    protected internal bool IsEmpty()
     {
         return baseMapping!.GetInt(INDEX_PTR_OFS) == 0; // TODO
     }
@@ -131,7 +131,7 @@ public class BlobStore : Store
         return ((long)page) << pageSizeShift;
     }
 
-    protected NioBuffer GetBlockOfPage(int page)
+    protected internal NioBuffer GetBlockOfPage(int page)
     {
         Debug.Assert(page >= 0); // TODO: treat page as unsigned int?
         return GetBlock(((long)page) << pageSizeShift);
@@ -159,7 +159,7 @@ public class BlobStore : Store
     /// <summary>
     /// Determines the number of pages needed to store a blob.
     /// </summary>
-    protected int PagesForPayloadSize(int size)
+    protected internal int PagesForPayloadSize(int size)
     {
         Debug.Assert(size > 0 && size <= ((1 << 30) - 4));
         return (size + (1 << pageSizeShift) + 3) >> pageSizeShift;
@@ -168,7 +168,7 @@ public class BlobStore : Store
     /// <summary>
     /// Determines the number of pages needed to store the given number of bytes.
     /// </summary>
-    protected int BytesToPages(int len)
+    protected internal int BytesToPages(int len)
     {
         Debug.Assert(len > 0 && len <= (1 << 30));
         return (len + (1 << pageSizeShift) - 1) >> pageSizeShift;
@@ -179,7 +179,7 @@ public class BlobStore : Store
     /// </summary>
     /// <param name="size">the size of the blob, not including its 4-byte header</param>
     /// <returns>the first page of the blob</returns>
-    protected int AllocateBlob(int size)
+    protected internal int AllocateBlob(int size)
     {
         Debug.Assert(size >= 0 && size <= ((1 << 30) - 4));
         int precedingBlobFreeFlag = 0;
@@ -622,12 +622,12 @@ public class BlobStore : Store
         }
     }
 
-    protected int GetIndexEntry(int id)
+    protected internal int GetIndexEntry(int id)
     {
         return baseMapping!.GetInt(IndexPointer() + id * 4);
     }
 
-    protected void SetIndexEntry(int id, int page)
+    protected internal void SetIndexEntry(int id, int page)
     {
         int pIndexEntry = IndexPointer() + id * 4;
         NioBuffer indexBlock = GetBlock(pIndexEntry & unchecked((int)0xffff_f000)); // TODO: assumes block length 4096

@@ -18,4 +18,5 @@ the GOL from there.
 
 ## Future step
 An MSBuild target will generate the required `.gol` fixtures on demand (e.g. download a small
-`.osm.pbf` such as Monaco and build the GOL during the build). See `PORTING_PLAN.md`.
+`.osm.pbf` such as Monaco and build the GOL during the build). See `PORT.md` (repo root) for the
+overall port status and the test data-coupling notes.

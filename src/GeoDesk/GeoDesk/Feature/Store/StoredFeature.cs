@@ -14,7 +14,7 @@ using Clarisma.Common.Util;
 using GeoDesk.Geom;
 using NetTopologySuite.Geometries;
 using DecimalType = Clarisma.Common.Math.Decimal;
-using NioBuffer = Clarisma.Common.Nio.ByteBuffer;
+using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace GeoDesk.Feature.Store;
 
@@ -471,12 +471,14 @@ public abstract class StoredFeature : Feature
         return (buf.GetInt(ptr) & IFeatureFlags.RELATION_MEMBER_FLAG) != 0;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.parents()</c>.</remarks>
     public virtual Features Parents()
     {
         return BelongsToRelation() ?
-            new Query.ParentRelationView(store, buf, GetRelationTablePtr()) : Query.EmptyView.ANY;
+            new Query.ParentRelationView(store, buf, GetRelationTablePtr()) : Query.EmptyView.Any;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.parents(String)</c>.</remarks>
     public virtual Features Parents(string query)
     {
         if (BelongsToRelation())
@@ -485,12 +487,12 @@ public abstract class StoredFeature : Feature
             if ((matcher.AcceptedTypes() & Match.TypeBits.RELATIONS) != 0)
             {
                 // PORT: faithful to the Java source, which constructs this view but does
-                // not return it (the method always falls through to EmptyView.ANY).
+                // not return it (the method always falls through to EmptyView.Any).
                 _ = new Query.ParentRelationView(store, buf, GetRelationTablePtr(),
                     matcher.AcceptedTypes(), matcher, null);
             }
         }
-        return Query.EmptyView.ANY;
+        return Query.EmptyView.Any;
     }
 
     /// <summary>Retrieves the pointer to the feature's relation table.</summary>

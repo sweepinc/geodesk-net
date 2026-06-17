@@ -8,17 +8,22 @@
 namespace Java.Util.Concurrent;
 
 // PORT: subset of java.util.concurrent.BlockingQueue used by the query engine.
+/// <remarks>Ported from Java <c>java.util.concurrent.BlockingQueue</c>.</remarks>
 public interface BlockingQueue<E>
 {
+
     /// <summary>
-    /// Inserts the element into this queue, returning <c>true</c> on success
-    /// (mirrors <c>Queue.add</c>; an unbounded queue never rejects).
+    /// Inserts the element into this queue, returning <c>true</c> on success (mirrors
+    /// <c>Queue.add</c>; an unbounded queue never rejects).
     /// </summary>
+    /// <remarks>Ported from Java <c>java.util.concurrent.BlockingQueue.add(E)</c>.</remarks>
     bool Add(E e);
 
     /// <summary>
-    /// Retrieves and removes the head of this queue, waiting if necessary
-    /// until an element becomes available.
+    /// Retrieves and removes the head of this queue, waiting if necessary until an element
+    /// becomes available.
     /// </summary>
+    /// <remarks>Ported from Java <c>java.util.concurrent.BlockingQueue.take()</c>.</remarks>
     E Take();
+
 }

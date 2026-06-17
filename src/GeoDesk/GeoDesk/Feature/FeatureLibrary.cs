@@ -12,41 +12,57 @@ using NetTopologySuite.Geometries;
 
 namespace GeoDesk.Feature;
 
+/// <summary>
 /// A Geographic Object Library containing features.
+/// </summary>
+/// <remarks>Ported from Java <c>com.geodesk.feature.FeatureLibrary</c>.</remarks>
 public class FeatureLibrary : WorldView, IDisposable
 {
+
+    /// <summary>
     /// Creates a <c>FeatureLibrary</c> instance associated with an existing GOL file.
-    ///
-    /// <deprecated>Use <see cref="Features.Open(string)"/> instead.</deprecated>
+    /// </summary>
+    /// <param name="path">the path of the GOL file</param>
+    /// <remarks>
+    /// Deprecated: use <see cref="Features.Open(string)"/> instead.
+    /// Ported from Java <c>com.geodesk.feature.FeatureLibrary(String)</c>.
+    /// </remarks>
     public FeatureLibrary(string path)
         : base(new FeatureStore(path))
     {
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.FeatureLibrary.geometryFactory()</c>.</remarks>
     public GeometryFactory GeometryFactory()
     {
         return store.GeometryFactory();
     }
 
+    /// <summary>
     /// Closes the library and releases its resources.
-    ///
-    /// **Important**: Do not call the methods of any collections or features you have
-    /// retrieved from this library after you've closed it. Doing so leads to undefined
-    /// results and may cause a segmentation fault.
+    /// <para>
+    /// <b>Important</b>: Do not call the methods of any collections or features you have retrieved
+    /// from this library after you've closed it. Doing so leads to undefined results and may cause
+    /// a segmentation fault.
+    /// </para>
+    /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.feature.FeatureLibrary.close()</c>.</remarks>
     public void Close()
     {
         store.Close();
     }
 
+    // PORT: IDisposable maps to Java's AutoCloseable.close().
     public void Dispose()
     {
         Close();
     }
 
     // TODO: remove from public API
-    /// @hidden
+    /// <remarks>Ported from Java <c>com.geodesk.feature.FeatureLibrary.store()</c>.</remarks>
     public FeatureStore Store()
     {
         return store;
     }
+
 }

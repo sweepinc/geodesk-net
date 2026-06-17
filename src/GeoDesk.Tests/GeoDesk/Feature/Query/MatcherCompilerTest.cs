@@ -11,7 +11,7 @@ using System.IO;
 using System.Text;
 using Clarisma.Common.Fab;
 using GeoDesk.Feature.Match;
-using NioBuffer = Clarisma.Common.Nio.ByteBuffer;
+using NioBuffer = Java.Nio.ByteBuffer;
 using Xunit;
 using Xunit.Abstractions;
 

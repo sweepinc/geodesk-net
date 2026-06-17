@@ -8,14 +8,16 @@
 using System;
 using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Store;
-using NioBuffer = Clarisma.Common.Nio.ByteBuffer;
+using NioBuffer = Java.Nio.ByteBuffer;
 
 // TODO: make Nodes the base class, Ways/Relations the specialization?
 
 namespace GeoDesk.Feature.Query;
 
+/// <remarks>Ported from Java <c>com.geodesk.feature.query.RTreeQueryTask</c>.</remarks>
 public class RTreeQueryTask : QueryTask
 {
+
     protected readonly NioBuffer buf;
     protected readonly int ppTree;
     protected readonly int bboxFlags;
@@ -23,23 +25,25 @@ public class RTreeQueryTask : QueryTask
     protected readonly Filter? filter;
     internal readonly RTreeQueryTask? next;
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.RTreeQueryTask(TileQueryTask, int, Matcher, RTreeQueryTask)</c>.</remarks>
     public RTreeQueryTask(TileQueryTask parent, int ppTree, Matcher matcher, RTreeQueryTask? next)
         : base(parent.query)
     {
-        this.buf = parent.buf!;
+        buf = parent.buf!;
         this.ppTree = ppTree;
-        this.bboxFlags = parent.bboxFlags;
+        bboxFlags = parent.bboxFlags;
         this.matcher = matcher;
-        this.filter = parent.filter;
+        filter = parent.filter;
         this.next = next;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.RTreeQueryTask.exec()</c>.</remarks>
     protected override bool Exec()
     {
         try
         {
             results = new QueryResults(buf);
-            int ptr = buf.GetInt(ppTree);
+            var ptr = buf.GetInt(ppTree);
             SearchTrunk(ppTree + (int)((uint)ptr & 0xffff_fffc));
         }
         catch (Exception ex)
@@ -49,17 +53,17 @@ public class RTreeQueryTask : QueryTask
         return true;
     }
 
-    private void SearchTrunk(int p)
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.RTreeQueryTask.searchTrunk(int)</c>.</remarks>
+    void SearchTrunk(int p)
     {
-        // log.debug("Searching trunk SIB at {}", String.format("%08X", p));
-        int minX = query.MinX;
-        int minY = query.MinY;
-        int maxX = query.MaxX;
-        int maxY = query.MaxY;
+        var minX = query.MinX;
+        var minY = query.MinY;
+        var maxX = query.MaxX;
+        var maxY = query.MaxY;
         for (; ; )
         {
-            int ptr = buf.GetInt(p);
-            int last = ptr & 1;
+            var ptr = buf.GetInt(p);
+            var last = ptr & 1;
 
             if (!(buf.GetInt(p + 4) > maxX ||
                 buf.GetInt(p + 8) > maxY ||
@@ -67,35 +71,27 @@ public class RTreeQueryTask : QueryTask
                 buf.GetInt(p + 16) < minY))
             {
                 if ((ptr & 2) != 0)
-                {
                     SearchLeaf(p + (ptr ^ 2 ^ last));
-                }
                 else
-                {
                     SearchTrunk(p + (ptr ^ last));
-                }
-            }
-            else
-            {
-                // log.debug("SIB rejected");
             }
             if (last != 0) break;
             p += 20;
         }
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.RTreeQueryTask.searchLeaf(int)</c>.</remarks>
     protected virtual void SearchLeaf(int p)
     {
-        // log.debug("Searching leaf SIB at {}", String.format("%08X", p));
-        int minX = query.MinX;
-        int minY = query.MinY;
-        int maxX = query.MaxX;
-        int maxY = query.MaxY;
-        int acceptedTypes = query.Types();
+        var minX = query.MinX;
+        var minY = query.MinY;
+        var maxX = query.MaxX;
+        var maxY = query.MaxY;
+        var acceptedTypes = query.Types();
 
         for (; ; )
         {
-            int flags = buf.GetInt(p + 16);
+            var flags = buf.GetInt(p + 16);
             if ((flags & bboxFlags) == 0)
             {
                 if (!(buf.GetInt(p) > maxX ||
@@ -107,15 +103,13 @@ public class RTreeQueryTask : QueryTask
                     // (No need for AND with 0x1f, as int-shift only considers lower 5 bits)
                     if (((1 << (flags >> 1)) & acceptedTypes) != 0)
                     {
-                        int pFeature = p + 16;
+                        var pFeature = p + 16;
                         if (matcher.Accept(buf, pFeature))
                         {
-                            // TODO: We should return results as Features rather than pointers,
-                            //  since we are creating a Feature anyway in order to apply a filter
+                            // TODO: We should return results as Features rather than pointers, since
+                            //  we are creating a Feature anyway in order to apply a filter
                             if (filter == null || filter.Accept(query.Store().GetFeature(buf, pFeature)))
-                            {
                                 results!.Add(pFeature | (int)(((uint)flags >> 3) & 3));
-                            }
                         }
                     }
                 }
@@ -125,47 +119,49 @@ public class RTreeQueryTask : QueryTask
         }
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.RTreeQueryTask.Nodes</c>.</remarks>
     public class Nodes : RTreeQueryTask
     {
+
+        /// <remarks>Ported from Java <c>com.geodesk.feature.query.RTreeQueryTask.Nodes(TileQueryTask, int, Matcher, RTreeQueryTask)</c>.</remarks>
         public Nodes(TileQueryTask parent, int ppTree, Matcher matcher, RTreeQueryTask? next)
             : base(parent, ppTree, matcher, next)
         {
         }
 
+        /// <remarks>Ported from Java <c>com.geodesk.feature.query.RTreeQueryTask.Nodes.searchLeaf(int)</c>.</remarks>
         protected override void SearchLeaf(int p)
         {
-            int minX = query.MinX;
-            int minY = query.MinY;
-            int maxX = query.MaxX;
-            int maxY = query.MaxY;
+            var minX = query.MinX;
+            var minY = query.MinY;
+            var maxX = query.MaxX;
+            var maxY = query.MaxY;
             for (; ; )
             {
-                int flags = buf.GetInt(p + 8);
+                var flags = buf.GetInt(p + 8);
 
-                // TODO: Should do type check for nodes as well to
-                //  e.g. to recognize WAYNODE_FLAG
+                // TODO: Should do type check for nodes as well to e.g. to recognize WAYNODE_FLAG
 
-                int x = buf.GetInt(p);
-                int y = buf.GetInt(p + 4);
+                var x = buf.GetInt(p);
+                var y = buf.GetInt(p + 4);
                 if (!(x > maxX || y > maxY || x < minX || y < minY))
                 {
-                    int pFeature = p + 8;
+                    var pFeature = p + 8;
                     if (matcher.Accept(buf, pFeature))
                     {
-                        // TODO: We should return results as Features rather than pointers,
-                        //  since we are creating a Feature anyway in order to apply a filter
-                        if (filter == null || filter.Accept(
-                            new StoredNode(query.Store(), buf, pFeature)))
-                        {
+                        // TODO: We should return results as Features rather than pointers, since we
+                        //  are creating a Feature anyway in order to apply a filter
+                        if (filter == null || filter.Accept(new StoredNode(query.Store(), buf, pFeature)))
                             results!.Add(pFeature);
-                        }
                     }
                 }
                 if ((flags & 1) != 0) break;
                 p += 20 + (flags & 4);
-                    // If Node is member of relation (flag bit 2), add
-                    // extra 4 bytes for the relation table pointer
+                    // If Node is member of relation (flag bit 2), add extra 4 bytes for the
+                    // relation table pointer
             }
         }
+
     }
+
 }

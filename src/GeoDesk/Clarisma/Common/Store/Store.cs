@@ -13,10 +13,10 @@ using System.IO;
 using System.IO.Hashing;
 using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
-using Clarisma.Common.Nio;
+using Java.Nio;
 using Clarisma.Common.Util;
-using ByteOrder = Clarisma.Common.Nio.ByteOrder;
-using NioBuffer = Clarisma.Common.Nio.ByteBuffer;
+using ByteOrder = Java.Nio.ByteOrder;
+using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace Clarisma.Common.Store;
 
@@ -58,7 +58,7 @@ public abstract class Store
 
     protected const int LOCK_NONE = 0;
     protected const int LOCK_READ = 1;
-    protected const int LOCK_APPEND = 2;
+    protected internal const int LOCK_APPEND = 2;
     protected const int LOCK_EXCLUSIVE = 3;
 
     // NOTE (port): unlike the Java original, this does NOT cache the mapped "original"
@@ -590,7 +590,7 @@ public abstract class Store
         }
     }
 
-    protected void BeginTransaction(int transactionLockLevel)
+    protected internal void BeginTransaction(int transactionLockLevel)
     {
         System.Diagnostics.Debug.Assert(transactionLockLevel == LOCK_APPEND || transactionLockLevel == LOCK_EXCLUSIVE);
         System.Threading.Monitor.Enter(transactionLock);
@@ -617,7 +617,7 @@ public abstract class Store
         transactionBlocks = new Dictionary<long, TransactionBlock>();
     }
 
-    protected void EndTransaction()
+    protected internal void EndTransaction()
     {
         System.Diagnostics.Debug.Assert(IsInTransaction());
         System.Diagnostics.Debug.Assert(System.Threading.Monitor.IsEntered(transactionLock));
@@ -651,7 +651,7 @@ public abstract class Store
         return (int)(pos >> 30);
     }
 
-    protected void Commit()
+    protected internal void Commit()
     {
         System.Diagnostics.Debug.Assert(IsInTransaction());
         System.Diagnostics.Debug.Assert(System.Threading.Monitor.IsEntered(transactionLock));
@@ -685,7 +685,7 @@ public abstract class Store
         ClearJournal();
     }
 
-    protected NioBuffer GetBlock(long pos)
+    protected internal NioBuffer GetBlock(long pos)
     {
         System.Diagnostics.Debug.Assert((pos & 0xfff) == 0,
             string.Format(CultureInfo.InvariantCulture, "{0}: Block must start at 4KB-aligned position", pos));

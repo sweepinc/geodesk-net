@@ -13,19 +13,24 @@ namespace GeoDesk.Feature.Filters;
 /// <summary>
 /// A Filter that accepts only features that intersect the specified bounds.
 /// </summary>
+/// <remarks>Ported from Java <c>com.geodesk.feature.filter.BoundsFilter</c>.</remarks>
 public class BoundsFilter : Filter
 {
-    private readonly Bounds bounds;
 
+    readonly Bounds _bounds;
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.filter.BoundsFilter(Bounds)</c>.</remarks>
     public BoundsFilter(Bounds bounds)
     {
-        this.bounds = bounds;
+        _bounds = bounds;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.filter.BoundsFilter.accept(Feature)</c>.</remarks>
     public bool Accept(Feature feature)
     {
-        return bounds.Intersects(feature.Bounds());
+        return _bounds.Intersects(feature.Bounds());
     }
 
     // TODO: Geometry?
+
 }

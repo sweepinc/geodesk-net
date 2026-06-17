@@ -13,47 +13,51 @@ using GeoDesk.Geom;
 
 namespace GeoDesk.Feature.Query;
 
-/// A Feature Collection that is materialized by running a query against
-/// a FeatureStore.
-///
-/// @hidden
+/// <summary>
+/// A Feature Collection that is materialized by running a query against a FeatureStore.
+/// </summary>
+/// <remarks>Ported from Java <c>com.geodesk.feature.query.WorldView</c>.</remarks>
 public class WorldView : View
 {
-    /// @hidden
+
+    protected static readonly Box World = Box.OfWorld();
+
     protected internal readonly Bounds bounds;
 
-    /// @hidden
-    protected static readonly Box WORLD = Box.OfWorld();
-
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.WorldView(FeatureStore)</c>.</remarks>
     public WorldView(FeatureStore store)
         : base(store, TypeBits.ALL, Matcher.ALL, null)
     {
-        this.bounds = WORLD;
+        bounds = World;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.WorldView(FeatureStore, int, Bounds, Matcher, Filter)</c>.</remarks>
     public WorldView(FeatureStore store, int types, Bounds bounds, Matcher matcher, Filter? filter)
         : base(store, types, matcher, filter)
     {
         this.bounds = bounds;
     }
 
-    /// @hidden
-    protected override Features NewWith(int types, Matcher matcher, Filter? filter)
-    {
-        return new WorldView(store, types, bounds, matcher, filter);
-    }
-
-    private WorldView(WorldView other, Bounds bounds)
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.WorldView(WorldView, Bounds)</c>.</remarks>
+    WorldView(WorldView other, Bounds bounds)
         : base(other.store, other.types, other.matcher, other.filter)
     {
         this.bounds = bounds;           // TODO: intersect bbox
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.WorldView.newWith(int, Matcher, Filter)</c>.</remarks>
+    protected override Features NewWith(int types, Matcher matcher, Filter? filter)
+    {
+        return new WorldView(store, types, bounds, matcher, filter);
+    }
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.WorldView.in(Bounds)</c>.</remarks>
     public override Features In(Bounds bbox)
     {
         return new WorldView(this, bbox);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.WorldView.contains(Object)</c>.</remarks>
     public bool Contains(object obj)
     {
         if (obj is StoredFeature feature)
@@ -62,7 +66,7 @@ public class WorldView : View
             if (feature.Store != store) return false;
 
             // Feature must fit into the filtered types
-            int featureType = 1 << (int)((uint)feature.Flags() >> 1); // shift uses only bottom 5 bits
+            var featureType = 1 << (int)((uint)feature.Flags() >> 1); // shift uses only bottom 5 bits
             if ((types & featureType) == 0) return false;
 
             // Feature must intersect the view's bbox
@@ -72,39 +76,40 @@ public class WorldView : View
             // Feature must be accepted by matcher
             if (!feature.Matches(matcher)) return false;
 
-            // If this view has a spatial filter, the feature must match
-            // that one as well
+            // If this view has a spatial filter, the feature must match that one as well
             if (filter == null) return true;
             return filter.Accept(feature);
         }
         return false;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.WorldView.select(Filter)</c>.</remarks>
     public override Features Select(Filter filter)
     {
-        int newTypes = types;
+        var newTypes = types;
         if (this.filter != null)
         {
             filter = AndFilter.Create(this.filter, filter);
-            if (filter == FalseFilter.INSTANCE) return EmptyView.ANY;
+            if (filter == FalseFilter.Instance) return EmptyView.Any;
         }
-        int strategy = filter.Strategy();
-        if ((strategy & FilterStrategy.RESTRICTS_TYPES) != 0)
+        var strategy = filter.Strategy();
+        if ((strategy & FilterStrategy.RestrictsTypes) != 0)
         {
             newTypes &= filter.AcceptedTypes();
-            if (newTypes == 0) return EmptyView.ANY;
+            if (newTypes == 0) return EmptyView.Any;
         }
 
         // TODO: review: filter type check
 
-        Bounds? filterBounds = filter.Bounds();
+        var filterBounds = filter.Bounds();
         // TODO: proper combining of bboxes
-        return new WorldView(store, types, filterBounds != null ? filterBounds : bounds,
-            matcher, filter);
+        return new WorldView(store, types, filterBounds != null ? filterBounds : bounds, matcher, filter);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.WorldView.iterator()</c>.</remarks>
     public override IEnumerator<Feature> GetEnumerator()
     {
         return new Query(this);
     }
+
 }

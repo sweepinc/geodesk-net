@@ -6,22 +6,25 @@
  */
 
 using GeoDesk.Feature.Store;
-using NioBuffer = Clarisma.Common.Nio.ByteBuffer;
+using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace GeoDesk.Feature.Query;
 
-// PORT: Java declares this as TableIterator<Feature> (a type parameter that shadows the
-// Feature type). It is currently unused scaffolding in the Java source; the concrete table
-// iterators implement their own state. Kept here, mirroring its fields/constants, atop the
-// FeatureIterator adapter base.
+// PORT: Java declares this as TableIterator<Feature> (a type parameter that shadows the Feature
+// type). It is currently unused scaffolding in the Java source; the concrete table iterators
+// implement their own state. Kept here, mirroring its fields/constants, atop the FeatureIterator
+// adapter base.
+/// <remarks>Ported from Java <c>com.geodesk.feature.query.TableIterator</c>.</remarks>
 public abstract class TableIterator : FeatureIterator
 {
+
+    // TODO: consolidate these
+    protected const int LastFlag = 1;
+    protected const int ForeignFlag = 2;
+    protected const int DifferentTileFlag = 4;
+
     protected int tip = FeatureConstants.START_TIP;
     protected NioBuffer? foreignBuf;
     protected int pForeignTile;
 
-    // TODO: consolidate these
-    protected const int LAST_FLAG = 1;
-    protected const int FOREIGN_FLAG = 2;
-    protected const int DIFFERENT_TILE_FLAG = 4;
 }

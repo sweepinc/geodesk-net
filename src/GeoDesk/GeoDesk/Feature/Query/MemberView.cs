@@ -8,25 +8,30 @@
 using System.Collections.Generic;
 using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Store;
-using NioBuffer = Clarisma.Common.Nio.ByteBuffer;
+using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace GeoDesk.Feature.Query;
 
+/// <remarks>Ported from Java <c>com.geodesk.feature.query.MemberView</c>.</remarks>
 public class MemberView : TableView
 {
-    public MemberView(FeatureStore store, NioBuffer buf, int pTable,
-        int types, Matcher matcher, Filter? filter)
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.MemberView(FeatureStore, ByteBuffer, int, int, Matcher, Filter)</c>.</remarks>
+    public MemberView(FeatureStore store, NioBuffer buf, int pTable, int types, Matcher matcher, Filter? filter)
         : base(store, buf, pTable, types, matcher, filter)
     {
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.MemberView.newWith(int, Matcher, Filter)</c>.</remarks>
     protected override Features NewWith(int types, Matcher matcher, Filter? filter)
     {
         return new MemberView(store, buf, ptr, types, matcher, filter);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.MemberView.iterator()</c>.</remarks>
     public override IEnumerator<Feature> GetEnumerator()
     {
         return new MemberIterator(store, buf, ptr, types, matcher, filter);
     }
+
 }

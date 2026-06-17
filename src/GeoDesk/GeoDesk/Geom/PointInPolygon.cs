@@ -5,10 +5,11 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+using GeoDesk.Feature.Store;
+
 namespace GeoDesk.Geom;
 
-// PORT-DEFERRED (Phase 5): the testFast(StoredWay.XYIterator, double, double) overload
-// is omitted until StoredWay is ported with the feature store layer.
+/// <remarks>Ported from Java <c>com.geodesk.geom.PointInPolygon</c>.</remarks>
 public static class PointInPolygon
 {
     // return -1 if vertex, 1 if inside, 0 if outside
@@ -70,6 +71,36 @@ public static class PointInPolygon
                     odd ^= 1;
                 }
             }
+        }
+        return odd;
+    }
+
+    /// <remarks>Ported from Java <c>com.geodesk.geom.PointInPolygon.testFast(StoredWay.XYIterator, double, double)</c>.</remarks>
+    public static int TestFast(StoredWay.XYIterator iter, double cx, double cy)
+    {
+        var odd = 0;
+        var xy = iter.NextXY();
+        double x1 = XY.X(xy);
+        double y1 = XY.Y(xy);
+
+        while (iter.HasNext())
+        {
+            xy = iter.NextXY();
+            double x2 = XY.X(xy);
+            double y2 = XY.Y(xy);
+
+            if (((y1 <= cy) && (y2 > cy))     // upward crossing
+                || ((y1 > cy) && (y2 <= cy))) // downward crossing
+            {
+                // compute edge-ray intersect x-coordinate
+                var vt = (cy - y1) / (y2 - y1);
+                if (cx < x1 + vt * (x2 - x1)) // P.x < intersect
+                {
+                    odd ^= 1;
+                }
+            }
+            x1 = x2;
+            y1 = y2;
         }
         return odd;
     }

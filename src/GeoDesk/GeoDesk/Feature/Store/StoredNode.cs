@@ -13,7 +13,7 @@ using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Query;
 using GeoDesk.Geom;
 using NetTopologySuite.Geometries;
-using NioBuffer = Clarisma.Common.Nio.ByteBuffer;
+using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace GeoDesk.Feature.Store;
 
@@ -77,6 +77,7 @@ public class StoredNode : StoredFeature, Node
         return buf.GetInt(ppBody) + ppBody;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.parentWays(int, Matcher, Filter)</c>.</remarks>
     public WorldView ParentWays(int types, Matcher matcher, Filter? filter)
     {
         Filter newFilter = new ParentWayFilter(Id());
@@ -85,6 +86,7 @@ public class StoredNode : StoredFeature, Node
             TypeBits.WAYNODE_FLAGGED, Bounds(), matcher, newFilter);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.parents(int, Matcher, Filter)</c>.</remarks>
     public Features Parents(int types, Matcher matcher, Filter? filter)
     {
         int acceptedFlags = ((types & TypeBits.RELATIONS) != 0) ?
@@ -107,14 +109,16 @@ public class StoredNode : StoredFeature, Node
             return new NodeParentView(store, buf, this,
                 GetRelationTablePtr(), types, matcher, filter);
         }
-        return EmptyView.ANY;
+        return EmptyView.Any;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.parents()</c>.</remarks>
     public override Features Parents()
     {
         return Parents(TypeBits.RELATIONS | TypeBits.WAYS, Matcher.ALL, null);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.parents(String)</c>.</remarks>
     public override Features Parents(string query)
     {
         Matcher matcher = store.GetMatcher(query);
@@ -123,13 +127,16 @@ public class StoredNode : StoredFeature, Node
 
     // TODO: No need to dereference the nodes in a way; we could simply check for
     //  same buffer and pointer (Nodes always live in one tile only)
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.ParentWayFilter</c>.</remarks>
     private class ParentWayFilter : IdMatcher, Filter
     {
+        /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.ParentWayFilter(long)</c>.</remarks>
         public ParentWayFilter(long nodeId)
             : base(0, nodeId)
         {
         }
 
+        /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.ParentWayFilter.accept(Feature)</c>.</remarks>
         public bool Accept(Feature feature)
         {
             StoredWay way = (StoredWay)feature;

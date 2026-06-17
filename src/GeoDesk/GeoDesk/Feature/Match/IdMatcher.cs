@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-using NioBuffer = Clarisma.Common.Nio.ByteBuffer;
+using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace GeoDesk.Feature.Match;
 

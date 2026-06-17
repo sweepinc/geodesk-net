@@ -6,7 +6,7 @@
  */
 
 using System.Text;
-using Clarisma.Common.Nio;
+using Java.Nio;
 
 namespace Clarisma.Common.Util;
 

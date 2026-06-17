@@ -9,17 +9,22 @@ using System;
 
 namespace Java.Util.Concurrent;
 
-// PORT: mirror of java.lang.InterruptedException. The .NET-backed blocking
-// primitives in this package do not currently raise it, but the type exists so
-// the ported call sites (which catch it) remain structurally identical to Java.
+// PORT: mirror of java.lang.InterruptedException. The .NET-backed blocking primitives in this
+// package do not currently raise it, but the type exists so the ported call sites (which catch
+// it) remain structurally identical to Java.
+/// <remarks>Ported from Java <c>java.lang.InterruptedException</c>.</remarks>
 public class InterruptedException : Exception
 {
+
+    /// <remarks>Ported from Java <c>java.lang.InterruptedException()</c>.</remarks>
     public InterruptedException()
     {
     }
 
+    /// <remarks>Ported from Java <c>java.lang.InterruptedException(String)</c>.</remarks>
     public InterruptedException(string message)
         : base(message)
     {
     }
+
 }
