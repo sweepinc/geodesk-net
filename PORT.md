@@ -198,8 +198,15 @@ Faithful in structure, but the following adaptations were unavoidable or idiomat
   `Unsafe.invokeCleaner` unmapping → deterministic `Dispose()`. Growing across a 1 GB boundary
   recreates view accessors, so mappings are re-fetched at point of use rather than cached across a
   transaction.
-- **File locking:** the JVM's shared byte-range file locks have no BCL equivalent, so the
-  multi-process shared-lock protocol is downgraded to **best-effort (single-process correct)**.
+- **File locking:** the JVM uses *shared* byte-range locks to let readers coexist while excluding a
+  concurrent writer/compactor. The BCL's high-level `FileStream.Lock` is **exclusive-only**, but
+  shared byte-range locks themselves are available at the OS level — on Windows via P/Invoke
+  `LockFileEx` (omitting `LOCKFILE_EXCLUSIVE_LOCK`), on POSIX via `fcntl(F_RDLCK)`. `FreeStore` uses
+  a real shared lock (`LockFileEx`) on Windows; emulating it with an *exclusive* lock was actively
+  wrong — because the `FileStream` is buffered, even the header read pulls in a block that overlaps
+  the locked byte, and a mandatory exclusive lock there makes concurrent read-opens of the same
+  store fail. (POSIX `fcntl` shared locking is a future addition; non-Windows currently skips the
+  lock, which is safe for the read-only path.)
 - **Sparse files:** marked via P/Invoke on Windows; Unix is sparse by default.
 - **`Downloader` access:** Java's `Downloader` reaches `BlobStore`/`Store` internals via package
   membership; the .NET port widens exactly those members to `protected internal` (the closest
@@ -225,15 +232,19 @@ good fit for CI/CD." Accordingly:
 - The data-coupled tests are **marked `[Fact(Skip = …)]`** with a reason explaining the coupling
   (they assert dataset-specific values, or require a GOL fixture not built in this repo). They can
   be re-enabled later by dropping the matching GOLs into the test `Fixtures/` directory and removing
-  the `Skip`. The set was derived from an actual run against the built `monaco.gol`, so only the
-  genuinely failing data-coupled methods are skipped — passing methods in the same class stay live.
+  the `Skip`. The set was derived empirically from a stable run against the built `monaco.gol`, so
+  only the genuinely failing data-coupled methods are skipped — passing methods in the same class
+  stay live.
 - The data-**agnostic** invariant tests (e.g. `FeatureTest`, `MultiSelectorTest.indexing`, most of
   `ReferentialIntegrityTest`, `ConcurTest`) **pass** and are what actually validate the port
   end-to-end against real data.
 
-After this, a full run is green except for `DownloaderTest.testDownload` — a manual network smoke
-test (live `data.geodesk.com` + a hardcoded local path) kept as a faithful 1:1 `[Fact]`; it is not
-data-coupled and is expected to fail outside the author's environment.
+With these skips a full run is **green** (`Failed: 0`). `DownloaderTest.testDownload` (a manual
+network smoke test) now writes to the test output directory instead of a hard-coded path, so it
+passes when `data.geodesk.com` is reachable. Note: a handful of tests originally appeared to fail
+under parallel load but were actually colliding on the `FreeStore` file lock (see *File locking*
+above) — once that was fixed to use a real shared lock they pass deterministically and are **not**
+skipped.
 
 **Intentionally skipped** integration tests: `NodeCoordinatesTest` (needs the un-ported OSM-PBF
 reader), `GolToolTest` (tests the external `gol` CLI, not the library), `RandomFeatures` (unused),

@@ -39,7 +39,9 @@ public class DownloaderTest
         // TODO: get Content-Length and Last-Modified
 
         var bytes = await resp.Content.ReadAsByteArrayAsync();
-        await File.WriteAllBytesAsync("c:\\geodesk\\debug\\download.html", bytes);
+        // PORT: Java writes to a hard-coded c:\geodesk\debug path; here the artifact goes to the
+        // test output directory (TestSettings.OutputPath), which is created if necessary.
+        await File.WriteAllBytesAsync(Path.Combine(TestSettings.OutputPath(), "download.html"), bytes);
     }
 
 }

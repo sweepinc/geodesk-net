@@ -73,11 +73,16 @@ public class FreeStore
 
     private void TrySharedLock(long position)
     {
-        // .NET FileStream.Lock is exclusive-only; a shared lock cannot be represented.
-        // Best effort: attempt an exclusive lock but ignore contention (treat as held).
+        // Java takes a *shared* byte-range lock here: compatible with other readers, but excluding a
+        // concurrent writer/compactor that might recycle the active snapshot. Emulating it with an
+        // *exclusive* lock is wrong — because the FileStream is buffered, even the small header read
+        // pulls in a block that overlaps this byte, and a mandatory exclusive lock there makes
+        // concurrent read-opens of the same store collide. FileLock provides a true shared
+        // byte-range lock cross-platform (LockFileEx / fcntl). Best-effort: a failure (e.g. a writer
+        // holds the range) is ignored, as in the Java original. See PORT.md.
         try
         {
-            channel!.Lock(position, 1);
+            FileLock.TryLock(channel!.SafeFileHandle, position, 1, exclusive: false);
         }
         catch (IOException)
         {

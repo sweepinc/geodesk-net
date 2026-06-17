@@ -16,7 +16,7 @@ public class WayNodesTest : AbstractFeatureTest
 {
 
     /// <remarks>Ported from Java <c>com.geodesk.tests.WayNodesTest.testNodeParentCounts()</c>.</remarks>
-    [Fact(Skip = "Data-coupled integration test: depends on dataset-specific values (OSM IDs, feature counts, place names), or a GOL fixture not built in this repo; passes only against the original dataset extracts used upstream. See PORT.md.")]
+    [Fact]
     public void TestNodeParentCounts()
     {
 var streets = world.Select("w[highway]");
@@ -44,7 +44,7 @@ var streets = world.Select("w[highway]");
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.tests.WayNodesTest.testNodesInRelations()</c>.</remarks>
-    [Fact(Skip = "Data-coupled integration test: depends on dataset-specific values (OSM IDs, feature counts, place names), or a GOL fixture not built in this repo; passes only against the original dataset extracts used upstream. See PORT.md.")]
+    [Fact]
     public void TestNodesInRelations()
     {
 foreach (var rel in world.Relations())

@@ -222,13 +222,12 @@ public abstract class Store
         if (held) return;
         try
         {
-            channel!.Lock(position, length);
-            held = true;
+            // Exclusive byte-range lock via FileLock (cross-platform: LockFileEx / fcntl). A
+            // conflict returns false; matches a failed blocking lock only loosely (see class remarks).
+            held = FileLock.TryLock(channel!.SafeFileHandle, position, length, exclusive: true);
         }
         catch (IOException)
         {
-            // Region already locked by another process; matches a failed blocking lock
-            // only loosely (see class remarks).
         }
     }
 
@@ -237,7 +236,7 @@ public abstract class Store
         if (!held) return;
         try
         {
-            channel!.Unlock(position, length);
+            FileLock.Release(channel!.SafeFileHandle, position, length);
         }
         catch (IOException)
         {
@@ -248,14 +247,16 @@ public abstract class Store
     protected bool TryExclusiveLock()
     {
         System.Diagnostics.Debug.Assert(lockLevel == LOCK_NONE);
+        bool acquired;
         try
         {
-            channel!.Lock(0, 4);
+            acquired = FileLock.TryLock(channel!.SafeFileHandle, 0, 4, exclusive: true);
         }
         catch (IOException)
         {
             return false;
         }
+        if (!acquired) return false;
         lockReadHeld = true;
         lockLevel = LOCK_EXCLUSIVE;
         return true;

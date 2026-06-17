@@ -30,7 +30,17 @@ public static class TestSettings
     /// <remarks>Ported from Java <c>com.geodesk.tests.TestSettings.tileURL()</c>.</remarks>
     public static string? TileUrl() => null;
 
-    /// <remarks>Ported from Java <c>com.geodesk.tests.TestSettings.outputPath()</c>.</remarks>
-    public static string OutputPath() => "c:\\geodesk\\debug\\";
+    /// <remarks>
+    /// Ported from Java <c>com.geodesk.tests.TestSettings.outputPath()</c>. The Java original returns
+    /// a hard-coded developer path; here it resolves to a created <c>TestOutput</c> directory under
+    /// the test assembly's base directory, so debug artifacts land with the test output instead of a
+    /// fixed machine path. The trailing separator is preserved (callers use it as a prefix).
+    /// </remarks>
+    public static string OutputPath()
+    {
+        var dir = Path.Combine(AppContext.BaseDirectory, "TestOutput");
+        Directory.CreateDirectory(dir);
+        return dir + Path.DirectorySeparatorChar;
+    }
 
 }
