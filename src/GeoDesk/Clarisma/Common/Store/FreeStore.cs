@@ -9,6 +9,7 @@ using System;
 using System.Globalization;
 using System.IO;
 using System.IO.MemoryMappedFiles;
+using GeoDesk.Extensions;
 using Java.Nio;
 using ByteOrder = Java.Nio.ByteOrder;
 using NioBuffer = Java.Nio.ByteBuffer;
@@ -77,12 +78,12 @@ public class FreeStore
         // concurrent writer/compactor that might recycle the active snapshot. Emulating it with an
         // *exclusive* lock is wrong — because the FileStream is buffered, even the small header read
         // pulls in a block that overlaps this byte, and a mandatory exclusive lock there makes
-        // concurrent read-opens of the same store collide. FileLock provides a true shared
-        // byte-range lock cross-platform (LockFileEx / fcntl). Best-effort: a failure (e.g. a writer
-        // holds the range) is ignored, as in the Java original. See PORT.md.
+        // concurrent read-opens of the same store collide. FileStream.TryLockRange provides a true
+        // shared byte-range lock cross-platform (LockFileEx / fcntl). Best-effort: a failure (e.g. a
+        // writer holds the range) is ignored, as in the Java original. See PORT.md.
         try
         {
-            FileLock.TryLock(channel!.SafeFileHandle, position, 1, exclusive: false);
+            channel!.TryLockRange(position, 1, exclusive: false);
         }
         catch (IOException)
         {

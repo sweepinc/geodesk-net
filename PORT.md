@@ -199,14 +199,32 @@ Faithful in structure, but the following adaptations were unavoidable or idiomat
   recreates view accessors, so mappings are re-fetched at point of use rather than cached across a
   transaction.
 - **File locking:** the JVM uses *shared* byte-range locks to let readers coexist while excluding a
-  concurrent writer/compactor. The BCL's high-level `FileStream.Lock` is **exclusive-only**, but
-  shared byte-range locks themselves are available at the OS level — on Windows via P/Invoke
-  `LockFileEx` (omitting `LOCKFILE_EXCLUSIVE_LOCK`), on POSIX via `fcntl(F_RDLCK)`. `FreeStore` uses
-  a real shared lock (`LockFileEx`) on Windows; emulating it with an *exclusive* lock was actively
-  wrong — because the `FileStream` is buffered, even the header read pulls in a block that overlaps
-  the locked byte, and a mandatory exclusive lock there makes concurrent read-opens of the same
-  store fail. (POSIX `fcntl` shared locking is a future addition; non-Windows currently skips the
-  lock, which is safe for the read-only path.)
+  concurrent writer/compactor. The BCL's high-level `FileStream.Lock` is **exclusive-only**, but the
+  underlying OS primitives support shared byte-range locks, so the port adds cross-platform
+  `FileStream` extension methods — `TryLockRange(pos, len, exclusive)` / `UnlockRange(pos, len)` in
+  [`GeoDesk.Extensions`](src/GeoDesk/GeoDesk/Extensions/FileStreamExtensions.cs) — backed by
+  **`LockFileEx`/`UnlockFileEx`** on Windows and **`fcntl`** on POSIX (Linux and macOS have different
+  `struct flock` layouts and `F_*` constants). `FreeStore` takes a real **shared** lock so concurrent
+  readers coexist; `Store` takes **exclusive** locks for its snapshot/append ranges. Emulating the
+  shared lock with an *exclusive* one (the original approach) was actively wrong: because the
+  `FileStream` is buffered, even the header read pulls in a block that overlaps the locked byte, and
+  a mandatory exclusive lock there made concurrent read-opens of the same store fail.
+  - **Lock ownership across platforms.** Windows `LockFileEx` locks belong to the *handle*: separate
+    opens conflict even within one process, released on handle close. Classic POSIX `fcntl(F_SETLK)`
+    locks belong to the *(process, inode)* pair — same-process opens never conflict, and closing
+    *any* descriptor drops *all* the process's locks on the file, so they'd be unsafe per-stream
+    unless taken once per process. To get handle-scoped semantics matching Windows, **Linux uses OFD
+    locks (`F_OFD_SETLK`)**, owned by the open file description (the descriptor). **macOS has no OFD
+    locks**, so it falls back to classic per-process `fcntl` (and on Apple Silicon the variadic ABI
+    passes `flock*` on the stack — the read path uses the lock best-effort, degrading to "no lock"
+    rather than misbehaving).
+  - **macOS exclusive-lock limitation.** Because macOS only has per-process `fcntl` locks, `Store`'s
+    exclusive snapshot/append ranges will **not** exclude a *second open of the same file within the
+    same process* on macOS — same-process opens are seen as the same lock owner. In practice this is
+    not hit: the read-write `Store`/`BlobStore` is opened once per file, and concurrent in-process
+    access is read-only via `FreeStore` (shared locks). True per-descriptor exclusive locking on
+    macOS would require an auxiliary lock file, which is not implemented. Windows (per-handle) and
+    Linux (OFD) are unaffected.
 - **Sparse files:** marked via P/Invoke on Windows; Unix is sparse by default.
 - **`Downloader` access:** Java's `Downloader` reaches `BlobStore`/`Store` internals via package
   membership; the .NET port widens exactly those members to `protected internal` (the closest

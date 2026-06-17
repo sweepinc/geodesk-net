@@ -13,6 +13,7 @@ using System.IO;
 using System.IO.Hashing;
 using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
+using GeoDesk.Extensions;
 using Java.Nio;
 using Clarisma.Common.Util;
 using ByteOrder = Java.Nio.ByteOrder;
@@ -222,9 +223,9 @@ public abstract class Store
         if (held) return;
         try
         {
-            // Exclusive byte-range lock via FileLock (cross-platform: LockFileEx / fcntl). A
-            // conflict returns false; matches a failed blocking lock only loosely (see class remarks).
-            held = FileLock.TryLock(channel!.SafeFileHandle, position, length, exclusive: true);
+            // Exclusive byte-range lock (cross-platform: LockFileEx / fcntl). A conflict returns
+            // false; matches a failed blocking lock only loosely (see class remarks).
+            held = channel!.TryLockRange(position, length, exclusive: true);
         }
         catch (IOException)
         {
@@ -236,7 +237,7 @@ public abstract class Store
         if (!held) return;
         try
         {
-            FileLock.Release(channel!.SafeFileHandle, position, length);
+            channel!.UnlockRange(position, length);
         }
         catch (IOException)
         {
@@ -250,7 +251,7 @@ public abstract class Store
         bool acquired;
         try
         {
-            acquired = FileLock.TryLock(channel!.SafeFileHandle, 0, 4, exclusive: true);
+            acquired = channel!.TryLockRange(0, 4, exclusive: true);
         }
         catch (IOException)
         {
