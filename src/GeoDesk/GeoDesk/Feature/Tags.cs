@@ -14,6 +14,7 @@ namespace GeoDesk.Feature;
 /// <summary>
 /// A <see cref="IConsumable"/> that can be used to iterate a feature's tags.
 /// </summary>
+/// <remarks>Ported from Java <c>com.geodesk.feature.Tags</c>.</remarks>
 public interface Tags : IConsumable
 {
     int Size();

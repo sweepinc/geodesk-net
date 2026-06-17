@@ -17,6 +17,7 @@ namespace GeoDesk.Feature.Match;
 /// (System.Linq.Expressions or Reflection.Emit — undecided) can later be swapped in here
 /// behind GetMatcher without changing callers.
 /// </summary>
+/// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherCompiler</c>.</remarks>
 public class MatcherCompiler
 {
     private readonly MatcherParser parser;

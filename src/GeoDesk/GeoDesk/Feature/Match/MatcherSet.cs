@@ -9,6 +9,7 @@ using static GeoDesk.Feature.Match.TypeBits;
 
 namespace GeoDesk.Feature.Match;
 
+/// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherSet</c>.</remarks>
 public class MatcherSet
 {
     private readonly int types;

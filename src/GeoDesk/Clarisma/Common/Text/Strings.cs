@@ -12,6 +12,7 @@ using System.Text;
 
 namespace Clarisma.Common.Text;
 
+/// <remarks>Ported from Java <c>com.clarisma.common.text.Strings</c>.</remarks>
 public static class Strings
 {
     /// <summary>

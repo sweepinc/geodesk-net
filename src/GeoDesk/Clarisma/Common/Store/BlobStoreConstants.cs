@@ -7,6 +7,7 @@
 
 namespace Clarisma.Common.Store;
 
+/// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreConstants</c>.</remarks>
 public static class BlobStoreConstants
 {
     // === GENERAL ===

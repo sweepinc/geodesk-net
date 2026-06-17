@@ -9,6 +9,7 @@ using System;
 
 namespace Clarisma.Common.Ast;
 
+/// <remarks>Ported from Java <c>com.clarisma.common.ast.Literal</c>.</remarks>
 public class Literal : Expression
 {
     private readonly object? value;

@@ -9,6 +9,7 @@ using System.Globalization;
 
 namespace Clarisma.Common.Text;
 
+/// <remarks>Ported from Java <c>com.clarisma.common.text.Format</c>.</remarks>
 public static class Format
 {
     public static string FormatTimespan(long ms)

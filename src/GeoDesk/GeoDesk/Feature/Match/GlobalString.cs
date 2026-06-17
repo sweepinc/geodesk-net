@@ -10,6 +10,7 @@ using System.Globalization;
 
 namespace GeoDesk.Feature.Match;
 
+/// <remarks>Ported from Java <c>com.geodesk.feature.match.GlobalString</c>.</remarks>
 public class GlobalString : IComparable<GlobalString>
 {
     private readonly string stringValue;

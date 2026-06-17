@@ -9,6 +9,7 @@ using System;
 
 namespace Clarisma.Common.Pbf;
 
+/// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfException</c>.</remarks>
 public class PbfException : Exception
 {
     public PbfException(string msg)

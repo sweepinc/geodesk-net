@@ -9,6 +9,7 @@ using System;
 
 namespace Clarisma.Common.Math;
 
+/// <remarks>Ported from Java <c>com.clarisma.common.math.DoubleRange</c>.</remarks>
 public class DoubleRange : IComparable<DoubleRange>
 {
     private readonly double start;

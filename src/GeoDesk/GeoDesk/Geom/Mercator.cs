@@ -20,6 +20,7 @@ namespace GeoDesk.Geom;
 /// except that instead of meters at the Equator, it uses a made-up
 /// unit called "imp" ("integer, Mercator-projected").
 /// </summary>
+/// <remarks>Ported from Java <c>com.geodesk.geom.Mercator</c>.</remarks>
 public static class Mercator
 {
     private const double MapWidth = 4_294_967_294.9999d;

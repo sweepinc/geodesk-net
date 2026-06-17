@@ -15,6 +15,7 @@ namespace GeoDesk.Feature.Store;
 // In Java this extends Box and implements CoordinateSequence. Because NTS's CoordinateSequence
 // is an abstract class (not an interface), C# single inheritance forces composition: the box
 // extent is stored directly. (BoxCoordinateSequence is only used as a CoordinateSequence.)
+/// <remarks>Ported from Java <c>com.geodesk.feature.store.BoxCoordinateSequence</c>.</remarks>
 public class BoxCoordinateSequence : CoordinateSequence
 {
     private readonly int minX;

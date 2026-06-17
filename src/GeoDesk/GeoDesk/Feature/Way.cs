@@ -10,6 +10,7 @@ namespace GeoDesk.Feature;
 /// <summary>
 /// A <see cref="Feature"/> that represents a linestring, linear ring, or a simple polygon.
 /// </summary>
+/// <remarks>Ported from Java <c>com.geodesk.feature.Way</c>.</remarks>
 public interface Way : Feature
 {
 }

@@ -11,23 +11,27 @@ using System.Diagnostics;
 namespace GeoDesk.Geom;
 
 // not used
+/// <remarks>Ported from Java <c>com.geodesk.geom.PairSort</c>.</remarks>
 public static class PairSort
 {
+
+    /// <remarks>Ported from Java <c>com.geodesk.geom.PairSort.sort(int[], List)</c>.</remarks>
     public static void Sort<T>(int[] keys, IList<T> values)
     {
         Debug.Assert(keys.Length == values.Count);
         Sort(keys, values, 0, keys.Length - 1);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.PairSort.sort(int[], List, int, int)</c>.</remarks>
     public static void Sort<T>(int[] keys, IList<T> values, int left, int right)
     {
         if (left >= right) return;
 
-        int pivot = keys[(left + right) >> 1];
-        int i = left - 1;
-        int j = right + 1;
+        var pivot = keys[(left + right) >> 1];
+        var i = left - 1;
+        var j = right + 1;
 
-        for (;;)
+        for (; ; )
         {
             do i++; while (keys[i] < pivot);
             do j--; while (keys[j] > pivot);
@@ -39,13 +43,15 @@ public static class PairSort
         Sort(keys, values, j + 1, right);
     }
 
-    private static void Swap<T>(int[] keys, IList<T> values, int i, int j)
+    /// <remarks>Ported from Java <c>com.geodesk.geom.PairSort.swap(int[], List, int, int)</c>.</remarks>
+    static void Swap<T>(int[] keys, IList<T> values, int i, int j)
     {
-        int tk = keys[i];
+        var tk = keys[i];
         keys[i] = keys[j];
         keys[j] = tk;
-        T tv = values[i];
+        var tv = values[i];
         values[i] = values[j];
         values[j] = tv;
     }
+
 }

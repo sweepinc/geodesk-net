@@ -9,6 +9,7 @@ using System;
 
 namespace Clarisma.Common.Ast;
 
+/// <remarks>Ported from Java <c>com.clarisma.common.ast.UnaryExpression</c>.</remarks>
 public class UnaryExpression : Expression
 {
     private readonly Operator op;

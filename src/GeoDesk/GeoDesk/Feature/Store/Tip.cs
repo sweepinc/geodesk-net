@@ -10,6 +10,7 @@ using System.IO;
 
 namespace GeoDesk.Feature.Store;
 
+/// <remarks>Ported from Java <c>com.geodesk.feature.store.Tip</c>.</remarks>
 public static class Tip
 {
     public static string ToString(int tip)

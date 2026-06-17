@@ -10,6 +10,7 @@ using System.Globalization;
 
 namespace Clarisma.Common.Util;
 
+/// <remarks>Ported from Java <c>com.clarisma.common.util.Log</c>.</remarks>
 public static class Log
 {
     private static readonly object SyncRoot = new object();

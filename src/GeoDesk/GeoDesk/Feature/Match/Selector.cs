@@ -15,6 +15,7 @@ namespace GeoDesk.Feature.Match;
 /// A class that represents a parsed GOQL selector expression
 /// (e.g. "na[amenity=restaurant][cuisine=pizza]").
 /// </summary>
+/// <remarks>Ported from Java <c>com.geodesk.feature.match.Selector</c>.</remarks>
 public class Selector : Expression
 {
     public const int CLAUSE_LOCAL_REQUIRED = 1;

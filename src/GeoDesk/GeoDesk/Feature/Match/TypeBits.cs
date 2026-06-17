@@ -14,6 +14,7 @@ namespace GeoDesk.Feature.Match;
 /// Support for bitsets that precisely describe which features to match. See the Java
 /// original for the bit layout documentation.
 /// </summary>
+/// <remarks>Ported from Java <c>com.geodesk.feature.match.TypeBits</c>.</remarks>
 public static class TypeBits
 {
     public const int NODES = 0b00000000_00000101_00000000_00000101;

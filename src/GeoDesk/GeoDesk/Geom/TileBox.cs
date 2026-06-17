@@ -11,6 +11,7 @@ using System.Diagnostics;
 namespace GeoDesk.Geom;
 
 // used only by tile.childrenOfTileAtZoom
+/// <remarks>Ported from Java <c>com.geodesk.geom.TileBox</c>.</remarks>
 public class TileBox
 {
     protected int topLeft;

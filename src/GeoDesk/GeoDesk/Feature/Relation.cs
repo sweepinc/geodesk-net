@@ -10,6 +10,7 @@ namespace GeoDesk.Feature;
 /// <summary>
 /// A <see cref="Feature"/> that represents a grouping of related features or a complex polygon.
 /// </summary>
+/// <remarks>Ported from Java <c>com.geodesk.feature.Relation</c>.</remarks>
 public interface Relation : Feature
 {
 }

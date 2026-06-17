@@ -11,6 +11,7 @@ using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace GeoDesk.Feature.Match;
 
+/// <remarks>Ported from Java <c>com.geodesk.feature.match.TagMatcher</c>.</remarks>
 public abstract class TagMatcher : Matcher
 {
     protected readonly string[] globalStrings;

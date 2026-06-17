@@ -12,6 +12,7 @@ namespace GeoDesk.Geom;
 //
 // In Java the computed members are interface default methods; here they are C#
 // default interface methods. They are callable on a reference typed as Bounds.
+/// <remarks>Ported from Java <c>com.geodesk.geom.Bounds</c>.</remarks>
 public interface Bounds
 {
     int MinX { get; }

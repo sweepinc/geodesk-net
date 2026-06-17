@@ -7,6 +7,7 @@
 
 namespace Clarisma.Common.Ast;
 
+/// <remarks>Ported from Java <c>com.clarisma.common.ast.Ast</c>.</remarks>
 public abstract class Ast
 {
     public abstract R Accept<R>(IAstVisitor<R> visitor);

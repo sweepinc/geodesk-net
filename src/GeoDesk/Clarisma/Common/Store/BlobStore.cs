@@ -23,6 +23,7 @@ namespace Clarisma.Common.Store;
 /// that span multiple contiguous file pages. See the Java original for the full format
 /// description. Uses the journaling mechanism of <see cref="Store"/>.
 /// </summary>
+/// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore</c>.</remarks>
 public class BlobStore : Store
 {
     /// <summary>

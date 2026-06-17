@@ -7,6 +7,7 @@
 
 namespace Clarisma.Common.Ast;
 
+/// <remarks>Ported from Java <c>com.clarisma.common.ast.ConditionalExpression</c>.</remarks>
 public class ConditionalExpression : Expression
 {
     private readonly Expression condition;

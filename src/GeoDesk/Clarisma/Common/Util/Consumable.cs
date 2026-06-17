@@ -10,6 +10,7 @@ namespace Clarisma.Common.Util;
 /// <summary>
 /// A lightweight Iterator-like data structure that can only be traversed once.
 /// </summary>
+/// <remarks>Ported from Java <c>com.clarisma.common.util.Consumable</c>.</remarks>
 public interface IConsumable
 {
     bool IsEmpty();

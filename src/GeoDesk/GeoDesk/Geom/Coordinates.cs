@@ -9,33 +9,38 @@ using NetTopologySuite.Geometries;
 
 namespace GeoDesk.Geom;
 
+/// <remarks>Ported from Java <c>com.geodesk.geom.Coordinates</c>.</remarks>
 public static class Coordinates
 {
+
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Coordinates.envelope(int[])</c>.</remarks>
     public static Envelope Envelope(int[] coords)
     {
-        Envelope env = new Envelope();
-        for (int i = 0; i < coords.Length; i += 2)
+        var env = new Envelope();
+        for (var i = 0; i < coords.Length; i += 2)
         {
             env.ExpandToInclude(coords[i], coords[i + 1]);
         }
         return env;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Coordinates.bounds(int[])</c>.</remarks>
     public static Box Bounds(int[] coords)
     {
-        Box bbox = new Box();
-        for (int i = 0; i < coords.Length; i += 2)
+        var bbox = new Box();
+        for (var i = 0; i < coords.Length; i += 2)
         {
             bbox.ExpandToInclude(coords[i], coords[i + 1]);
         }
         return bbox;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Coordinates.fixMissing(int[], int, int)</c>.</remarks>
     public static bool FixMissing(int[] c, int nullX, int nullY)
     {
-        bool success = true;
+        var success = true;
 
-        for (int i = 0; i < c.Length; i += 2)
+        for (var i = 0; i < c.Length; i += 2)
         {
             if (c[i] == nullX && c[i + 1] == nullY)
             {
@@ -46,7 +51,7 @@ public static class Coordinates
                 }
                 else
                 {
-                    int valid = FindValid(c, i + 2, nullX, nullY);
+                    var valid = FindValid(c, i + 2, nullX, nullY);
                     if (valid < 0)
                     {
                         success = false;
@@ -62,7 +67,8 @@ public static class Coordinates
         return success;
     }
 
-    private static int FindValid(int[] c, int index, int nullX, int nullY)
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Coordinates.findValid(int[], int, int, int)</c>.</remarks>
+    static int FindValid(int[] c, int index, int nullX, int nullY)
     {
         while (index < c.Length)
         {
@@ -72,18 +78,19 @@ public static class Coordinates
         return -1;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Coordinates.countLongDeltas(int[])</c>.</remarks>
     public static int CountLongDeltas(int[] c)
     {
-        int count = 0;
-        for (int i = 2; i < c.Length; i += 2)
+        var count = 0;
+        for (var i = 2; i < c.Length; i += 2)
         {
-            int xDelta = c[i] - c[i - 2];
+            var xDelta = c[i] - c[i - 2];
             if (xDelta > short.MaxValue || xDelta < short.MinValue)
             {
                 count++;
                 continue;
             }
-            int yDelta = c[i + 1] - c[i - 1];
+            var yDelta = c[i + 1] - c[i - 1];
             if (yDelta > short.MaxValue || yDelta < short.MinValue)
             {
                 count++;
@@ -92,16 +99,18 @@ public static class Coordinates
         return count;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Coordinates.isClosedRing(int[])</c>.</remarks>
     public static bool IsClosedRing(int[] coords)
     {
         return coords[0] == coords[coords.Length - 2] &&
             coords[1] == coords[coords.Length - 1];
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Coordinates.fromCoordinates(Coordinate[])</c>.</remarks>
     public static double[] FromCoordinates(Coordinate[] coords)
     {
-        double[] points = new double[coords.Length * 2];
-        for (int i = 0; i < coords.Length; i++)
+        var points = new double[coords.Length * 2];
+        for (var i = 0; i < coords.Length; i++)
         {
             points[i * 2] = coords[i].X;
             points[i * 2 + 1] = coords[i].Y;
@@ -109,14 +118,16 @@ public static class Coordinates
         return points;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Coordinates.fromCoordinateSequence(CoordinateSequence)</c>.</remarks>
     public static double[] FromCoordinateSequence(CoordinateSequence coords)
     {
-        double[] points = new double[coords.Count * 2];
-        for (int i = 0; i < coords.Count; i++)
+        var points = new double[coords.Count * 2];
+        for (var i = 0; i < coords.Count; i++)
         {
             points[i * 2] = coords.GetX(i);
             points[i * 2 + 1] = coords.GetY(i);
         }
         return points;
     }
+
 }

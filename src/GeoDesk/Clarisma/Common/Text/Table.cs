@@ -15,6 +15,7 @@ namespace Clarisma.Common.Text;
 
 // TODO: don't shrink column to less than header text width!
 
+/// <remarks>Ported from Java <c>com.clarisma.common.text.Table</c>.</remarks>
 public class Table
 {
     private readonly List<Column> columns = new List<Column>();

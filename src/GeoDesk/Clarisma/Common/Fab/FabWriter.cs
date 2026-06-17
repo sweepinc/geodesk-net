@@ -11,6 +11,7 @@ using System.IO;
 
 namespace Clarisma.Common.Fab;
 
+/// <remarks>Ported from Java <c>com.clarisma.common.fab.FabWriter</c>.</remarks>
 public class FabWriter
 {
     private readonly TextWriter @out;

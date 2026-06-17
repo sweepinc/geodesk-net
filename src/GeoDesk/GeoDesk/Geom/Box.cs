@@ -17,6 +17,7 @@ namespace GeoDesk.Geom;
 /// Antimeridian (in which case <c>minX</c> is *larger* than <c>maxX</c>). A <c>Box</c> can
 /// also be empty (in which case <c>minY</c> is *larger* than <c>maxY</c>)
 /// </summary>
+/// <remarks>Ported from Java <c>com.geodesk.geom.Box</c>.</remarks>
 public class Box : Bounds
 {
     private int minX;

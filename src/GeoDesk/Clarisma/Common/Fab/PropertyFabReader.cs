@@ -10,6 +10,7 @@ using System.Diagnostics;
 
 namespace Clarisma.Common.Fab;
 
+/// <remarks>Ported from Java <c>com.clarisma.common.fab.PropertyFabReader</c>.</remarks>
 public class PropertyFabReader : FabReader
 {
     private readonly Dictionary<string, string> properties = new Dictionary<string, string>();

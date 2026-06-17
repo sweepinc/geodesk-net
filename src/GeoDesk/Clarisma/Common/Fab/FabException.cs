@@ -9,6 +9,7 @@ using System;
 
 namespace Clarisma.Common.Fab;
 
+/// <remarks>Ported from Java <c>com.clarisma.common.fab.FabException</c>.</remarks>
 public class FabException : Exception
 {
     public FabException(string msg)

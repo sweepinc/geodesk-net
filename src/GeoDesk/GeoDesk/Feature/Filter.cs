@@ -14,6 +14,7 @@ namespace GeoDesk.Feature;
 /// <summary>
 /// An interface for classes that select the features to be returned by a query.
 /// </summary>
+/// <remarks>Ported from Java <c>com.geodesk.feature.Filter</c>.</remarks>
 public interface Filter
 {
     /// <summary>

@@ -10,6 +10,7 @@ using System.Globalization;
 
 namespace GeoDesk.Feature;
 
+/// <remarks>Ported from Java <c>com.geodesk.feature.MissingTileException</c>.</remarks>
 public class MissingTileException : Exception
 {
     private readonly int tip;

@@ -10,6 +10,7 @@ using Java.Nio;
 
 namespace Clarisma.Common.Pbf;
 
+/// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfEncoder</c>.</remarks>
 public static class PbfEncoder
 {
     public static void WriteVarint(ByteBuffer buf, long val)

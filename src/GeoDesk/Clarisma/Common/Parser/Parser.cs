@@ -18,10 +18,11 @@ namespace Clarisma.Common.Parser;
 /// An extendable general-purpose lexer/parser, especially suited
 /// for generating abstract syntax trees.
 /// </summary>
-//
-// In Java this implements CharSequence and FileLocation. The straight port keeps
-// FileLocation (IFileLocation) and provides Length/CharAt/SubSequence directly
-// rather than implementing a CharSequence interface (which .NET lacks).
+/// <remarks>
+/// Ported from Java <c>com.clarisma.common.parser.Parser</c>. In Java this implements CharSequence and
+/// FileLocation; the straight port keeps FileLocation (IFileLocation) and provides
+/// Length/CharAt/SubSequence directly rather than implementing a CharSequence interface (which .NET lacks).
+/// </remarks>
 public class Parser : IFileLocation
 {
     /// <summary>

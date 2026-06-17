@@ -12,6 +12,7 @@ namespace GeoDesk.Feature;
 /// <summary>
 /// An enum representing the three feature types: <c>Node</c>, <c>Way</c> and <c>Relation</c>.
 /// </summary>
+/// <remarks>Ported from Java <c>com.geodesk.feature.FeatureType</c>.</remarks>
 public enum FeatureType
 {
     Node,

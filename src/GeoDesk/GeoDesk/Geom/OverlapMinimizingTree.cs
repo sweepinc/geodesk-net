@@ -41,6 +41,7 @@ namespace GeoDesk.Geom;
 
 // careful when translating code from JavaScript:
 // must cast ints explicitly into doubles
+/// <remarks>Ported from Java <c>com.geodesk.geom.OverlapMinimizingTree</c>.</remarks>
 public class OverlapMinimizingTree : RTree
 {
     private static readonly IComparer<Bounds> CompareMinX = new MinXComparer();

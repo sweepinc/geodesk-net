@@ -20,6 +20,7 @@ namespace Clarisma.Common.Store;
 //
 // PORT-LIMITATION (locking): Java acquires a *shared* byte-range lock. .NET has no shared
 // byte-range locks, so locking here is a best-effort no-op (see Store for details).
+/// <remarks>Ported from Java <c>com.clarisma.common.store.FreeStore</c>.</remarks>
 public class FreeStore
 {
     private readonly string path;

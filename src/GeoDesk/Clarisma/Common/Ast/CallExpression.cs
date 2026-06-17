@@ -7,6 +7,7 @@
 
 namespace Clarisma.Common.Ast;
 
+/// <remarks>Ported from Java <c>com.clarisma.common.ast.CallExpression</c>.</remarks>
 public class CallExpression : Expression
 {
     private readonly Expression callee;

@@ -15,6 +15,7 @@ namespace Clarisma.Common.Parser;
 /// can be a quoted string, an identifier (treated as a string),
 /// a number, <c>true</c> or <c>false</c>.
 /// </summary>
+/// <remarks>Ported from Java <c>com.clarisma.common.parser.TagsParser</c>.</remarks>
 public class TagsParser : Parser
 {
     public const string COMMA = ",";

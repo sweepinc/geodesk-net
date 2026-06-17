@@ -12,6 +12,7 @@ namespace GeoDesk.Feature.Match;
 // In Java this is abstract (subclasses are generated as bytecode). Here it is a concrete
 // base so Matcher.ALL can be instantiated directly; the hand-written matcher subclasses
 // (IdMatcher, TypeMatcher, AndMatcher, …) extend it as usual.
+/// <remarks>Ported from Java <c>com.geodesk.feature.match.Matcher</c>.</remarks>
 public class Matcher
 {
     protected readonly int acceptedTypes;

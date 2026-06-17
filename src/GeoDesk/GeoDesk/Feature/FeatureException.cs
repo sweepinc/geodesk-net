@@ -9,6 +9,7 @@ using System;
 
 namespace GeoDesk.Feature;
 
+/// <remarks>Ported from Java <c>com.geodesk.feature.FeatureException</c>.</remarks>
 public class FeatureException : Exception
 {
     public FeatureException(string msg)

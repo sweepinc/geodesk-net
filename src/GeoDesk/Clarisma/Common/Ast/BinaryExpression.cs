@@ -9,6 +9,7 @@ using System;
 
 namespace Clarisma.Common.Ast;
 
+/// <remarks>Ported from Java <c>com.clarisma.common.ast.BinaryExpression</c>.</remarks>
 public class BinaryExpression : Expression
 {
     private readonly Operator op;

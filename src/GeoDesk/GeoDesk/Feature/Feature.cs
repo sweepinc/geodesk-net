@@ -16,6 +16,7 @@ namespace GeoDesk.Feature;
 /// <summary>
 /// A geographic feature.
 /// </summary>
+/// <remarks>Ported from Java <c>com.geodesk.feature.Feature</c>.</remarks>
 public interface Feature : IEnumerable<Feature>
 {
     /// <summary>Returns the OSM ID of the feature.</summary>

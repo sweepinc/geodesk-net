@@ -15,6 +15,7 @@ namespace Clarisma.Common.Fab;
 // SAX (push) parsing API equivalent, so this reader has no clean mapping without a
 // third-party SAX library. A future pass could adapt it to System.Xml.XmlWriter or a
 // custom handler interface. The class is unused elsewhere in the library.
+/// <remarks>Ported from Java <c>com.clarisma.common.fab.SaxFabReader</c>.</remarks>
 public class SaxFabReader : FabReader
 {
     public void Read(TextReader @in, string baseElement, object handler)

@@ -13,6 +13,7 @@ using Java.Nio;
 namespace Clarisma.Common.Pbf;
 
 // In Java this extends ByteArrayOutputStream; the straight port extends MemoryStream.
+/// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfOutputStream</c>.</remarks>
 public class PbfOutputStream : MemoryStream
 {
     // check encoding of negative varints

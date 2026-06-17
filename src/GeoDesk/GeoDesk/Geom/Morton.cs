@@ -9,15 +9,18 @@ using System.Diagnostics;
 
 namespace GeoDesk.Geom;
 
+/// <remarks>Ported from Java <c>com.geodesk.geom.Morton</c>.</remarks>
 public static class Morton
 {
+
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Morton.mortonFromXY(int, int)</c>.</remarks>
     public static int MortonFromXY(int x, int y)
     {
         Debug.Assert((x & 0xffff_0000) == 0);
         Debug.Assert((y & 0xffff_0000) == 0);
 
-        int i0 = x;
-        int i1 = y;
+        var i0 = x;
+        var i1 = y;
 
         i0 = (i0 | (i0 << 8)) & 0x00FF00FF;
         i0 = (i0 | (i0 << 4)) & 0x0F0F0F0F;
@@ -31,4 +34,5 @@ public static class Morton
 
         return (i1 << 1) | i0;
     }
+
 }

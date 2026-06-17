@@ -10,6 +10,7 @@ namespace GeoDesk.Feature;
 /// <summary>
 /// A <see cref="Feature"/> that represents a single point.
 /// </summary>
+/// <remarks>Ported from Java <c>com.geodesk.feature.Node</c>.</remarks>
 public interface Node : Feature
 {
 }

@@ -33,14 +33,17 @@ using static System.Math;
 
 namespace GeoDesk.Geom;
 
+/// <remarks>Ported from Java <c>com.geodesk.geom.QuickSelect</c>.</remarks>
 public static class QuickSelect
 {
-    // sort an array so that items come in groups of n unsorted items, with groups sorted between each other;
-    // combines selection algorithm with binary divide & conquer approach
 
+    // sort an array so that items come in groups of n unsorted items, with groups sorted between each
+    // other; combines selection algorithm with binary divide & conquer approach
+
+    /// <remarks>Ported from Java <c>com.geodesk.geom.QuickSelect.multiSelect(List, int, int, int, Comparator)</c>.</remarks>
     public static void MultiSelect<T>(IList<T> arr, int left, int right, int n, IComparer<T> compare)
     {
-        Stack<int> stack = new Stack<int>();
+        var stack = new Stack<int>();
         stack.Push(left);
         stack.Push(right);
 
@@ -51,7 +54,7 @@ public static class QuickSelect
 
             if (right - left <= n) continue;
 
-            int mid = left + (int)Ceiling((double)(right - left) / n / 2) * n;
+            var mid = left + (int)Ceiling((double)(right - left) / n / 2) * n;
             QuickselectStep(arr, mid, left, right, compare);
 
             stack.Push(left);
@@ -61,12 +64,14 @@ public static class QuickSelect
         }
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.QuickSelect.quickselect(List, int, int, int, Comparator)</c>.</remarks>
     public static void Quickselect<T>(IList<T> arr, int k, int left, int right, IComparer<T> compare)
     {
         QuickselectStep(arr, k, left, right != 0 ? right : (arr.Count - 1), compare);
     }
 
-    private static void QuickselectStep<T>(IList<T> arr, int k, int left, int right, IComparer<T> compare)
+    /// <remarks>Ported from Java <c>com.geodesk.geom.QuickSelect.quickselectStep(List, int, int, int, Comparator)</c>.</remarks>
+    static void QuickselectStep<T>(IList<T> arr, int k, int left, int right, IComparer<T> compare)
     {
         while (right > left)
         {
@@ -74,17 +79,17 @@ public static class QuickSelect
             {
                 double n = right - left + 1;
                 double m = k - left + 1;
-                double z = Log(n);
-                double s = 0.5 * Exp(2 * z / 3);
-                double sd = 0.5 * Sqrt(z * s * (n - s) / n) * (m - n / 2 < 0 ? -1 : 1);
-                int newLeft = Max(left, (int)Floor(k - m * s / n + sd));
-                int newRight = Min(right, (int)Floor(k + (n - m) * s / n + sd));
+                var z = Log(n);
+                var s = 0.5 * Exp(2 * z / 3);
+                var sd = 0.5 * Sqrt(z * s * (n - s) / n) * (m - n / 2 < 0 ? -1 : 1);
+                var newLeft = Max(left, (int)Floor(k - m * s / n + sd));
+                var newRight = Min(right, (int)Floor(k + (n - m) * s / n + sd));
                 QuickselectStep(arr, k, newLeft, newRight, compare);
             }
 
-            T t = arr[k];
-            int i = left;
-            int j = right;
+            var t = arr[k];
+            var i = left;
+            var j = right;
 
             Swap(arr, left, k);
             if (compare.Compare(arr[right], t) > 0) Swap(arr, left, right);
@@ -112,10 +117,12 @@ public static class QuickSelect
         }
     }
 
-    private static void Swap<T>(IList<T> arr, int i, int j)
+    /// <remarks>Ported from Java <c>com.geodesk.geom.QuickSelect.swap(List, int, int)</c>.</remarks>
+    static void Swap<T>(IList<T> arr, int i, int j)
     {
-        T tmp = arr[i];
+        var tmp = arr[i];
         arr[i] = arr[j];
         arr[j] = tmp;
     }
+
 }

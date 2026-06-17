@@ -10,6 +10,7 @@ using System;
 namespace Clarisma.Common.Ast;
 
 // In Java the type argument is Class<?>; here it is System.Type.
+/// <remarks>Ported from Java <c>com.clarisma.common.ast.TypeChecker</c>.</remarks>
 public class TypeChecker : IAstVisitor<Type?>
 {
     // Renamed from Java's getType() to avoid colliding with object.GetType().

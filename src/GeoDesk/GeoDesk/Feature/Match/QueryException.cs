@@ -9,6 +9,7 @@ using System;
 
 namespace GeoDesk.Feature.Match;
 
+/// <remarks>Ported from Java <c>com.geodesk.feature.match.QueryException</c>.</remarks>
 public class QueryException : Exception
 {
     public QueryException(string msg)

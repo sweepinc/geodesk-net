@@ -7,18 +7,23 @@
 
 namespace GeoDesk.Geom;
 
+/// <remarks>Ported from Java <c>com.geodesk.geom.BoundedItem</c>.</remarks>
 public class BoundedItem<T> : Box
 {
-    private readonly T item;
 
+    readonly T _item;
+
+    /// <remarks>Ported from Java <c>com.geodesk.geom.BoundedItem(Bounds, T)</c>.</remarks>
     public BoundedItem(Bounds b, T item)
         : base(b)
     {
-        this.item = item;
+        _item = item;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.BoundedItem.get()</c>.</remarks>
     public T Get()
     {
-        return item;
+        return _item;
     }
+
 }

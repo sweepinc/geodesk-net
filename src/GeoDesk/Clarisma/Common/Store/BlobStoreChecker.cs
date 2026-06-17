@@ -17,6 +17,7 @@ namespace Clarisma.Common.Store;
 /// <summary>
 /// A class that verifies the integrity of a BlobStore.
 /// </summary>
+/// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker</c>.</remarks>
 public class BlobStoreChecker
 {
     protected readonly BlobStore store;

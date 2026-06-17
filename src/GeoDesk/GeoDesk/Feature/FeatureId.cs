@@ -13,6 +13,7 @@ namespace GeoDesk.Feature;
 /// <summary>
 /// Methods for creating IDs that are unique across feature types.
 /// </summary>
+/// <remarks>Ported from Java <c>com.geodesk.feature.FeatureId</c>.</remarks>
 public static class FeatureId
 {
     public static long Of(FeatureType type, long id)

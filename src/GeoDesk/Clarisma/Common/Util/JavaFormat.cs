@@ -19,6 +19,7 @@ namespace Clarisma.Common.Util;
 /// This is a port aid; it is not a complete implementation of
 /// <c>java.util.Formatter</c>.
 /// </summary>
+/// <remarks>Port-only helper (no direct Java counterpart): a stand-in for <c>java.util.Formatter</c>.</remarks>
 public static class JavaFormat
 {
     public static string Format(string format, params object?[] args)

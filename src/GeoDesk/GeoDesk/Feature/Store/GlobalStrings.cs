@@ -7,6 +7,7 @@
 
 namespace GeoDesk.Feature.Store;
 
+/// <remarks>Ported from Java <c>com.geodesk.feature.store.GlobalStrings</c>.</remarks>
 public static class GlobalStrings
 {
     public const int EMPTY = 0;

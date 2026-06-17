@@ -37,6 +37,7 @@ using System.Globalization;
 
 namespace GeoDesk.Geom;
 
+/// <remarks>Ported from Java <c>com.geodesk.geom.Hilbert</c>.</remarks>
 public static class Hilbert
 {
     /// <summary>

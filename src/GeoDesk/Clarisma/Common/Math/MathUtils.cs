@@ -9,6 +9,7 @@ namespace Clarisma.Common.Math;
 
 // TODO: these are really parsing methods rather than "math"
 
+/// <remarks>Ported from Java <c>com.clarisma.common.math.MathUtils</c>.</remarks>
 public static class MathUtils
 {
     private static readonly double[] Pow10Table =

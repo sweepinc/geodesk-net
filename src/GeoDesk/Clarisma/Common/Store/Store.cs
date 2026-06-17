@@ -37,6 +37,7 @@ namespace Clarisma.Common.Store;
 ///   by default. If marking fails, the store still works but may consume more disk.
 /// - <c>Unsafe.invokeCleaner</c> unmapping → deterministic <see cref="IDisposable.Dispose"/>.
 /// </summary>
+/// <remarks>Ported from Java <c>com.clarisma.common.store.Store</c>.</remarks>
 public abstract class Store
 {
     private static readonly HashSet<string> openStores = new HashSet<string>();

@@ -14,6 +14,7 @@ namespace GeoDesk.Feature.Store;
 /// <summary>
 /// A <see cref="CoordinateSequence"/> that provides integer-based coordinates in a compact format.
 /// </summary>
+/// <remarks>Ported from Java <c>com.geodesk.feature.store.WayCoordinateSequence</c>.</remarks>
 public class WayCoordinateSequence : CoordinateSequence
 {
     private readonly int[] coordinates; // pairs of x/y

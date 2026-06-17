@@ -10,6 +10,7 @@ using Clarisma.Common.Text;
 
 namespace Clarisma.Common.Util;
 
+/// <remarks>Ported from Java <c>com.clarisma.common.util.ProgressReporter</c>.</remarks>
 public class ProgressReporter : IProgressListener
 {
     private readonly string? progressVerb;

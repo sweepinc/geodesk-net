@@ -7,6 +7,7 @@
 
 namespace Clarisma.Common.Ast;
 
+/// <remarks>Ported from Java <c>com.clarisma.common.ast.Variable</c>.</remarks>
 public class Variable : Expression
 {
     private readonly string name;

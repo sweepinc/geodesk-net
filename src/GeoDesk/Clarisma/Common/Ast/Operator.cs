@@ -7,6 +7,7 @@
 
 namespace Clarisma.Common.Ast;
 
+/// <remarks>Ported from Java <c>com.clarisma.common.ast.Operator</c>.</remarks>
 public class Operator
 {
     private readonly string name;
