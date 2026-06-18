@@ -14,6 +14,10 @@ on:
     types:
     - created
 
+permissions:
+  contents: read
+  packages: read
+
 jobs:
   build:
     name: Build
@@ -187,6 +191,9 @@ jobs:
     needs:
     - test
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
     steps:
     - name: Checkout Source
       uses: actions/checkout@v5
