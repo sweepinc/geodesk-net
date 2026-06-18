@@ -45,7 +45,8 @@ internal class CoordinateTransformer
     {
         v = Math.Floor(v * _scale + 0.5) / _scale;
         var lv = (long)v;
-        if (lv == v) return lv.ToString(CultureInfo.InvariantCulture);
+        if (lv == v)
+            return lv.ToString(CultureInfo.InvariantCulture);
         return v.ToString(CultureInfo.InvariantCulture);
     }
 
@@ -90,8 +91,7 @@ internal class CoordinateTransformer
     {
 
         /// <remarks>Ported from Java <c>com.geodesk.util.CoordinateTransformer.ToMercator()</c>.</remarks>
-        public ToMercator()
-            : base(7)
+        public ToMercator() : base(7)
         {
             // TODO: technically, imps are always integer
         }
