@@ -10,8 +10,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
-using Clarisma.Common.Util;
-
+using GeoDesk.Common.Util;
 using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Store;
 using GeoDesk.Geom;

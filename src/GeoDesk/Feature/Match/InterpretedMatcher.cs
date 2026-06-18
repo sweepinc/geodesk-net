@@ -10,11 +10,11 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.Text.RegularExpressions;
-using Clarisma.Common.Ast;
-using Clarisma.Common.Math;
-using Clarisma.Common.Util;
 using GeoDesk.Feature.Store;
 using NioBuffer = Java.Nio.ByteBuffer;
+using GeoDesk.Common.Ast;
+using GeoDesk.Common.Math;
+using GeoDesk.Common.Util;
 
 namespace GeoDesk.Feature.Match;
 

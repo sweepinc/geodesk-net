@@ -8,7 +8,7 @@
 using System;
 using System.Globalization;
 
-using Clarisma.Common.Ast;
+using GeoDesk.Common.Ast;
 
 namespace GeoDesk.Feature.Match;
 

@@ -6,8 +6,10 @@
  */
 
 using System;
-using Clarisma.Common.Store;
+
+using GeoDesk.Common.Store;
 using GeoDesk.Feature.Store;
+
 using NetTopologySuite.Geometries;
 
 namespace GeoDesk.Feature.Polygons;

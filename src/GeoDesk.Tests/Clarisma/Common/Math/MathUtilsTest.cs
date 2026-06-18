@@ -6,7 +6,8 @@
  */
 
 using Xunit;
-using static Clarisma.Common.Math.MathUtils;
+
+using static GeoDesk.Common.Math.MathUtils;
 
 namespace Clarisma.Common.Math;
 

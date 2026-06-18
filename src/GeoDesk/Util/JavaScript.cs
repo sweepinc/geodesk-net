@@ -8,7 +8,8 @@
 using System;
 using System.Collections;
 using System.IO;
-using Clarisma.Common.Text;
+
+using GeoDesk.Common.Text;
 
 namespace GeoDesk.Util;
 

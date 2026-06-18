@@ -7,12 +7,15 @@
 
 using System;
 using System.Diagnostics;
-using Clarisma.Common.Util;
+
+using GeoDesk.Common.Util;
 using GeoDesk.Feature;
 using GeoDesk.Geom;
 using GeoDesk.Util;
+
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Geometries.Prepared;
+
 using Xunit;
 
 namespace GeoDesk.Tests;

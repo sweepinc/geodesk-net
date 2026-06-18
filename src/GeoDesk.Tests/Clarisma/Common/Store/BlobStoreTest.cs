@@ -7,6 +7,9 @@
 
 using System;
 using System.IO;
+
+using GeoDesk.Common.Store;
+
 using Xunit;
 
 namespace Clarisma.Common.Store;

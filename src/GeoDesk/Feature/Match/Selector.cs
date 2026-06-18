@@ -6,7 +6,8 @@
  */
 
 using System.Diagnostics;
-using Clarisma.Common.Ast;
+
+using GeoDesk.Common.Ast;
 using GeoDesk.Feature.Query;
 
 namespace GeoDesk.Feature.Match;

@@ -9,14 +9,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 
-using Clarisma.Common.Math;
-using Clarisma.Common.Util;
-
+using GeoDesk.Common.Math;
+using GeoDesk.Common.Util;
 using GeoDesk.Geom;
 
 using NetTopologySuite.Geometries;
 
-using DecimalType = Clarisma.Common.Math.Decimal;
+using DecimalType = GeoDesk.Common.Math.Decimal;
 using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace GeoDesk.Feature.Store;

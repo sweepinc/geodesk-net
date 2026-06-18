@@ -6,7 +6,8 @@
  */
 
 using Xunit;
-using DecimalType = Clarisma.Common.Math.Decimal;
+
+using DecimalType = GeoDesk.Common.Math.Decimal;
 
 namespace Clarisma.Common.Math;
 

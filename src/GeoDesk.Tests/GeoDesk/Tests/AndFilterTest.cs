@@ -7,13 +7,16 @@
 
 using System;
 using System.Collections.Generic;
-using Clarisma.Common.Util;
+
+using GeoDesk.Common.Util;
 using GeoDesk.Feature;
 using GeoDesk.Feature.Filters;
 using GeoDesk.Feature.Store;
 using GeoDesk.Geom;
 using GeoDesk.Util;
+
 using NetTopologySuite.Geometries.Prepared;
+
 using Xunit;
 
 namespace GeoDesk.Tests;

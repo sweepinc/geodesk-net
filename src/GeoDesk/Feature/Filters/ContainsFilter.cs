@@ -6,10 +6,12 @@
  */
 
 using System;
-using Clarisma.Common.Util;
+
+using GeoDesk.Common.Util;
 using GeoDesk.Feature;
 using GeoDesk.Feature.Match;
 using GeoDesk.Geom;
+
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Geometries.Prepared;
 

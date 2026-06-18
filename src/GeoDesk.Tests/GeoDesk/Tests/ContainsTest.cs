@@ -7,7 +7,9 @@
 
 using System.Collections.Generic;
 using System.Globalization;
-using Clarisma.Common.Util;
+
+using GeoDesk.Common.Util;
+
 using Xunit;
 
 namespace GeoDesk.Tests;

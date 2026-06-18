@@ -6,9 +6,11 @@
  */
 
 using System;
-using Clarisma.Common.Util;
+
 using GeoDesk.Benchmark;
+using GeoDesk.Common.Util;
 using GeoDesk.Feature;
+
 using Xunit;
 
 namespace GeoDesk.Tests;

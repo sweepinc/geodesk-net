@@ -5,9 +5,10 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-using Clarisma.Common.Util;
+using GeoDesk.Common.Util;
 using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Store;
+
 using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace GeoDesk.Feature.Query;

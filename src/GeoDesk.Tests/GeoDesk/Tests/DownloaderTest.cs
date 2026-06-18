@@ -9,7 +9,9 @@ using System;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Clarisma.Common.Util;
+
+using GeoDesk.Common.Util;
+
 using Xunit;
 
 namespace GeoDesk.Tests;

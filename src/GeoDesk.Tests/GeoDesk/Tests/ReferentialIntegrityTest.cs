@@ -11,13 +11,16 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Text;
-using Clarisma.Common.Util;
+
+using GeoDesk.Common.Util;
 using GeoDesk.Feature;
 using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Query;
 using GeoDesk.Feature.Store;
 using GeoDesk.Geom;
+
 using NetTopologySuite.Geometries;
+
 using Xunit;
 
 namespace GeoDesk.Tests;

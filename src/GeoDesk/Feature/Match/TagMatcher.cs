@@ -6,7 +6,9 @@
  */
 
 using System.Globalization;
-using Clarisma.Common.Math;
+
+using GeoDesk.Common.Math;
+
 using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace GeoDesk.Feature.Match;

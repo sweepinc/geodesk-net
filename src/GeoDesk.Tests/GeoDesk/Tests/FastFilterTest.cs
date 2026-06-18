@@ -8,14 +8,17 @@
 using System;
 using System.Diagnostics;
 using System.Globalization;
-using Clarisma.Common.Util;
+
 using GeoDesk.Benchmark;
+using GeoDesk.Common.Util;
 using GeoDesk.Feature;
 using GeoDesk.Feature.Filters;
 using GeoDesk.Feature.Store;
 using GeoDesk.Geom;
 using GeoDesk.Util;
+
 using NetTopologySuite.Geometries.Prepared;
+
 using Xunit;
 
 namespace GeoDesk.Tests;

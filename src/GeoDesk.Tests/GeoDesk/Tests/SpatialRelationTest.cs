@@ -5,9 +5,10 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-using Clarisma.Common.Util;
+using GeoDesk.Common.Util;
 using GeoDesk.Feature;
 using GeoDesk.Feature.Filters;
+
 using Xunit;
 
 namespace GeoDesk.Tests;

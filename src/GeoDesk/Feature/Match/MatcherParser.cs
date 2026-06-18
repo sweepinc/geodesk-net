@@ -8,9 +8,10 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text.RegularExpressions;
-using Clarisma.Common.Ast;
-using Clarisma.Common.Math;
-using Clarisma.Common.Parser;
+
+using GeoDesk.Common.Ast;
+using GeoDesk.Common.Math;
+using GeoDesk.Common.Parser;
 using GeoDesk.Feature.Store;
 
 namespace GeoDesk.Feature.Match;

@@ -8,10 +8,13 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using Clarisma.Common.Fab;
-using Clarisma.Common.Parser;
+
 using Clarisma.Common.Soar;
+
+using GeoDesk.Common.Fab;
+using GeoDesk.Common.Parser;
 using GeoDesk.Gol.Compiler;
+
 using NioBuffer = Java.Nio.ByteBuffer;
 using NioOrder = Java.Nio.ByteOrder;
 

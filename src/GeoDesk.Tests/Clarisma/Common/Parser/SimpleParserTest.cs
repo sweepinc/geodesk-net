@@ -6,7 +6,10 @@
  */
 
 using System;
-using Clarisma.Common.Util;
+
+using GeoDesk.Common.Parser;
+using GeoDesk.Common.Util;
+
 using Xunit;
 
 namespace Clarisma.Common.Parser;

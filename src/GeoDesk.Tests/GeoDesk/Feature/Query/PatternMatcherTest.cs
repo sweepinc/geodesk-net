@@ -6,7 +6,9 @@
  */
 
 using System.Text;
-using Clarisma.Common.Util;
+
+using GeoDesk.Common.Util;
+
 using Xunit;
 
 namespace GeoDesk.Feature.Query;

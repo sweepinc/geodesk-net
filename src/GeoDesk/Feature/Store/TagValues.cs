@@ -6,8 +6,10 @@
  */
 
 using System.Globalization;
-using Clarisma.Common.Math;
-using DecimalType = Clarisma.Common.Math.Decimal;
+
+using GeoDesk.Common.Math;
+
+using DecimalType = GeoDesk.Common.Math.Decimal;
 
 namespace GeoDesk.Feature.Store;
 

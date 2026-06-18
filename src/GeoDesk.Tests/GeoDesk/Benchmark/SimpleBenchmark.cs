@@ -7,7 +7,8 @@
 
 using System;
 using System.Diagnostics;
-using Clarisma.Common.Util;
+
+using GeoDesk.Common.Util;
 
 namespace GeoDesk.Benchmark;
 

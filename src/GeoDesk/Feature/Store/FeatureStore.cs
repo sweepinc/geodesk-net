@@ -9,9 +9,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 
-using Clarisma.Common.Pbf;
-using Clarisma.Common.Store;
-
+using GeoDesk.Common.Pbf;
+using GeoDesk.Common.Store;
 using GeoDesk.Feature.Match;
 
 using Java.Util.Concurrent;
@@ -108,6 +107,7 @@ internal class FeatureStore : FreeStore
             _codesToStrings[i] = s;
             stringMap[s] = i;
         }
+
         _stringsToCodes = stringMap;
     }
 
@@ -123,6 +123,7 @@ internal class FeatureStore : FreeStore
             var entry = baseMapping.GetInt(p);
             map[(char)entry] = entry >> 16;
         }
+
         _keysToCategories = map;
     }
 

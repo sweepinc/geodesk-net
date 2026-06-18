@@ -10,9 +10,12 @@
 
 using System;
 using System.Collections.Generic;
+
 using Clarisma.Common.Soar;
+
 using GeoDesk.Feature.Store;
-using DecimalType = Clarisma.Common.Math.Decimal;
+
+using DecimalType = GeoDesk.Common.Math.Decimal;
 
 namespace GeoDesk.Gol.Compiler;
 
