@@ -57,6 +57,16 @@ sealed unsafe class MappedFileMemoryManager : MemoryManager<byte>
 
     }
 
+    /// <summary>
+    /// Flushes any changes to the memory mapped view to the underlying file. Note that this is not necessary to call, as the view will
+    /// flush itself when it is disposed. However, if you want to ensure that changes are flushed before disposing the view, you can call
+    /// this method.
+    /// </summary>
+    public void Flush()
+    {
+        _view.Flush();
+    }
+
     /// <inheritdoc />
     protected override void Dispose(bool disposing)
     {
