@@ -46,6 +46,17 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: NuGet Restore
       run: dotnet restore GeoDesk.sln
+    - name: Install GOL Tool
+      shell: bash
+      env:
+        GOL_VERSION: 2.2.3
+      run: |
+        curl -fsSL -o /tmp/gol.zip \
+          "https://github.com/clarisma/geodesk-gol/releases/download/v${GOL_VERSION}/gol-${GOL_VERSION}-linux.zip"
+        unzip -o /tmp/gol.zip -d /tmp/gol
+        sudo install -m 0755 /tmp/gol/gol /usr/local/bin/gol
+        command -v gol
+        gol --version || true
     - name: Build
       run: |
         dotnet msbuild /m /bl \
