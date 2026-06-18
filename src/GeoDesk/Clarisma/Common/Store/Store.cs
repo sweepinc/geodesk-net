@@ -14,12 +14,10 @@ using System.IO.Hashing;
 using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
 
+using Clarisma.Common.Util;
+
 using GeoDesk.Buffers;
 using GeoDesk.Extensions;
-
-using Java.Nio;
-
-using Clarisma.Common.Util;
 
 using ByteOrder = Java.Nio.ByteOrder;
 using NioBuffer = Java.Nio.ByteBuffer;
@@ -166,7 +164,7 @@ namespace Clarisma.Common.Store;
 ///   by default. If marking fails, the store still works but may consume more disk.
 /// - <c>Unsafe.invokeCleaner</c> unmapping → deterministic <see cref="IDisposable.Dispose"/>.
 /// </remarks>
-public abstract class Store
+internal abstract class Store
 {
 
     static readonly HashSet<string> _openStores = new HashSet<string>();
@@ -860,8 +858,7 @@ public abstract class Store
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.getBlock(long)</c>.</remarks>
     protected internal NioBuffer GetBlock(long pos)
     {
-        System.Diagnostics.Debug.Assert((pos & 0xfff) == 0,
-            string.Format(CultureInfo.InvariantCulture, "{0}: Block must start at 4KB-aligned position", pos));
+        System.Diagnostics.Debug.Assert((pos & 0xfff) == 0, string.Format(CultureInfo.InvariantCulture, "{0}: Block must start at 4KB-aligned position", pos));
 
         if (pos < _preTransactionFileSize)
         {
@@ -870,7 +867,7 @@ public abstract class Store
             {
                 block = new TransactionBlock();
                 block.pos = pos;
-                NioBuffer original = GetMapping((int)(pos >> 30));
+                var original = GetMapping((int)(pos >> 30));
                 var ofs = (int)pos & 0x3fff_ffff;
                 var copy = new byte[4096];
                 original.Get(ofs, copy);
@@ -880,7 +877,8 @@ public abstract class Store
             }
             return block.current;
         }
-        NioBuffer buf = GetMapping((int)(pos >> 30));
+
+        var buf = GetMapping((int)(pos >> 30));
         var order = buf.Order();
         buf = buf.Slice((int)pos & 0x3fff_ffff, 4096);
         buf.Order(order);

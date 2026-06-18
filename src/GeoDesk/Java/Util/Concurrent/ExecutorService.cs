@@ -12,7 +12,7 @@ namespace Java.Util.Concurrent;
 // the concrete ForkJoinPool, matching how the Java code casts the executor back to ForkJoinPool
 // before submitting.
 /// <remarks>Ported from Java <c>java.util.concurrent.ExecutorService</c>.</remarks>
-public abstract class ExecutorService
+internal abstract class ExecutorService
 {
 
     /// <summary>

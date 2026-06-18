@@ -11,7 +11,7 @@ using Java.Nio;
 namespace Clarisma.Common.Util;
 
 /// <remarks>Ported from Java <c>com.clarisma.common.util.Bytes</c>.</remarks>
-public static class Bytes
+internal static class Bytes
 {
 
     // not used

@@ -10,7 +10,7 @@ using static GeoDesk.Feature.Match.TypeBits;
 namespace GeoDesk.Feature.Match;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherSet</c>.</remarks>
-public class MatcherSet
+internal class MatcherSet
 {
 
     public static readonly MatcherSet ALL = new MatcherSet(TypeBits.ALL, Matcher.ALL);

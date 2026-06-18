@@ -10,7 +10,7 @@ using GeoDesk.Feature;
 namespace GeoDesk.Feature.Filters;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.filter.IdFilter</c>.</remarks>
-public class IdFilter : Filter
+internal class IdFilter : Filter
 {
 
     protected readonly int types;

@@ -10,7 +10,7 @@ using System;
 namespace Clarisma.Common.Fab;
 
 /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabException</c>.</remarks>
-public class FabException : Exception
+internal class FabException : Exception
 {
 
     /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabException(String)</c>.</remarks>

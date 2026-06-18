@@ -15,7 +15,7 @@ namespace Clarisma.Common.Ast;
 // or System.Linq.Expressions. The bytecode package (Coder, Instructions) is likewise
 // not ported. All visitor methods throw until that work is done.
 /// <remarks>Ported from Java <c>com.clarisma.common.ast.ExpressionCoder</c>.</remarks>
-public class ExpressionCoder : IAstVisitor<object?>
+internal class ExpressionCoder : IAstVisitor<object?>
 {
 
     protected TypeChecker? typeChecker;

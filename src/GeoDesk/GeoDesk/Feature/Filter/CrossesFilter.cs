@@ -21,7 +21,7 @@ namespace GeoDesk.Feature.Filters;
 /// </para>
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.filter.CrossesFilter</c>.</remarks>
-public class CrossesFilter : AbstractRelateFilter
+internal class CrossesFilter : AbstractRelateFilter
 {
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.CrossesFilter(Feature)</c>.</remarks>

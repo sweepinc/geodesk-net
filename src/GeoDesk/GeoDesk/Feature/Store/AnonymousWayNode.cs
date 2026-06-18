@@ -23,7 +23,7 @@ namespace GeoDesk.Feature.Store;
 /// but merely defines the geometry of a Way.
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.store.AnonymousWayNode</c>.</remarks>
-public class AnonymousWayNode : Node
+internal class AnonymousWayNode : Node
 {
 
     readonly FeatureStore _store;

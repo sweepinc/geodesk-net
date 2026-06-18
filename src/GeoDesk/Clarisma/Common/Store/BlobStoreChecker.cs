@@ -8,9 +8,12 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+
 using Clarisma.Common.Util;
-using NioBuffer = Java.Nio.ByteBuffer;
+
 using static Clarisma.Common.Store.BlobStoreConstants;
+
+using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace Clarisma.Common.Store;
 
@@ -18,7 +21,7 @@ namespace Clarisma.Common.Store;
 /// A class that verifies the integrity of a BlobStore.
 /// </summary>
 /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker</c>.</remarks>
-public class BlobStoreChecker
+internal class BlobStoreChecker
 {
 
     protected readonly BlobStore store;
@@ -136,21 +139,18 @@ public class BlobStoreChecker
                 {
                     if (blob.IsFree() && !blobStartsAtSegment)
                     {
-                        Error(blob, " should have been consolidated with " +
-                            "previous free blob");
+                        Error(blob, " should have been consolidated with " + "previous free blob");
                     }
                     if (!blob.HasFlags(PRECEDING_BLOB_FREE_FLAG))
                     {
-                        Error(blob, ": Preceding blob is free, " +
-                            "but prev_blob_free flag not set");
+                        Error(blob, ": Preceding blob is free, " + "but prev_blob_free flag not set");
                     }
                 }
                 else
                 {
                     if (blob.HasFlags(PRECEDING_BLOB_FREE_FLAG))
                     {
-                        Error(blob, ": Preceding blob in use, " +
-                            "but prev_blob_free flag set");
+                        Error(blob, ": Preceding blob in use, " + "but prev_blob_free flag set");
                     }
                 }
             }
@@ -158,13 +158,16 @@ public class BlobStoreChecker
             prevBlob = blob;
         }
 
-        if (nextPage == _totalPages) return;
+        if (nextPage == _totalPages)
+            return;
+
         if (nextPage > _totalPages)
         {
-            Error(TOTAL_PAGES_OFS, "total_pages should be %d instead of %d",
-                nextPage, _totalPages);
+            Error(TOTAL_PAGES_OFS, "total_pages should be %d instead of %d", nextPage, _totalPages);
+
             return;
         }
+
         CheckUnreferenced(nextPage, _totalPages);
     }
 
@@ -204,12 +207,16 @@ public class BlobStoreChecker
         for (var slot = 0; slot < 512; slot++, p += 4)
         {
             var freePage = buf.GetInt(p);
-            if (freePage == 0) continue;
+            if (freePage == 0)
+                continue;
             rangesUsed |= 1 << (slot >> 4);
             var freeBlob = GetValidBlob(p, freePage);
-            if (freeBlob == null) continue;
-            if (!CheckBlobIsFree(freeBlob)) continue;
-            if (!freeBlob.HasFlags(VALID_FREE_BLOB_SIZE | VALID_FREE_BLOB_TRAILER)) continue;
+            if (freeBlob == null)
+                continue;
+            if (!CheckBlobIsFree(freeBlob))
+                continue;
+            if (!freeBlob.HasFlags(VALID_FREE_BLOB_SIZE | VALID_FREE_BLOB_TRAILER))
+                continue;
             CheckLeafFreeTable(slot, freeBlob);
         }
         CheckExpectedVsActual(TRUNK_FT_RANGE_BITS_OFS, "trunk_free_range_mask",
@@ -259,16 +266,19 @@ public class BlobStoreChecker
         for (var leafSlot = 0; leafSlot < 512; leafSlot++, p += 4)
         {
             var freePage = buf.GetInt(p);
-            if (freePage == 0) continue;
+            if (freePage == 0)
+                continue;
             rangesUsed |= 1 << (leafSlot >> 4);
             var freeBlob = GetValidBlob(ofs + p, freePage);
-            if (freeBlob != null) CheckFreeBlobChain(trunkSlot, leafSlot, freeBlob);
+            if (freeBlob != null)
+                CheckFreeBlobChain(trunkSlot, leafSlot, freeBlob);
         }
 
         CheckExpectedVsActual(ofs + LEAF_FREE_TABLE_OFS, "leaf_free_range_mask",
             rangesUsed, rangeMask);
 
-        if (rangesUsed == 0) Error(blob, "Leaf free-table must have at least one entry");
+        if (rangesUsed == 0)
+            Error(blob, "Leaf free-table must have at least one entry");
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.checkFreeBlobChain(int, int, Blob)</c>.</remarks>
@@ -280,7 +290,8 @@ public class BlobStoreChecker
         for (; ; )
         {
             blob.flags |= FREE_BLOB_REFERENCED_FLAG;
-            if (!CheckBlobIsFree(blob)) return;
+            if (!CheckBlobIsFree(blob))
+                return;
             var ofs = AbsPosOfPage(blob.firstPage);
             if (blob.pages != len)
             {
@@ -300,11 +311,14 @@ public class BlobStoreChecker
             {
                 Error(ofsPrev, "prev_free_blob should be %d, not %d", prevFreePage, prev);
             }
-            if (next == 0) return;
+            if (next == 0)
+                return;
             prevFreePage = blob.firstPage;
             var nextBlob = GetValidBlob(ofsNext, next);
-            if (nextBlob == null) return;
-            if (!CheckBlobIsFree(nextBlob)) return;
+            if (nextBlob == null)
+                return;
+            if (!CheckBlobIsFree(nextBlob))
+                return;
             if (nextBlob.HasFlags(FREE_BLOB_REFERENCED_FLAG))
             {
                 Error(ofsNext, "Circular reference in free-blob list (to %d)", next);
@@ -351,8 +365,7 @@ public class BlobStoreChecker
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.error(Blob, String, Object...)</c>.</remarks>
     protected void Error(Blob blob, string msg, params object?[] args)
     {
-        _errors.Add(new ErrorEntry(AbsPosOfPage(blob.firstPage),
-            JavaFormat.Format("Blob " + blob.firstPage + msg, args)));
+        _errors.Add(new ErrorEntry(AbsPosOfPage(blob.firstPage), JavaFormat.Format("Blob " + blob.firstPage + msg, args)));
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.Blob</c>.</remarks>
@@ -401,7 +414,9 @@ public class BlobStoreChecker
     Blob? GetValidBlob(long ofs, int page)
     {
         var blob = GetBlob(page);
-        if (blob == null) Error(ofs, "Bad blob reference: %d", page);
+        if (blob == null)
+            Error(ofs, "Bad blob reference: %d", page);
+
         return blob;
     }
 
@@ -409,16 +424,24 @@ public class BlobStoreChecker
     public Blob? UseBlob(long ofs, int page)
     {
         var blob = GetValidBlob(ofs, page);
-        if (blob != null) blob.flags |= BLOB_REFERENCED_FLAG;
+        if (blob != null)
+            blob.flags |= BLOB_REFERENCED_FLAG;
+
         return blob;
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.getBlob(int)</c>.</remarks>
     Blob? GetBlob(int page)
     {
-        if (_blobs.TryGetValue(page, out var existing)) return existing;
-        if (page <= 0) return null;
-        if ((page << _pageSizeShift) >= _fileSize) return null;
+        if (_blobs.TryGetValue(page, out var existing))
+            return existing;
+
+        if (page <= 0)
+            return null;
+
+        if ((page << _pageSizeShift) >= _fileSize)
+            return null;
+
         var buf = BufferOfPage(page);
         var p = OffsetOfPage(page);
         var header = buf.GetInt(p);
@@ -430,15 +453,19 @@ public class BlobStoreChecker
                 "Blob at page %d has illegal payload length (%d)", page, len);
             return null;
         }
+
         var lenPages = (len + _pageSize + 3) / _pageSize;
         if ((header & FREE_BLOB_FLAG) != 0)
         {
-            if ((len + 4) % _pageSize == 0) flags |= VALID_FREE_BLOB_SIZE;
+            if ((len + 4) % _pageSize == 0)
+                flags |= VALID_FREE_BLOB_SIZE;
             var lastPage = page + lenPages - 1;
             var lastBuf = BufferOfPage(lastPage);
             var pTrailer = OffsetOfPage(lastPage) + _pageSize - 4;
-            if (lastBuf.GetInt(pTrailer) == lenPages) flags |= VALID_FREE_BLOB_TRAILER;
+            if (lastBuf.GetInt(pTrailer) == lenPages)
+                flags |= VALID_FREE_BLOB_TRAILER;
         }
+
         var blob = new Blob(page, lenPages, flags);
         _blobs[page] = blob;
         return blob;
@@ -448,7 +475,8 @@ public class BlobStoreChecker
     public void ReportErrors(TextWriter @out)
     {
         _errors.Sort();
-        foreach (var error in _errors) @out.WriteLine(error);
+        foreach (var error in _errors)
+            @out.WriteLine(error);
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.hasErrors()</c>.</remarks>

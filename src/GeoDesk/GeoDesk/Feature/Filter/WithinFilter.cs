@@ -13,7 +13,7 @@ using NetTopologySuite.Geometries.Prepared;
 namespace GeoDesk.Feature.Filters;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.filter.WithinFilter</c>.</remarks>
-public class WithinFilter : AbstractRelateFilter
+internal class WithinFilter : AbstractRelateFilter
 {
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.WithinFilter(Feature)</c>.</remarks>

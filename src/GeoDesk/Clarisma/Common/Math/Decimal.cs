@@ -8,7 +8,7 @@
 namespace Clarisma.Common.Math;
 
 /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal</c>.</remarks>
-public class Decimal
+internal class Decimal
 {
 
     public const long Invalid = long.MinValue;

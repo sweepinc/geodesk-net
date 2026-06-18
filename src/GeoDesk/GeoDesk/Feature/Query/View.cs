@@ -19,13 +19,13 @@ namespace GeoDesk.Feature.Query;
 public abstract class View : Features
 {
 
-    protected internal readonly FeatureStore store;
-    protected internal readonly int types;
-    protected internal readonly Matcher matcher;
-    protected internal readonly Filter? filter;
+    internal readonly FeatureStore store;
+    internal readonly int types;
+    internal readonly Matcher matcher;
+    internal readonly Filter? filter;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View(FeatureStore, int, Matcher, Filter)</c>.</remarks>
-    protected View(FeatureStore store, int types, Matcher matcher, Filter? filter)
+    internal View(FeatureStore store, int types, Matcher matcher, Filter? filter)
     {
         this.store = store;
         this.types = types;
@@ -34,7 +34,7 @@ public abstract class View : Features
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.newWith(int, Matcher, Filter)</c>.</remarks>
-    protected abstract Features NewWith(int types, Matcher matcher, Filter? filter);
+    internal abstract Features NewWith(int types, Matcher matcher, Filter? filter);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.types()</c>.</remarks>
     public int TypesValue()

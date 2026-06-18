@@ -8,7 +8,7 @@
 namespace Clarisma.Common.Util;
 
 /// <remarks>Ported from Java <c>com.clarisma.common.util.ProgressListener</c>.</remarks>
-public interface IProgressListener
+internal interface IProgressListener
 {
 
     /// <remarks>Ported from Java <c>com.clarisma.common.util.ProgressListener.progress(int)</c>.</remarks>

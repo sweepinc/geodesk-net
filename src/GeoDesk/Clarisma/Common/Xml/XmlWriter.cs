@@ -17,7 +17,7 @@ namespace Clarisma.Common.Xml;
 // In Java this extends PrintWriter. The straight port wraps a TextWriter and exposes
 // the print/format helpers that subclasses rely on.
 /// <remarks>Ported from Java <c>com.clarisma.common.xml.XmlWriter</c>.</remarks>
-public class XmlWriter
+internal class XmlWriter
 {
 
     protected readonly TextWriter Out;

@@ -16,7 +16,7 @@ namespace GeoDesk.Feature.Query;
 // TODO: fix lazy tile loading
 // TODO: Apply filter
 /// <remarks>Ported from Java <c>com.geodesk.feature.query.MemberIterator</c>.</remarks>
-public class MemberIterator : FeatureIterator
+internal class MemberIterator : FeatureIterator
 {
 
     // TODO: consolidate these flags?

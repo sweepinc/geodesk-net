@@ -13,7 +13,7 @@ namespace Java.Util.Concurrent;
 // package do not currently raise it, but the type exists so the ported call sites (which catch
 // it) remain structurally identical to Java.
 /// <remarks>Ported from Java <c>java.lang.InterruptedException</c>.</remarks>
-public class InterruptedException : Exception
+internal class InterruptedException : Exception
 {
 
     /// <remarks>Ported from Java <c>java.lang.InterruptedException()</c>.</remarks>

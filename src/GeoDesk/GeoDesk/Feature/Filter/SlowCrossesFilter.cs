@@ -22,7 +22,7 @@ namespace GeoDesk.Feature.Filters;
 /// </para>
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.filter.SlowCrossesFilter</c>.</remarks>
-public class SlowCrossesFilter : SlowSpatialFilter
+internal class SlowCrossesFilter : SlowSpatialFilter
 {
 
     readonly IPreparedGeometry _prepared;

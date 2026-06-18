@@ -10,7 +10,7 @@ using GeoDesk.Feature.Store;
 namespace GeoDesk.Feature.Match;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.match.RoleMatcher</c>.</remarks>
-public class RoleMatcher : Matcher
+internal class RoleMatcher : Matcher
 {
 
     readonly int _roleCode;

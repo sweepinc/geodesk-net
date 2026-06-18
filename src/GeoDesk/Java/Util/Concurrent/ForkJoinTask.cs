@@ -19,7 +19,7 @@ namespace Java.Util.Concurrent;
 // will execute the task inline on the calling thread if no worker has claimed it yet ("helping");
 // otherwise it waits for the claiming worker.
 /// <remarks>Ported from Java <c>java.util.concurrent.ForkJoinTask</c>.</remarks>
-public abstract class ForkJoinTask<V>
+internal abstract class ForkJoinTask<V>
 {
 
     const int Fresh = 0;

@@ -10,7 +10,7 @@ using System;
 namespace Clarisma.Common.Math;
 
 /// <remarks>Ported from Java <c>com.clarisma.common.math.DoubleRange</c>.</remarks>
-public class DoubleRange : IComparable<DoubleRange>
+internal class DoubleRange : IComparable<DoubleRange>
 {
 
     readonly double _start;

@@ -17,7 +17,7 @@ namespace GeoDesk.Util;
 /// Methods to generate JavaScript.
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.util.JavaScript</c>.</remarks>
-public class JavaScript
+internal class JavaScript
 {
 
     /// <remarks>Ported from Java <c>com.geodesk.util.JavaScript.writeMap(Appendable, Map)</c>.</remarks>

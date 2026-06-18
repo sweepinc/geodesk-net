@@ -14,7 +14,7 @@ using NetTopologySuite.Geometries;
 namespace GeoDesk.Util;
 
 /// <remarks>Ported from Java <c>com.geodesk.util.GeometryBuilder</c>.</remarks>
-public class GeometryBuilder : GeometryFactory
+internal class GeometryBuilder : GeometryFactory
 {
 
     public static readonly GeometryBuilder Instance = new GeometryBuilder();

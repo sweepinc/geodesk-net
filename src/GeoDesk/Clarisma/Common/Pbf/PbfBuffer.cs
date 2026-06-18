@@ -17,7 +17,7 @@ namespace Clarisma.Common.Pbf;
 
 // TODO: maybe maintain start pos so we can reset the buffer?
 /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer</c>.</remarks>
-public class PbfBuffer
+internal class PbfBuffer
 {
 
     protected byte[]? buf;

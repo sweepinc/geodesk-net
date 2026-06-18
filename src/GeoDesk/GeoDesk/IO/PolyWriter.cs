@@ -15,7 +15,7 @@ namespace GeoDesk.IO;
 
 // PORT: Java's Appendable sink is represented as a .NET TextWriter.
 /// <remarks>Ported from Java <c>com.geodesk.io.PolyWriter</c>.</remarks>
-public class PolyWriter
+internal class PolyWriter
 {
 
     readonly TextWriter _out;

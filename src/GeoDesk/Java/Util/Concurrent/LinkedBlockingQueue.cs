@@ -13,7 +13,7 @@ namespace Java.Util.Concurrent;
 // unbounded (Java's no-arg constructor), so Add() always succeeds and Take() blocks until an
 // element is available.
 /// <remarks>Ported from Java <c>java.util.concurrent.LinkedBlockingQueue</c>.</remarks>
-public class LinkedBlockingQueue<E> : BlockingQueue<E>
+internal class LinkedBlockingQueue<E> : BlockingQueue<E>
 {
 
     readonly BlockingCollection<E> _queue = new BlockingCollection<E>();

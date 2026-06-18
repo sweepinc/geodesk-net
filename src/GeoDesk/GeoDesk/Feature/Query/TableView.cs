@@ -17,7 +17,7 @@ namespace GeoDesk.Feature.Query;
 /// A Feature Collection that is materialized by scanning a table.
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.query.TableView</c>.</remarks>
-public abstract class TableView : View
+internal abstract class TableView : View
 {
 
     protected readonly NioBuffer buf;

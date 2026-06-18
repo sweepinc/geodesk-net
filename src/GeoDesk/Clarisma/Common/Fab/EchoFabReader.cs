@@ -11,7 +11,7 @@ using Clarisma.Common.Util;
 namespace Clarisma.Common.Fab;
 
 /// <remarks>Ported from Java <c>com.clarisma.common.fab.EchoFabReader</c>.</remarks>
-public class EchoFabReader : FabReader
+internal class EchoFabReader : FabReader
 {
 
     int _level;

@@ -16,7 +16,7 @@ using NioBuffer = Java.Nio.ByteBuffer;
 namespace GeoDesk.Feature.Query;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.query.WayNodeView</c>.</remarks>
-public class WayNodeView : TableView
+internal class WayNodeView : TableView
 {
 
     const int IncludeGeometryNodes = 256;
@@ -37,7 +37,7 @@ public class WayNodeView : TableView
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.WayNodeView.newWith(int, Matcher, Filter)</c>.</remarks>
-    protected override Features NewWith(int types, Matcher matcher, Filter? filter)
+    internal override Features NewWith(int types, Matcher matcher, Filter? filter)
     {
         return new WayNodeView(store, buf, ptr, types, matcher, filter);
     }

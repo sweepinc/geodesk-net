@@ -20,7 +20,7 @@ namespace GeoDesk.Feature.Filters;
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.filter.FastTileFilter</c>.</remarks>
 // TODO: don't apply to nodes (Nodes can never be multi-tile)
-public class FastTileFilter : Filter
+internal class FastTileFilter : Filter
 {
 
     readonly bool _fastAccept;

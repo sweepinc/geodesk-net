@@ -8,7 +8,7 @@
 namespace GeoDesk.Feature.Filters;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.filter.FilterStrategy</c>.</remarks>
-public class FilterStrategy
+internal class FilterStrategy
 {
 
     /// <summary>

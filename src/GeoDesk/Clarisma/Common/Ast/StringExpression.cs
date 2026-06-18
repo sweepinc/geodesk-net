@@ -8,7 +8,7 @@
 namespace Clarisma.Common.Ast;
 
 /// <remarks>Ported from Java <c>com.clarisma.common.ast.StringExpression</c>.</remarks>
-public class StringExpression : Expression
+internal class StringExpression : Expression
 {
 
     readonly Expression[] _parts;

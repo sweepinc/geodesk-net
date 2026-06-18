@@ -15,7 +15,7 @@ using NetTopologySuite.Geometries;
 namespace GeoDesk.Feature.Filters;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ConnectedFilter</c>.</remarks>
-public class ConnectedFilter : Filter
+internal class ConnectedFilter : Filter
 {
 
     Feature? _self;

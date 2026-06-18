@@ -16,7 +16,7 @@ namespace Clarisma.Common.Fab;
 // third-party SAX library. A future pass could adapt it to System.Xml.XmlWriter or a
 // custom handler interface. The class is unused elsewhere in the library.
 /// <remarks>Ported from Java <c>com.clarisma.common.fab.SaxFabReader</c>.</remarks>
-public class SaxFabReader : FabReader
+internal class SaxFabReader : FabReader
 {
 
     /// <remarks>Ported from Java <c>com.clarisma.common.fab.SaxFabReader.read(BufferedReader, String, ContentHandler)</c>.</remarks>

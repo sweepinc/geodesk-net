@@ -8,7 +8,7 @@
 namespace Clarisma.Common.Pbf;
 
 /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfType</c>.</remarks>
-public static class PbfType
+internal static class PbfType
 {
 
     public const int Varint = 0;

@@ -19,7 +19,7 @@ namespace Java.Util.Concurrent;
 // without reproducing the work-stealing internals. Replacing this with a tuned scheduler is a
 // future optimization.
 /// <remarks>Ported from Java <c>java.util.concurrent.ForkJoinPool</c>.</remarks>
-public class ForkJoinPool : ExecutorService
+internal class ForkJoinPool : ExecutorService
 {
 
     [ThreadStatic] static ForkJoinPool? _current;

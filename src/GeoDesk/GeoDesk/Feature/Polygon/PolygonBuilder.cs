@@ -13,7 +13,7 @@ using NetTopologySuite.Geometries;
 namespace GeoDesk.Feature.Polygons;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.polygon.PolygonBuilder</c>.</remarks>
-public class PolygonBuilder
+internal class PolygonBuilder
 {
 
     /// <summary>

@@ -8,7 +8,7 @@
 namespace GeoDesk.Feature.Store;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureFlags</c>.</remarks>
-public interface IFeatureFlags
+internal interface IFeatureFlags
 {
 
     const int LAST_SPATIAL_ITEM_FLAG = 1;

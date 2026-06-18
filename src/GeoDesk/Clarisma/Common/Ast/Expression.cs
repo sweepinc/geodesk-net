@@ -8,7 +8,7 @@
 namespace Clarisma.Common.Ast;
 
 /// <remarks>Ported from Java <c>com.clarisma.common.ast.Expression</c>.</remarks>
-public abstract class Expression : Ast
+internal abstract class Expression : Ast
 {
 
     // TODO: why is accept() not implemented here?

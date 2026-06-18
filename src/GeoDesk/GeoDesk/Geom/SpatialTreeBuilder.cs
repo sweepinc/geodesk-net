@@ -12,7 +12,7 @@ namespace GeoDesk.Geom;
 // NOTE: Java declares the parameter as ArrayList<? extends Bounds>. C# lacks
 // use-site covariance for mutable lists, so this straight port uses IList<Bounds>.
 /// <remarks>Ported from Java <c>com.geodesk.geom.SpatialTreeBuilder</c>.</remarks>
-public interface ISpatialTreeBuilder<B> where B : Bounds
+internal interface ISpatialTreeBuilder<B> where B : Bounds
 {
 
     /// <remarks>Ported from Java <c>com.geodesk.geom.SpatialTreeBuilder.build(ArrayList)</c>.</remarks>

@@ -15,7 +15,7 @@ namespace GeoDesk.Feature.Filters;
 /// Spatial predicate that accepts only features that contain a given point.
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ContainsPointFilter</c>.</remarks>
-public class ContainsPointFilter : Filter
+internal class ContainsPointFilter : Filter
 {
 
     readonly Bounds _bounds;

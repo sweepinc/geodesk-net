@@ -18,7 +18,7 @@ using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace GeoDesk.Feature.Store;
 
-public class StoredWay : StoredFeature, Way
+internal class StoredWay : StoredFeature, Way
 {
     public StoredWay(FeatureStore store, NioBuffer buf, int ptr)
         : base(store, buf, ptr)

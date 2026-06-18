@@ -8,7 +8,7 @@
 namespace GeoDesk.Geom;
 
 /// <remarks>Ported from Java <c>com.geodesk.geom.BoxBuilder</c>.</remarks>
-public class BoxBuilder : Bounds
+internal class BoxBuilder : Bounds
 {
 
     int _minX;

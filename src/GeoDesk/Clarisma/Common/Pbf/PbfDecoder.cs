@@ -17,7 +17,7 @@ namespace Clarisma.Common.Pbf;
 // TODO: unify these under an interface, so we can read ByteBuffer, byte array
 //  and InputStream the same way
 /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfDecoder</c>.</remarks>
-public class PbfDecoder
+internal class PbfDecoder
 {
 
     readonly ByteBuffer _buf;

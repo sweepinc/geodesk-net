@@ -14,7 +14,7 @@ namespace Clarisma.Common.Fab;
 
 // TODO: Use simple = instead of := for literal values without comments and sub-keys
 /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader</c>.</remarks>
-public class FabReader
+internal class FabReader
 {
 
     protected int tabSize = 4;

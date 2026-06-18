@@ -8,7 +8,7 @@
 namespace GeoDesk.Feature.Polygons;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.polygon.RingAssigner</c>.</remarks>
-public class RingAssigner
+internal class RingAssigner
 {
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.polygon.RingAssigner.assignRing(Ring[], Ring)</c>.</remarks>

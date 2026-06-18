@@ -11,7 +11,7 @@ namespace GeoDesk.IO;
 
 // TODO: use a more general class
 /// <remarks>Ported from Java <c>com.geodesk.io.ParseException</c>.</remarks>
-public class ParseException : Exception
+internal class ParseException : Exception
 {
 
     /// <remarks>Ported from Java <c>com.geodesk.io.ParseException(String)</c>.</remarks>

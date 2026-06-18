@@ -12,7 +12,7 @@ using DecimalType = Clarisma.Common.Math.Decimal;
 namespace GeoDesk.Feature.Store;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.store.TagValues</c>.</remarks>
-public static class TagValues
+internal static class TagValues
 {
 
     /// <summary>

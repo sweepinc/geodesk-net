@@ -11,7 +11,7 @@ using System.Text;
 namespace GeoDesk.Feature.Query;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.query.IndexBits</c>.</remarks>
-public static class IndexBits
+internal static class IndexBits
 {
 
     /// <summary>

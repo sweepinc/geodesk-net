@@ -13,7 +13,7 @@ using GeoDesk.Feature;
 namespace GeoDesk.Feature.Polygons;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.polygon.Segment</c>.</remarks>
-public class Segment
+internal class Segment
 {
 
     internal const int Unassigned = 0;

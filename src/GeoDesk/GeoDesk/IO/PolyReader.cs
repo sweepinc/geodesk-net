@@ -17,7 +17,7 @@ namespace GeoDesk.IO;
 
 // PORT: Java's BufferedReader source is represented as a .NET TextReader.
 /// <remarks>Ported from Java <c>com.geodesk.io.PolyReader</c>.</remarks>
-public class PolyReader
+internal class PolyReader
 {
 
     readonly TextReader _in;

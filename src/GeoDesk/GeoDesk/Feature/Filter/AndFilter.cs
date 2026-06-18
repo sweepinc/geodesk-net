@@ -15,7 +15,7 @@ namespace GeoDesk.Feature.Filters;
 /// A Filter that combines two Filters.
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.filter.AndFilter</c>.</remarks>
-public class AndFilter : Filter
+internal class AndFilter : Filter
 {
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.AndFilter.create(Filter, Filter)</c>.</remarks>

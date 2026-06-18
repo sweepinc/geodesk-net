@@ -16,7 +16,7 @@ using GeoDesk.Feature.Store;
 namespace GeoDesk.Feature.Match;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherParser</c>.</remarks>
-public class MatcherParser : Parser
+internal class MatcherParser : Parser
 {
 
     const string Comma = ",";

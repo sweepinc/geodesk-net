@@ -20,7 +20,7 @@ namespace Clarisma.Common.Util;
 /// <c>java.util.Formatter</c>.
 /// </summary>
 /// <remarks>Port-only helper (no direct Java counterpart): a stand-in for <c>java.util.Formatter</c>.</remarks>
-public static class JavaFormat
+internal static class JavaFormat
 {
 
     /// <remarks>Port-only: emulates Java's <c>String.format(String, Object...)</c> for the used specifiers.</remarks>

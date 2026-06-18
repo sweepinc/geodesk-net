@@ -14,7 +14,7 @@ namespace GeoDesk.Feature.Query;
 
 // TODO: Maybe give task the tile page instead of TIP
 /// <remarks>Ported from Java <c>com.geodesk.feature.query.TileQueryTask</c>.</remarks>
-public class TileQueryTask : QueryTask
+internal class TileQueryTask : QueryTask
 {
 
     readonly int _tilePage;

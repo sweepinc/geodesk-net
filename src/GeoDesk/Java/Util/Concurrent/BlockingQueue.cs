@@ -9,7 +9,7 @@ namespace Java.Util.Concurrent;
 
 // PORT: subset of java.util.concurrent.BlockingQueue used by the query engine.
 /// <remarks>Ported from Java <c>java.util.concurrent.BlockingQueue</c>.</remarks>
-public interface BlockingQueue<E>
+internal interface BlockingQueue<E>
 {
 
     /// <summary>

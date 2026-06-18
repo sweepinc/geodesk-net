@@ -10,7 +10,7 @@ using System.Globalization;
 namespace Clarisma.Common.Text;
 
 /// <remarks>Ported from Java <c>com.clarisma.common.text.Format</c>.</remarks>
-public static class Format
+internal static class Format
 {
 
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Format.formatTimespan(long)</c>.</remarks>

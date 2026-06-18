@@ -19,7 +19,7 @@ using ZoomLevelsUtil = GeoDesk.Feature.Store.ZoomLevels;
 namespace GeoDesk.Feature.Store;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore</c>.</remarks>
-public class FeatureStore : FreeStore
+internal class FeatureStore : FreeStore
 {
 
     public new const int MAGIC = 0x1CE50D6E; // "geodesic"

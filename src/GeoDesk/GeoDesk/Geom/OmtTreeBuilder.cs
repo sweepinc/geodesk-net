@@ -42,7 +42,7 @@ namespace GeoDesk.Geom;
 // careful when translating code from JavaScript:
 // must cast ints explicitly into doubles
 /// <remarks>Ported from Java <c>com.geodesk.geom.OmtTreeBuilder</c>.</remarks>
-public class OmtTreeBuilder<B> : ISpatialTreeBuilder<B> where B : Bounds
+internal class OmtTreeBuilder<B> : ISpatialTreeBuilder<B> where B : Bounds
 {
 
     static readonly IComparer<Bounds> CompareMinX = new MinXComparer();

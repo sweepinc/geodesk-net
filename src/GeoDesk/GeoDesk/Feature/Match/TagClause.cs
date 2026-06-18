@@ -16,7 +16,7 @@ namespace GeoDesk.Feature.Match;
 /// A class that represents a parsed GOQL tag clause (e.g. "[amenity=restaurant]").
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagClause</c>.</remarks>
-public class TagClause : Variable, IComparable<TagClause>
+internal class TagClause : Variable, IComparable<TagClause>
 {
 
     // explicit is [k], implicit are all others except [k!=v] and [k!~v]

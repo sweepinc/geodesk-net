@@ -13,7 +13,7 @@ using NioBuffer = Java.Nio.ByteBuffer;
 namespace GeoDesk.Feature.Query;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.query.ParentRelationView</c>.</remarks>
-public class ParentRelationView : TableView
+internal class ParentRelationView : TableView
 {
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.ParentRelationView(FeatureStore, ByteBuffer, int)</c>.</remarks>
@@ -29,7 +29,7 @@ public class ParentRelationView : TableView
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.ParentRelationView.newWith(int, Matcher, Filter)</c>.</remarks>
-    protected override Features NewWith(int types, Matcher matcher, Filter? filter)
+    internal override Features NewWith(int types, Matcher matcher, Filter? filter)
     {
         return new ParentRelationView(store, buf, ptr, types, matcher, filter);
     }

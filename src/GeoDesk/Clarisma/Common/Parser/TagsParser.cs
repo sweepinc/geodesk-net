@@ -16,7 +16,7 @@ namespace Clarisma.Common.Parser;
 /// a number, <c>true</c> or <c>false</c>.
 /// </summary>
 /// <remarks>Ported from Java <c>com.clarisma.common.parser.TagsParser</c>.</remarks>
-public class TagsParser : Parser
+internal class TagsParser : Parser
 {
 
     public const string COMMA = ",";

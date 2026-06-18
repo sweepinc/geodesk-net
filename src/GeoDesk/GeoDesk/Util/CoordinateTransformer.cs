@@ -16,7 +16,7 @@ namespace GeoDesk.Util;
 // (10cm resolution)
 // PORT: Java's Appendable sink is represented as a .NET TextWriter.
 /// <remarks>Ported from Java <c>com.geodesk.util.CoordinateTransformer</c>.</remarks>
-public class CoordinateTransformer
+internal class CoordinateTransformer
 {
 
     readonly double _scale;

@@ -10,7 +10,7 @@ using NetTopologySuite.Geometries;
 namespace GeoDesk.Geom;
 
 /// <remarks>Ported from Java <c>com.geodesk.geom.Coordinates</c>.</remarks>
-public static class Coordinates
+internal static class Coordinates
 {
 
     /// <remarks>Ported from Java <c>com.geodesk.geom.Coordinates.envelope(int[])</c>.</remarks>

@@ -13,7 +13,7 @@ using NioBuffer = Java.Nio.ByteBuffer;
 namespace GeoDesk.Feature.Query;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.query.MemberView</c>.</remarks>
-public class MemberView : TableView
+internal class MemberView : TableView
 {
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.MemberView(FeatureStore, ByteBuffer, int, int, Matcher, Filter)</c>.</remarks>
@@ -23,7 +23,7 @@ public class MemberView : TableView
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.MemberView.newWith(int, Matcher, Filter)</c>.</remarks>
-    protected override Features NewWith(int types, Matcher matcher, Filter? filter)
+    internal override Features NewWith(int types, Matcher matcher, Filter? filter)
     {
         return new MemberView(store, buf, ptr, types, matcher, filter);
     }

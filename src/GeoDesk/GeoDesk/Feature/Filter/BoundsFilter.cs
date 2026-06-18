@@ -14,7 +14,7 @@ namespace GeoDesk.Feature.Filters;
 /// A Filter that accepts only features that intersect the specified bounds.
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.filter.BoundsFilter</c>.</remarks>
-public class BoundsFilter : Filter
+internal class BoundsFilter : Filter
 {
 
     readonly Bounds _bounds;

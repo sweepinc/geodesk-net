@@ -19,7 +19,7 @@ namespace GeoDesk.Feature.Filters;
 /// A Filter that only accepts features whose geometry contains the test geometry.
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ContainsFilter</c>.</remarks>
-public class ContainsFilter : Filter
+internal class ContainsFilter : Filter
 {
 
     readonly Geometry _testGeom;

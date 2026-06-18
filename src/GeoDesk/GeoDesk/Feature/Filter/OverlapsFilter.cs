@@ -23,7 +23,7 @@ namespace GeoDesk.Feature.Filters;
 /// </para>
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.filter.OverlapsFilter</c>.</remarks>
-public class OverlapsFilter : AbstractRelateFilter
+internal class OverlapsFilter : AbstractRelateFilter
 {
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.OverlapsFilter(Feature)</c>.</remarks>

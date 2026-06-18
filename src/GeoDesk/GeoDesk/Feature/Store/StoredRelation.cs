@@ -16,7 +16,7 @@ using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace GeoDesk.Feature.Store;
 
-public class StoredRelation : StoredFeature, Relation
+internal class StoredRelation : StoredFeature, Relation
 {
     public StoredRelation(FeatureStore store, NioBuffer buf, int ptr)
         : base(store, buf, ptr)

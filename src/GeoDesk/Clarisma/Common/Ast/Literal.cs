@@ -10,7 +10,7 @@ using System;
 namespace Clarisma.Common.Ast;
 
 /// <remarks>Ported from Java <c>com.clarisma.common.ast.Literal</c>.</remarks>
-public class Literal : Expression
+internal class Literal : Expression
 {
 
     readonly object? _value;

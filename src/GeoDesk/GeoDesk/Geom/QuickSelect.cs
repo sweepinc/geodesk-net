@@ -34,7 +34,7 @@ using static System.Math;
 namespace GeoDesk.Geom;
 
 /// <remarks>Ported from Java <c>com.geodesk.geom.QuickSelect</c>.</remarks>
-public static class QuickSelect
+internal static class QuickSelect
 {
 
     // sort an array so that items come in groups of n unsorted items, with groups sorted between each

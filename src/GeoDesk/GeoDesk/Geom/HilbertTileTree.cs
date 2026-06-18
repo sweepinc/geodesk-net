@@ -35,7 +35,7 @@ using System.Collections.Generic;
 namespace GeoDesk.Geom;
 
 /// <remarks>Ported from Java <c>com.geodesk.geom.HilbertTileTree</c>.</remarks>
-public class HilbertTileTree : RTree
+internal class HilbertTileTree : RTree
 {
 
     /// <remarks>Ported from Java <c>com.geodesk.geom.HilbertTileTree.Pair</c>.</remarks>

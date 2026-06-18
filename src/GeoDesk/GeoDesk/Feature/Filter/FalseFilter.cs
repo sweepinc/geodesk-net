@@ -13,7 +13,7 @@ using GeoDesk.Feature;
 namespace GeoDesk.Feature.Filters;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.filter.FalseFilter</c>.</remarks>
-public class FalseFilter : Filter
+internal class FalseFilter : Filter
 {
 
     public static readonly Filter Instance = new FalseFilter();

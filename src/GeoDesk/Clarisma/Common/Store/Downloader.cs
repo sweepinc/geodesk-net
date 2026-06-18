@@ -30,7 +30,7 @@ namespace Clarisma.Common.Store;
 /// <see cref="System.Threading.Thread"/>, and Java's <c>synchronized</c> / <c>wait</c> /
 /// <c>notifyAll</c> become <see cref="Monitor"/> on a private lock object.
 /// </remarks>
-public class Downloader
+internal class Downloader
 {
 
     static readonly HttpClient HttpClient = new HttpClient();

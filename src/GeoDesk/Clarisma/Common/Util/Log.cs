@@ -11,7 +11,7 @@ using System.Globalization;
 namespace Clarisma.Common.Util;
 
 /// <remarks>Ported from Java <c>com.clarisma.common.util.Log</c>.</remarks>
-public static class Log
+internal static class Log
 {
 
     // Port-only: Java synchronizes on System.out and formats the timestamp with a SimpleDateFormat;

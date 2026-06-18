@@ -8,7 +8,7 @@
 namespace Clarisma.Common.Ast;
 
 /// <remarks>Ported from Java <c>com.clarisma.common.ast.AstVisitor</c>.</remarks>
-public interface IAstVisitor<R>
+internal interface IAstVisitor<R>
 {
 
     /// <remarks>Ported from Java <c>com.clarisma.common.ast.AstVisitor.visitExpression(Expression)</c>.</remarks>

@@ -11,7 +11,7 @@ using GeoDesk.Geom;
 namespace GeoDesk.Feature.Polygons;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.polygon.RingBuilder</c>.</remarks>
-public class RingBuilder
+internal class RingBuilder
 {
 
     /// <summary>

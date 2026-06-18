@@ -11,7 +11,7 @@ namespace GeoDesk.Feature.Query;
 
 // TODO: do we need this base class?
 /// <remarks>Ported from Java <c>com.geodesk.feature.query.QueryTask</c>.</remarks>
-public abstract class QueryTask : ForkJoinTask<QueryResults>
+internal abstract class QueryTask : ForkJoinTask<QueryResults>
 {
 
     // PORT: Java declares these protected, but they are also accessed across sibling task

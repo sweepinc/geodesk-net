@@ -15,7 +15,7 @@ namespace GeoDesk.Feature.Filters;
 /// A Filter that only accepts features whose geometry is disjoint from the test geometry.
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.filter.DisjointFilter</c>.</remarks>
-public class DisjointFilter : Filter
+internal class DisjointFilter : Filter
 {
 
     readonly IPreparedGeometry _prepared;

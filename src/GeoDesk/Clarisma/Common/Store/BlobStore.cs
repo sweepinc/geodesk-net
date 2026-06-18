@@ -52,7 +52,7 @@ namespace Clarisma.Common.Store;
 /// modifications, or rolling them back.
 /// </summary>
 /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore</c>.</remarks>
-public class BlobStore : Store
+internal class BlobStore : Store
 {
 
     /// <summary>
@@ -781,14 +781,14 @@ public class BlobStore : Store
     public void CreateCopy(string newPath)
     {
         var metadataSize = baseMapping!.GetInt(METADATA_SIZE_OFS);
-        var buf = NioBuffer.Allocate(metadataSize);
+        using var buf = NioBuffer.Allocate(metadataSize); // pooled — dispose returns the array
         buf.Order(ByteOrder.LittleEndian);
         buf.Put(0, baseMapping!, 0, metadataSize);
         ResetMetadata(buf);
         buf.PutInt(TOTAL_PAGES_OFS, BytesToPages(metadataSize));
 
         using FileStream channel = new FileStream(newPath, FileMode.Create, FileAccess.Write);
-        channel.Write(buf.Array()!, 0, metadataSize);
+        channel.Write(buf.Array(), 0, metadataSize);
     }
 
 }

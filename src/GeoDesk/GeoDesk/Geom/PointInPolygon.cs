@@ -10,7 +10,7 @@ using GeoDesk.Feature.Store;
 namespace GeoDesk.Geom;
 
 /// <remarks>Ported from Java <c>com.geodesk.geom.PointInPolygon</c>.</remarks>
-public static class PointInPolygon
+internal static class PointInPolygon
 {
     // return -1 if vertex, 1 if inside, 0 if outside
     public static bool IsInside(int[] coords, double cx, double cy)

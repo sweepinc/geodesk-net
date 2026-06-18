@@ -35,7 +35,7 @@ namespace GeoDesk.Extensions;
 /// (<c>F_OFD_SETLK</c>), which are owned by the open file description (the descriptor) rather than the
 /// process. macOS has no OFD locks, so it falls back to classic per-process <c>fcntl</c> locks.</para>
 /// </remarks>
-public static class FileStreamExtensions
+internal static class FileStreamExtensions
 {
 
     /// <summary>

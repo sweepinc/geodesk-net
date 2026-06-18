@@ -16,7 +16,7 @@ namespace GeoDesk.Feature.Filters;
 /// A Filter that only accepts features whose geometry is covered by the test geometry.
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.filter.CoveredByFilter</c>.</remarks>
-public class CoveredByFilter : AbstractRelateFilter
+internal class CoveredByFilter : AbstractRelateFilter
 {
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.CoveredByFilter(Feature)</c>.</remarks>

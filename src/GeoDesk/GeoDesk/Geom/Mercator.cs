@@ -21,7 +21,7 @@ namespace GeoDesk.Geom;
 /// unit called "imp" ("integer, Mercator-projected").
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator</c>.</remarks>
-public static class Mercator
+internal static class Mercator
 {
 
     const double MapWidth = 4_294_967_294.9999d;

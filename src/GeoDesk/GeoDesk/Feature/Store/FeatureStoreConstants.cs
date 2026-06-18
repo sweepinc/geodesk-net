@@ -12,7 +12,7 @@ namespace GeoDesk.Feature.Store;
 // directly at the (few) call sites. Note MAGIC/VERSION/VERSION_OFS deliberately differ
 // from the BlobStore values.
 /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStoreConstants</c>.</remarks>
-public static class FeatureStoreConstants
+internal static class FeatureStoreConstants
 {
 
     public const int MAGIC = 0x1CE50D6E; // 6E0DE51C "geodesic/geodesk"

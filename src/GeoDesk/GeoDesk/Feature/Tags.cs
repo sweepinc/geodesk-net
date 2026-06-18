@@ -6,17 +6,22 @@
  */
 
 using System.Collections.Generic;
-using Clarisma.Common.Util;
 using GeoDesk.Feature.Store;
 
 namespace GeoDesk.Feature;
 
 /// <summary>
-/// A <see cref="IConsumable"/> that can be used to iterate a feature's tags.
+/// A once-traversable collection that can be used to iterate a feature's tags.
 /// </summary>
-/// <remarks>Ported from Java <c>com.geodesk.feature.Tags</c>.</remarks>
-public interface Tags : IConsumable
+/// <remarks>Ported from Java <c>com.geodesk.feature.Tags</c> (which extends
+/// <c>com.clarisma.common.util.Consumable</c>; <see cref="IsEmpty"/> is declared here directly
+/// so the public API does not expose the internal Consumable type).</remarks>
+public interface Tags
 {
+
+    /// <summary>Returns true if there are no tags to iterate.</summary>
+    /// <remarks>Ported from Java <c>com.clarisma.common.util.Consumable.isEmpty()</c>.</remarks>
+    bool IsEmpty();
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.Tags.size()</c>.</remarks>
     int Size();

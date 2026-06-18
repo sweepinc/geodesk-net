@@ -10,7 +10,7 @@ using System;
 namespace Clarisma.Common.Pbf;
 
 /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfException</c>.</remarks>
-public class PbfException : Exception
+internal class PbfException : Exception
 {
 
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfException(String)</c>.</remarks>

@@ -11,7 +11,7 @@ using GeoDesk.Feature;
 namespace GeoDesk.Feature.Store;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.store.EmptyTags</c>.</remarks>
-public class EmptyTags : Tags
+internal class EmptyTags : Tags
 {
 
     public static readonly EmptyTags SINGLETON = new EmptyTags();

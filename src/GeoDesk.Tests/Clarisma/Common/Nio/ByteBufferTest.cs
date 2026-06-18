@@ -13,6 +13,7 @@ namespace Java.Nio;
 // Java counterpart test).
 public class ByteBufferTest
 {
+
     [Fact]
     public void LittleEndianRoundTrip()
     {
@@ -76,4 +77,5 @@ public class ByteBufferTest
         Assert.Same(data, buf.Array());
         Assert.Equal(4, buf.Capacity());
     }
+
 }

@@ -13,7 +13,7 @@ namespace Clarisma.Common.Ast;
 
 // In Java implements AstVisitor<Void>; here uses object? as the (ignored) result type.
 /// <remarks>Ported from Java <c>com.clarisma.common.ast.ExpressionXmlWriter</c>.</remarks>
-public class ExpressionXmlWriter : XmlWriter, IAstVisitor<object?>
+internal class ExpressionXmlWriter : XmlWriter, IAstVisitor<object?>
 {
 
     /// <remarks>Ported from Java <c>com.clarisma.common.ast.ExpressionXmlWriter(OutputStream)</c>.</remarks>

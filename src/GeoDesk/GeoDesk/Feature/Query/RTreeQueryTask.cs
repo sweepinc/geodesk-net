@@ -15,7 +15,7 @@ using NioBuffer = Java.Nio.ByteBuffer;
 namespace GeoDesk.Feature.Query;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.query.RTreeQueryTask</c>.</remarks>
-public class RTreeQueryTask : QueryTask
+internal class RTreeQueryTask : QueryTask
 {
 
     protected readonly NioBuffer buf;

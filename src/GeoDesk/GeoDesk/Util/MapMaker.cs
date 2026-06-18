@@ -18,7 +18,7 @@ namespace GeoDesk.Util;
 /// A class for generating a Leaflet-based interactive map.
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker</c>.</remarks>
-public class MapMaker
+internal class MapMaker
 {
 
     string _id = "map";

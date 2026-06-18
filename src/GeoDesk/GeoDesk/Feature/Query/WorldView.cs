@@ -25,14 +25,14 @@ public class WorldView : View
     protected internal readonly Bounds bounds;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.WorldView(FeatureStore)</c>.</remarks>
-    public WorldView(FeatureStore store)
+    internal WorldView(FeatureStore store)
         : base(store, TypeBits.ALL, Matcher.ALL, null)
     {
         bounds = World;
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.WorldView(FeatureStore, int, Bounds, Matcher, Filter)</c>.</remarks>
-    public WorldView(FeatureStore store, int types, Bounds bounds, Matcher matcher, Filter? filter)
+    internal WorldView(FeatureStore store, int types, Bounds bounds, Matcher matcher, Filter? filter)
         : base(store, types, matcher, filter)
     {
         this.bounds = bounds;
@@ -46,7 +46,7 @@ public class WorldView : View
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.WorldView.newWith(int, Matcher, Filter)</c>.</remarks>
-    protected override Features NewWith(int types, Matcher matcher, Filter? filter)
+    internal override Features NewWith(int types, Matcher matcher, Filter? filter)
     {
         return new WorldView(store, types, bounds, matcher, filter);
     }

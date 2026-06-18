@@ -12,7 +12,7 @@ namespace Clarisma.Common.Store;
 
 // In Java the path type is java.nio.file.Path; here it is a string.
 /// <remarks>Ported from Java <c>com.clarisma.common.store.StoreException</c>.</remarks>
-public class StoreException : Exception
+internal class StoreException : Exception
 {
 
     readonly string? path;

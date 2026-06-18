@@ -10,7 +10,7 @@ using System.Diagnostics;
 namespace GeoDesk.Geom;
 
 /// <remarks>Ported from Java <c>com.geodesk.geom.Morton</c>.</remarks>
-public static class Morton
+internal static class Morton
 {
 
     /// <remarks>Ported from Java <c>com.geodesk.geom.Morton.mortonFromXY(int, int)</c>.</remarks>

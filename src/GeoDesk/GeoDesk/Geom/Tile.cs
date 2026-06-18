@@ -15,7 +15,7 @@ using NetTopologySuite.Geometries;
 
 namespace GeoDesk.Geom;
 
-public static class Tile
+internal static class Tile
 {
     public static int Row(int tile)
     {

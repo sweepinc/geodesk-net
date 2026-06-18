@@ -16,7 +16,7 @@ namespace GeoDesk.Feature.Match;
 /// (e.g. "na[amenity=restaurant][cuisine=pizza]").
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.match.Selector</c>.</remarks>
-public class Selector : Expression
+internal class Selector : Expression
 {
 
     public const int CLAUSE_LOCAL_REQUIRED = 1;

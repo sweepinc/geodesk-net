@@ -17,7 +17,7 @@ namespace GeoDesk.Util;
 /// A marker on a Leaflet-based interactive map.
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.util.Marker</c>.</remarks>
-public abstract class Marker
+internal abstract class Marker
 {
 
     protected Dictionary<string, object> options = new Dictionary<string, object>();

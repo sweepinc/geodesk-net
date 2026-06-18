@@ -8,7 +8,7 @@
 namespace GeoDesk.Feature.Store;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureConstants</c>.</remarks>
-public static class FeatureConstants
+internal static class FeatureConstants
 {
 
     /// <summary>

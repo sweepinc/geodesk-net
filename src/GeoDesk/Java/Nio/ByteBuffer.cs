@@ -26,8 +26,19 @@ namespace Java.Nio;
 /// reimplementation of java.nio.
 /// </summary>
 /// <remarks>.NET stand-in for <c>java.nio.ByteBuffer</c> (no <c>com.*</c> Java source; mirrors the JDK type).</remarks>
-public sealed class ByteBuffer : IDisposable
+internal sealed class ByteBuffer : IDisposable
 {
+
+    /// <summary>
+    /// Wraps an arbitrary <see cref="System.Memory{Byte}"/> window. For a mapped backing, pass the
+    /// <paramref name="owner"/> (disposed to unmap) and an <paramref name="onForce"/> delegate
+    /// (the view's flush). Heap buffers pass neither.
+    /// </summary>
+    public static ByteBuffer Of(Memory<byte> memory, IDisposable? owner = null, Action? onForce = null)
+    {
+        return new ByteBuffer(memory, owner, onForce);
+    }
+
     readonly Memory<byte> _mem;
     readonly IDisposable? _owner;
     readonly Action? _onForce;
@@ -36,6 +47,12 @@ public sealed class ByteBuffer : IDisposable
     int capacity;
     ByteOrder order = ByteOrder.BigEndian; // Java's default
 
+    /// <summary>
+    /// Initializes a new instance.
+    /// </summary>
+    /// <param name="mem"></param>
+    /// <param name="owner"></param>
+    /// <param name="onForce"></param>
     ByteBuffer(Memory<byte> mem, IDisposable? owner, Action? onForce)
     {
         _mem = mem;
@@ -69,10 +86,26 @@ public sealed class ByteBuffer : IDisposable
         src.CopyTo(_mem.Span.Slice(index, src.Length));
     }
 
-    /// <summary>The backing array (heap buffers only); null for mapped buffers.</summary>
-    public byte[]? Array()
+    /// <summary>
+    /// Tells whether this buffer is backed by an accessible byte array.
+    /// </summary>
+    /// <remarks>Mirrors <c>java.nio.ByteBuffer.hasArray()</c>: true for heap buffers, false for mapped.</remarks>
+    public bool HasArray()
     {
-        return MemoryMarshal.TryGetArray<byte>(_mem, out var seg) ? seg.Array : null;
+        return MemoryMarshal.TryGetArray<byte>(_mem, out _);
+    }
+
+    /// <summary>
+    /// Returns the byte array that backs this buffer (heap buffers only).
+    /// </summary>
+    /// <remarks>Mirrors <c>java.nio.ByteBuffer.array()</c>: throws <see cref="NotSupportedException"/>
+    /// (Java's <c>UnsupportedOperationException</c>) if this buffer is not backed by an accessible
+    /// array — e.g. a mapped buffer. Guard with <see cref="HasArray"/>.</remarks>
+    public byte[] Array()
+    {
+        if (MemoryMarshal.TryGetArray<byte>(_mem, out var seg))
+            return seg.Array!;
+        throw new NotSupportedException();
     }
 
     public ByteBuffer Slice()
@@ -114,8 +147,11 @@ public sealed class ByteBuffer : IDisposable
     public ByteBuffer PutInt(int index, int value)
     {
         Span<byte> s = stackalloc byte[4];
-        if (order == ByteOrder.LittleEndian) BinaryPrimitives.WriteInt32LittleEndian(s, value);
-        else BinaryPrimitives.WriteInt32BigEndian(s, value);
+        if (order == ByteOrder.LittleEndian)
+            BinaryPrimitives.WriteInt32LittleEndian(s, value);
+        else
+            BinaryPrimitives.WriteInt32BigEndian(s, value);
+
         PutBytes(index, s);
         return this;
     }
@@ -124,16 +160,17 @@ public sealed class ByteBuffer : IDisposable
     {
         Span<byte> s = stackalloc byte[8];
         GetBytes(index, s);
-        return order == ByteOrder.LittleEndian
-            ? BinaryPrimitives.ReadInt64LittleEndian(s)
-            : BinaryPrimitives.ReadInt64BigEndian(s);
+        return order == ByteOrder.LittleEndian ? BinaryPrimitives.ReadInt64LittleEndian(s) : BinaryPrimitives.ReadInt64BigEndian(s);
     }
 
     public ByteBuffer PutLong(int index, long value)
     {
         Span<byte> s = stackalloc byte[8];
-        if (order == ByteOrder.LittleEndian) BinaryPrimitives.WriteInt64LittleEndian(s, value);
-        else BinaryPrimitives.WriteInt64BigEndian(s, value);
+        if (order == ByteOrder.LittleEndian)
+            BinaryPrimitives.WriteInt64LittleEndian(s, value);
+        else
+            BinaryPrimitives.WriteInt64BigEndian(s, value);
+
         PutBytes(index, s);
         return this;
     }
@@ -150,8 +187,11 @@ public sealed class ByteBuffer : IDisposable
     public ByteBuffer PutShort(int index, short value)
     {
         Span<byte> s = stackalloc byte[2];
-        if (order == ByteOrder.LittleEndian) BinaryPrimitives.WriteInt16LittleEndian(s, value);
-        else BinaryPrimitives.WriteInt16BigEndian(s, value);
+        if (order == ByteOrder.LittleEndian)
+            BinaryPrimitives.WriteInt16LittleEndian(s, value);
+        else
+            BinaryPrimitives.WriteInt16BigEndian(s, value);
+
         PutBytes(index, s);
         return this;
     }
@@ -163,14 +203,18 @@ public sealed class ByteBuffer : IDisposable
         ushort v = order == ByteOrder.LittleEndian
             ? BinaryPrimitives.ReadUInt16LittleEndian(s)
             : BinaryPrimitives.ReadUInt16BigEndian(s);
+
         return (char)v;
     }
 
     public ByteBuffer PutChar(int index, char value)
     {
         Span<byte> s = stackalloc byte[2];
-        if (order == ByteOrder.LittleEndian) BinaryPrimitives.WriteUInt16LittleEndian(s, value);
-        else BinaryPrimitives.WriteUInt16BigEndian(s, value);
+        if (order == ByteOrder.LittleEndian)
+            BinaryPrimitives.WriteUInt16LittleEndian(s, value);
+        else
+            BinaryPrimitives.WriteUInt16BigEndian(s, value);
+
         PutBytes(index, s);
         return this;
     }
@@ -312,7 +356,8 @@ public sealed class ByteBuffer : IDisposable
     public ByteBuffer Limit(int newLimit)
     {
         limit = newLimit;
-        if (position > limit) position = limit;
+        if (position > limit)
+            position = limit;
         return this;
     }
 
@@ -377,7 +422,6 @@ public sealed class ByteBuffer : IDisposable
     }
 
     // --- factories ---
-
     public static ByteBuffer Allocate(int capacity)
     {
         return new ByteBuffer(new byte[capacity], null, null);
@@ -388,13 +432,4 @@ public sealed class ByteBuffer : IDisposable
         return new ByteBuffer(array, null, null);
     }
 
-    /// <summary>
-    /// Wraps an arbitrary <see cref="System.Memory{Byte}"/> window. For a mapped backing, pass the
-    /// <paramref name="owner"/> (disposed to unmap) and an <paramref name="onForce"/> delegate
-    /// (the view's flush). Heap buffers pass neither.
-    /// </summary>
-    public static ByteBuffer Of(Memory<byte> memory, IDisposable? owner = null, Action? onForce = null)
-    {
-        return new ByteBuffer(memory, owner, onForce);
-    }
 }

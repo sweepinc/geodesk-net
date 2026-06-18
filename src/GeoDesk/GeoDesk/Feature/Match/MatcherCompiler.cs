@@ -18,7 +18,7 @@ namespace GeoDesk.Feature.Match;
 /// behind GetMatcher without changing callers.
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherCompiler</c>.</remarks>
-public class MatcherCompiler
+internal class MatcherCompiler
 {
 
     readonly MatcherParser _parser;

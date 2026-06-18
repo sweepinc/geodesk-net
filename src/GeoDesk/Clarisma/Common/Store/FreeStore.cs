@@ -27,7 +27,7 @@ namespace Clarisma.Common.Store;
 /// which provides a real shared byte-range lock cross-platform (<c>LockFileEx</c> / <c>fcntl</c>).
 /// See <see cref="Store"/> for details.
 /// </remarks>
-public class FreeStore
+internal class FreeStore
 {
 
     readonly string _path;

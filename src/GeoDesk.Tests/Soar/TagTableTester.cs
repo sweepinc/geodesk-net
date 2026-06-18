@@ -88,7 +88,7 @@ public class TagTableTester
         return tags;
     }
 
-    public NioBuffer MakeCase(string name, int maxRandomTags, ISet<string>? excludeTags)
+    internal NioBuffer MakeCase(string name, int maxRandomTags, ISet<string>? excludeTags)
     {
         Dictionary<string, object?>? tags = GetTags(name);
         if (tags == null) throw new InvalidOperationException($"TagTable case \"{name}\" not found");

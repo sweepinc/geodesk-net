@@ -16,7 +16,7 @@ namespace GeoDesk.Feature.Filters;
 /// A Filter that only accepts features whose geometry intersects the test geometry.
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.filter.IntersectsFilter</c>.</remarks>
-public class IntersectsFilter : AbstractRelateFilter
+internal class IntersectsFilter : AbstractRelateFilter
 {
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.IntersectsFilter(Feature)</c>.</remarks>

@@ -20,7 +20,7 @@ public class BlobStoreTest : IDisposable
     private readonly string storePath;
     private readonly TestBlobStore store;
 
-    public class TestBlobStore : BlobStore
+    internal class TestBlobStore : BlobStore
     {
         public TestBlobStore(string filename)
         {

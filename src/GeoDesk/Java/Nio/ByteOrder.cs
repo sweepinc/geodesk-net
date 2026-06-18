@@ -10,7 +10,7 @@ namespace Java.Nio;
 /// <summary>
 /// .NET stand-in for <c>java.nio.ByteOrder</c>.
 /// </summary>
-public enum ByteOrder
+internal enum ByteOrder
 {
     BigEndian,
     LittleEndian

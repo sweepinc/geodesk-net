@@ -6,8 +6,10 @@
  */
 
 using System;
+
 using GeoDesk.Feature.Query;
 using GeoDesk.Feature.Store;
+
 using NetTopologySuite.Geometries;
 
 namespace GeoDesk.Feature;
@@ -27,9 +29,10 @@ public class FeatureLibrary : WorldView, IDisposable
     /// Deprecated: use <see cref="Features.Open(string)"/> instead.
     /// Ported from Java <c>com.geodesk.feature.FeatureLibrary(String)</c>.
     /// </remarks>
-    public FeatureLibrary(string path)
-        : base(new FeatureStore(path))
+    public FeatureLibrary(string path) :
+        base(new FeatureStore(path))
     {
+
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.FeatureLibrary.geometryFactory()</c>.</remarks>
@@ -58,9 +61,8 @@ public class FeatureLibrary : WorldView, IDisposable
         Close();
     }
 
-    // TODO: remove from public API
     /// <remarks>Ported from Java <c>com.geodesk.feature.FeatureLibrary.store()</c>.</remarks>
-    public FeatureStore Store()
+    internal FeatureStore Store()
     {
         return store;
     }

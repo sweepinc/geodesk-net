@@ -23,7 +23,7 @@ namespace Clarisma.Common.Parser;
 /// FileLocation; the straight port keeps FileLocation (IFileLocation) and provides
 /// Length/CharAt/SubSequence directly rather than implementing a CharSequence interface (which .NET lacks).
 /// </remarks>
-public class Parser : IFileLocation
+internal class Parser : IFileLocation
 {
 
     /// <summary>

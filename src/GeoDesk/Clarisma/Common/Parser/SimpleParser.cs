@@ -13,7 +13,7 @@ using Clarisma.Common.Math;
 namespace Clarisma.Common.Parser;
 
 /// <remarks>Ported from Java <c>com.clarisma.common.parser.SimpleParser</c>.</remarks>
-public class SimpleParser
+internal class SimpleParser
 {
 
     readonly string _buf;

@@ -16,7 +16,7 @@ namespace GeoDesk.Feature.Query;
 /// A view that contains the parent ways/relations of a specific node.
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.query.NodeParentView</c>.</remarks>
-public class NodeParentView : ParentRelationView
+internal class NodeParentView : ParentRelationView
 {
 
     internal readonly StoredNode node;
@@ -30,7 +30,7 @@ public class NodeParentView : ParentRelationView
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.NodeParentView.newWith(int, Matcher, Filter)</c>.</remarks>
-    protected override Features NewWith(int types, Matcher matcher, Filter? filter)
+    internal override Features NewWith(int types, Matcher matcher, Filter? filter)
     {
         if ((types & TypeBits.RELATIONS) == 0)
         {

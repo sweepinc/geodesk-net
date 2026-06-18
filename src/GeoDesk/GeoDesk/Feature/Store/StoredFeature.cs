@@ -19,7 +19,7 @@ using NioBuffer = Java.Nio.ByteBuffer;
 namespace GeoDesk.Feature.Store;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature</c>.</remarks>
-public abstract class StoredFeature : Feature
+internal abstract class StoredFeature : Feature
 {
 
     protected readonly FeatureStore store;

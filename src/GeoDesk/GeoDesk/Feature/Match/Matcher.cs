@@ -13,7 +13,7 @@ namespace GeoDesk.Feature.Match;
 // base so Matcher.ALL can be instantiated directly; the hand-written matcher subclasses
 // (IdMatcher, TypeMatcher, AndMatcher, …) extend it as usual.
 /// <remarks>Ported from Java <c>com.geodesk.feature.match.Matcher</c>.</remarks>
-public class Matcher
+internal class Matcher
 {
 
     public static readonly Matcher ALL = new Matcher(TypeBits.ALL);

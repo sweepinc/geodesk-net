@@ -9,7 +9,7 @@ namespace Clarisma.Common.Util;
 
 // TODO: change to TextLocation, move to ccc.text?
 /// <remarks>Ported from Java <c>com.clarisma.common.util.FileLocation</c>.</remarks>
-public interface IFileLocation
+internal interface IFileLocation
 {
 
     /// <remarks>Ported from Java <c>com.clarisma.common.util.FileLocation.getFile()</c>.</remarks>

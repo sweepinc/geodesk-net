@@ -10,7 +10,7 @@ using GeoDesk.Geom;
 namespace GeoDesk.Feature.Polygons;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.polygon.Ring</c>.</remarks>
-public class Ring
+internal class Ring
 {
 
     internal readonly int number;       // TODO: remove? No!

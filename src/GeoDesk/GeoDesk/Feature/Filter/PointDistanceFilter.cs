@@ -18,7 +18,7 @@ namespace GeoDesk.Feature.Filters;
 /// <remarks>Ported from Java <c>com.geodesk.feature.filter.PointDistanceFilter</c>.</remarks>
 // TODO: check if we need to increase bbox size to account for distortion introduced by the
 //  Mercator projection
-public class PointDistanceFilter : Filter
+internal class PointDistanceFilter : Filter
 {
 
     readonly Bounds _bounds;

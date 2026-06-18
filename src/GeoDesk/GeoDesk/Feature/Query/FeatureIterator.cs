@@ -17,7 +17,7 @@ namespace GeoDesk.Feature.Query;
 // base supplies the IEnumerator adapter so a view can be enumerated with foreach.
 /// <remarks>Port-only adapter (no direct Java counterpart): bridges Java's
 /// <c>java.util.Iterator&lt;Feature&gt;</c> contract to .NET <c>IEnumerator&lt;Feature&gt;</c>.</remarks>
-public abstract class FeatureIterator : IEnumerator<Feature>
+internal abstract class FeatureIterator : IEnumerator<Feature>
 {
 
     Feature? _current;

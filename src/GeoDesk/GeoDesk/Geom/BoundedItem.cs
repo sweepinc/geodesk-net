@@ -8,7 +8,7 @@
 namespace GeoDesk.Geom;
 
 /// <remarks>Ported from Java <c>com.geodesk.geom.BoundedItem</c>.</remarks>
-public class BoundedItem<T> : Box
+internal class BoundedItem<T> : Box
 {
 
     readonly T _item;

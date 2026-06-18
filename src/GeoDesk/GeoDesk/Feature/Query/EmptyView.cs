@@ -14,7 +14,7 @@ using GeoDesk.Geom;
 namespace GeoDesk.Feature.Query;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.query.EmptyView</c>.</remarks>
-public class EmptyView : View
+internal class EmptyView : View
 {
 
     public static readonly Features Any = new EmptyView();
@@ -32,7 +32,7 @@ public class EmptyView : View
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.EmptyView.newWith(int, Matcher, Filter)</c>.</remarks>
-    protected override Features NewWith(int types, Matcher matcher, Filter? filter)
+    internal override Features NewWith(int types, Matcher matcher, Filter? filter)
     {
         return this;
     }

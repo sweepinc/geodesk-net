@@ -8,7 +8,7 @@
 namespace GeoDesk.Geom;
 
 /// <remarks>Ported from Java <c>com.geodesk.geom.Measure</c>.</remarks>
-public class Measure
+internal class Measure
 {
 
     /// <remarks>Ported from Java <c>com.geodesk.geom.Measure.length(Feature)</c>.</remarks>

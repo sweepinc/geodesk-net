@@ -12,7 +12,7 @@ using NetTopologySuite.Geometries.Prepared;
 namespace GeoDesk.Feature.Filters;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.filter.SlowIntersectsFilter</c>.</remarks>
-public class SlowIntersectsFilter : SlowSpatialFilter
+internal class SlowIntersectsFilter : SlowSpatialFilter
 {
 
     readonly IPreparedGeometry _prepared;

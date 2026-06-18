@@ -12,7 +12,7 @@ namespace GeoDesk.Geom;
 
 // not used
 /// <remarks>Ported from Java <c>com.geodesk.geom.PairSort</c>.</remarks>
-public static class PairSort
+internal static class PairSort
 {
 
     /// <remarks>Ported from Java <c>com.geodesk.geom.PairSort.sort(int[], List)</c>.</remarks>

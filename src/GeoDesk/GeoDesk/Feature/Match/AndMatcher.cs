@@ -10,7 +10,7 @@ using NioBuffer = Java.Nio.ByteBuffer;
 namespace GeoDesk.Feature.Match;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.match.AndMatcher</c>.</remarks>
-public class AndMatcher : Matcher
+internal class AndMatcher : Matcher
 {
 
     readonly Matcher _a;

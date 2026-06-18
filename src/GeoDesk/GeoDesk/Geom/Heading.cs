@@ -20,7 +20,7 @@ namespace GeoDesk.Geom;
 /// Ported from Java <c>com.geodesk.geom.Heading</c> (a Java <c>enum</c>; modelled here as a sealed
 /// class with static instances, preserving the Java enum's <c>ordinal()</c>/<c>values()</c> surface).
 /// </remarks>
-public sealed class Heading
+internal sealed class Heading
 {
 
     public static readonly Heading North = new Heading(0, "N", 1, 0, 0);

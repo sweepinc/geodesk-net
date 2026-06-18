@@ -20,7 +20,7 @@ namespace GeoDesk.Feature.Store;
 /// returning all tiles that intersect a given bounding box.
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker</c>.</remarks>
-public class TileIndexWalker
+internal class TileIndexWalker
 {
 
     Bounds? _bounds;

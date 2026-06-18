@@ -12,7 +12,7 @@ using Java.Nio;
 namespace Clarisma.Common.Pbf;
 
 /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfEncoder</c>.</remarks>
-public static class PbfEncoder
+internal static class PbfEncoder
 {
 
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfEncoder.writeVarint(ByteBuffer, long)</c>.</remarks>

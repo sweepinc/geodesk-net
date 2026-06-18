@@ -11,7 +11,7 @@ using GeoDesk.Feature.Store;
 namespace GeoDesk.Feature.Filters;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ParentWayFilterXY</c>.</remarks>
-public class ParentWayFilterXY : Filter
+internal class ParentWayFilterXY : Filter
 {
 
     readonly long _xy;

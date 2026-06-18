@@ -14,7 +14,7 @@ namespace GeoDesk.Geom;
 /// A generic r-tree. Supports querying via bounding box.
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.geom.RTree</c>.</remarks>
-public abstract class RTree
+internal abstract class RTree
 {
 
     protected Node? root;

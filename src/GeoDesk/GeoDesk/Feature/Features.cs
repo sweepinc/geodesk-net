@@ -7,9 +7,11 @@
 
 using System;
 using System.Collections.Generic;
+
 using GeoDesk.Feature.Filters;
 using GeoDesk.Feature.Match;
 using GeoDesk.Geom;
+
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Geometries.Prepared;
 
@@ -20,6 +22,7 @@ namespace GeoDesk.Feature;
 /// </summary>
 public interface Features : IEnumerable<Feature>
 {
+
     /// <summary>Returns a view containing only features matching the given query.</summary>
     Features Select(string query);
 
@@ -92,9 +95,7 @@ public interface Features : IEnumerable<Feature>
     /// <summary>Creates a list containing all features in this collection.</summary>
     List<Feature> ToList()
     {
-        List<Feature> list = new List<Feature>();
-        foreach (Feature f in this) list.Add(f);
-        return list;
+        return [.. this];
     }
 
     /// <summary>Creates an array containing all features in this collection.</summary>
@@ -107,10 +108,11 @@ public interface Features : IEnumerable<Feature>
     bool Contains(object f)
     {
         using IEnumerator<Feature> iter = GetEnumerator();
+
         while (iter.MoveNext())
-        {
-            if (f.Equals(iter.Current)) return true;
-        }
+            if (f.Equals(iter.Current))
+                return true;
+
         return false;
     }
 
@@ -141,8 +143,8 @@ public interface Features : IEnumerable<Feature>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.containingLonLat(double, double)</c>.</remarks>
     Features ContainingLonLat(double lon, double lat)
     {
-        var x = (int)Mercator.XFromLon(lon);
-        var y = (int)Mercator.YFromLat(lat);
+        var x = Mercator.XFromLon(lon);
+        var y = Mercator.YFromLat(lat);
         return Select(new ContainsPointFilter(x, y));
     }
 
@@ -150,8 +152,10 @@ public interface Features : IEnumerable<Feature>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.containing(Feature)</c>.</remarks>
     Features Containing(Feature feature)
     {
-        if (feature is Node) return Select(new ContainsPointFilter(feature.X(), feature.Y()));
-        return Select(new ContainsFilter(feature));
+        if (feature is Node)
+            return Select(new ContainsPointFilter(feature.X(), feature.Y()));
+        else
+            return Select(new ContainsFilter(feature));
     }
 
     /// <summary>Returns all features that contain the given Geometry.</summary>
@@ -206,8 +210,8 @@ public interface Features : IEnumerable<Feature>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.maxMetersFromLonLat(double, double, double)</c>.</remarks>
     Features MaxMetersFromLonLat(double distance, double lon, double lat)
     {
-        var x = (int)Mercator.XFromLon(lon);
-        var y = (int)Mercator.YFromLat(lat);
+        var x = Mercator.XFromLon(lon);
+        var y = Mercator.YFromLat(lat);
         return Select(new PointDistanceFilter(distance, x, y));
     }
 
@@ -268,7 +272,8 @@ public interface Features : IEnumerable<Feature>
     /// <summary>Adds all features in this collection to the given collection.</summary>
     void AddTo(ICollection<Feature> collection)
     {
-        foreach (Feature f in this) collection.Add(f);
+        foreach (Feature f in this)
+            collection.Add(f);
     }
 
     /// <summary>Opens the given Geographic Object Library and returns all of its features.</summary>
@@ -276,4 +281,5 @@ public interface Features : IEnumerable<Feature>
     {
         return new FeatureLibrary(path);
     }
+
 }

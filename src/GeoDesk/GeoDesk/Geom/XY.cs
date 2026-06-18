@@ -14,7 +14,7 @@ namespace GeoDesk.Geom;
 /// value. Y coordinate is stored in the upper 32 bits, X in the lower.
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.geom.XY</c>.</remarks>
-public static class XY
+internal static class XY
 {
 
     /// <summary>Creates a <c>long</c> coordinate based on the given X and Y.</summary>

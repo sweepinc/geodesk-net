@@ -11,7 +11,7 @@ using NetTopologySuite.Geometries;
 namespace GeoDesk.Feature.Filters;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.filter.SlowSpatialFilter</c>.</remarks>
-public abstract class SlowSpatialFilter : Filter
+internal abstract class SlowSpatialFilter : Filter
 {
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.SlowSpatialFilter.acceptGeometry(Geometry)</c>.</remarks>

@@ -15,7 +15,7 @@ namespace GeoDesk.Feature.Query;
 // implement their own state. Kept here, mirroring its fields/constants, atop the FeatureIterator
 // adapter base.
 /// <remarks>Ported from Java <c>com.geodesk.feature.query.TableIterator</c>.</remarks>
-public abstract class TableIterator : FeatureIterator
+internal abstract class TableIterator : FeatureIterator
 {
 
     // TODO: consolidate these

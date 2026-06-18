@@ -10,7 +10,7 @@ using NioBuffer = Java.Nio.ByteBuffer;
 namespace GeoDesk.Feature.Query;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.query.QueryResults</c>.</remarks>
-public class QueryResults
+internal class QueryResults
 {
 
     const int DefaultBucketSize = 256;

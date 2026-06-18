@@ -22,7 +22,7 @@ namespace GeoDesk.Feature.Filters;
 /// </para>
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.filter.AbstractRelateFilter</c>.</remarks>
-public abstract class AbstractRelateFilter : Filter
+internal abstract class AbstractRelateFilter : Filter
 {
 
     internal const int MixedDimension = -3;

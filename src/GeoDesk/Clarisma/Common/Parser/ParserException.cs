@@ -10,7 +10,7 @@ using System;
 namespace Clarisma.Common.Parser;
 
 /// <remarks>Ported from Java <c>com.clarisma.common.parser.ParserException</c>.</remarks>
-public class ParserException : Exception
+internal class ParserException : Exception
 {
 
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.ParserException(String)</c>.</remarks>

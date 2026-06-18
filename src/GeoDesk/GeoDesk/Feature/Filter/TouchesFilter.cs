@@ -21,7 +21,7 @@ namespace GeoDesk.Feature.Filters;
 /// </para>
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.filter.TouchesFilter</c>.</remarks>
-public class TouchesFilter : AbstractRelateFilter
+internal class TouchesFilter : AbstractRelateFilter
 {
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.TouchesFilter(Feature)</c>.</remarks>

@@ -11,7 +11,7 @@ using System.Diagnostics;
 namespace Clarisma.Common.Fab;
 
 /// <remarks>Ported from Java <c>com.clarisma.common.fab.PropertyFabReader</c>.</remarks>
-public class PropertyFabReader : FabReader
+internal class PropertyFabReader : FabReader
 {
 
     readonly Dictionary<string, string> _properties = new Dictionary<string, string>();

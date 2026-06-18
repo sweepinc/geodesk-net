@@ -15,7 +15,7 @@ namespace GeoDesk.Feature.Store;
 /// Methods for dealing with zoom levels.
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.store.ZoomLevels</c>.</remarks>
-public static class ZoomLevels
+internal static class ZoomLevels
 {
 
     public const string DEFAULT = "4,6,8,10,12";
