@@ -53,7 +53,7 @@ var rivers = world.Relations();
         {
             foreach (var m in river.Members("w"))
             {
-                Assert.True(m is Way);
+                Assert.True(m is IWay);
             }
         }
     }

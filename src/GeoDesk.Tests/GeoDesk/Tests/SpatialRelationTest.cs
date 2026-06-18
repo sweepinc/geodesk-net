@@ -28,7 +28,7 @@ public class SpatialRelationTest : AbstractFeatureTest
         var mostPlaceholders = 0;
         var mostNodes = 0;
         var mostWays = 0;
-        GeoDesk.Feature.Feature? trickiestRelation = null;
+        GeoDesk.Feature.IFeature? trickiestRelation = null;
 
         foreach (var rel in world.Relations("r[route=train]"))
         {
@@ -36,8 +36,8 @@ public class SpatialRelationTest : AbstractFeatureTest
             var ways = 0;
             foreach (var member in rel)
             {
-                if (member is Node) nodes++;
-                if (member is Way) ways++;
+                if (member is INode) nodes++;
+                if (member is IWay) ways++;
             }
             if (nodes > mostNodes && ways > mostWays)
             {
@@ -59,9 +59,9 @@ public class SpatialRelationTest : AbstractFeatureTest
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.tests.SpatialRelationTest.testSpatial(String, Feature)</c>.</remarks>
-    void TestSpatial(string name, GeoDesk.Feature.Feature test)
+    void TestSpatial(string name, GeoDesk.Feature.IFeature test)
     {
-        Filter? filter = name switch
+        IFilter? filter = name switch
         {
             "coveredBy" => new CoveredByFilter(test),
             "crosses" => new CrossesFilter(test),

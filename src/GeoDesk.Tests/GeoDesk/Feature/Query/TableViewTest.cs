@@ -39,14 +39,14 @@ public class TableViewTest
             return;
         }
 
-        Features world = Features.Open(gol);
+        IFeatures world = FeatureLibrary.Open(gol);
         try
         {
             // 1) Relation members: at least one relation in Monaco has members.
             long relations = 0;
             long memberTotal = 0;
-            Feature? relWithMembers = null;
-            foreach (Feature r in world.Relations())
+            IFeature? relWithMembers = null;
+            foreach (IFeature r in world.Relations())
             {
                 relations++;
                 long m = r.Members().Count();
@@ -58,16 +58,16 @@ public class TableViewTest
             Assert.True(memberTotal > 0, "expected at least one relation member");
 
             // Each member of a relation reports that relation as a parent.
-            Feature firstMember = relWithMembers!.Members().First()!;
+            IFeature firstMember = relWithMembers!.Members().First()!;
             Assert.Contains(relWithMembers, world.ParentsOf(firstMember).ToList());
 
             // 2) Way feature-nodes: find a way that has feature nodes and round-trip the
             //    parent relationship (the node's parent ways include the way).
-            Feature? wayWithNodes = null;
-            Feature? aNode = null;
-            foreach (Feature w in world.Ways())
+            IFeature? wayWithNodes = null;
+            IFeature? aNode = null;
+            foreach (IFeature w in world.Ways())
             {
-                Feature? n = w.Nodes().First();
+                IFeature? n = w.Nodes().First();
                 if (n != null)
                 {
                     wayWithNodes = w;

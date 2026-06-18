@@ -83,7 +83,7 @@ public class LocalKeyTest
         Log.Debug("Total - [harbour]:  %d", nodeCount - harbourCount);
         Log.Debug("Total - [!harbour]: %d", nodeCount - nonHarbourCount);
 
-        var queryMatched = new HashSet<GeoDesk.Feature.Feature>();
+        var queryMatched = new HashSet<GeoDesk.Feature.IFeature>();
         Log.Debug("");
         Log.Debug("Results returned by [harbour] query:");
         foreach (var f in harbours)
@@ -95,7 +95,7 @@ public class LocalKeyTest
         Log.Debug("");
         Log.Debug("Check tag via Feature.stringValue(\"harbour\"), test harbours.contains():");
 
-        var manuallyMatched = new List<GeoDesk.Feature.Feature>();
+        var manuallyMatched = new List<GeoDesk.Feature.IFeature>();
         foreach (var f in world.Nodes())
         {
             var h = f.StringValue("harbour");

@@ -41,7 +41,7 @@ public class SpatialFilterTest
             return;
         }
 
-        var world = Features.Open(gol);
+        var world = FeatureLibrary.Open(gol);
         try
         {
             // A box covering central Monaco, as a JTS polygon (Mercator coords).

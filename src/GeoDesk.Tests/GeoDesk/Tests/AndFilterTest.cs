@@ -93,8 +93,8 @@ public class AndFilterTest : IDisposable
         var airports = world.Select("a[aeroway=aerodrome]");
         const double minLength = 3000;
 
-        var suitableRunways = new HashSet<GeoDesk.Feature.Feature>();
-        var suitableAirports = new HashSet<GeoDesk.Feature.Feature>();
+        var suitableRunways = new HashSet<GeoDesk.Feature.IFeature>();
+        var suitableAirports = new HashSet<GeoDesk.Feature.IFeature>();
 
         foreach (var runway in runways)
         {
@@ -124,7 +124,7 @@ public class AndFilterTest : IDisposable
     [Fact(Skip = "Data-coupled integration test: depends on dataset-specific values (OSM IDs, feature counts, place names), or a GOL fixture not built in this repo; passes only against the original dataset extracts used upstream. See PORT.md.")]
     public void DebugAirports()
     {
-        GeoDesk.Feature.Feature? runway = null;
+        GeoDesk.Feature.IFeature? runway = null;
 
         var map = new MapMaker();
         var runways = world.Select("w[aeroway=runway]");
@@ -140,7 +140,7 @@ public class AndFilterTest : IDisposable
         }
 
         var walker = new TileIndexWalker(world.Store());
-        Filter filter = new IntersectsFilter(runway!.ToGeometry());
+        IFilter filter = new IntersectsFilter(runway!.ToGeometry());
         walker.Start(filter.Bounds(), filter);
         map.Add(filter.Bounds()).Color("orange");
         while (walker.Next())

@@ -76,7 +76,7 @@ public class DisjointTest : AbstractFeatureTest
         map.Add(bavaria!).Color("red");
 
         var walker = new TileIndexWalker(((FeatureLibrary)world).Store());
-        Filter filter = new DisjointFilter(bavaria!);
+        IFilter filter = new DisjointFilter(bavaria!);
 
         map.Add(filter.Bounds()).Color("orange");
         walker.Start(Box.OfWorld(), filter);

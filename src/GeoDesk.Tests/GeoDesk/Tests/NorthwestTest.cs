@@ -22,7 +22,7 @@ public class NorthwestTest
     [Fact(Skip = "Data-coupled integration test: depends on dataset-specific values (OSM IDs, feature counts, place names), or a GOL fixture not built in this repo; passes only against the original dataset extracts used upstream. See PORT.md.")]
     public void TestSameIntersectsResults()
     {
-        var world = Features.Open(TestSettings.GolFile());
+        var world = FeatureLibrary.Open(TestSettings.GolFile());
         try
         {
             var country = world
@@ -48,7 +48,7 @@ public class NorthwestTest
     [Fact]
     public void WhySlowIntersectionFailsToReturnRelation9675374()
     {
-        var world = Features.Open(TestSettings.GolFile());
+        var world = FeatureLibrary.Open(TestSettings.GolFile());
         try
         {
             foreach (var rel in world.Relations("ra[name='Euskirchener Straße'][type=public_transport]"))

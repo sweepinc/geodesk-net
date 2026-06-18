@@ -18,7 +18,7 @@ namespace GeoDesk.Tests;
 public abstract class AbstractFeatureTest : IDisposable
 {
 
-    protected readonly Features world;
+    protected readonly IFeatures world;
     readonly FeatureLibrary _lib;
 
     protected AbstractFeatureTest()

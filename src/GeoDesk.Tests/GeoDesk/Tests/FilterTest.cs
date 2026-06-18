@@ -21,7 +21,7 @@ public class FilterTest
     [Fact]
     public void TestConnectedStreets()
     {
-        var world = Features.Open(TestSettings.GolFile());
+        var world = FeatureLibrary.Open(TestSettings.GolFile());
         try
         {
             var streets = world.Ways("w[highway]");

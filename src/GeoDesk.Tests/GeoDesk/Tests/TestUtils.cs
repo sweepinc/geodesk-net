@@ -101,7 +101,7 @@ public static class TestUtils
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.tests.TestUtils.getSet(Features)</c>.</remarks>
-    public static List<long> GetSet(Features features)
+    public static List<long> GetSet(IFeatures features)
     {
         var list = new List<long>();
         foreach (var f in features)
@@ -126,7 +126,7 @@ public static class TestUtils
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.tests.TestUtils.primaryTag(Feature)</c>.</remarks>
-    public static string PrimaryTag(GeoDesk.Feature.Feature f)
+    public static string PrimaryTag(GeoDesk.Feature.IFeature f)
     {
         var tags = f.Tags();
         while (tags.Next())

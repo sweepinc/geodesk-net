@@ -20,13 +20,13 @@ public class ErrorTest : AbstractFeatureTest
 
     /// <summary>Filter that throws an exception after accepting 10 features.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.tests.ErrorTest.BadFilter</c>.</remarks>
-    class BadFilter : Filter
+    class BadFilter : IFilter
     {
 
         int _count;
 
         /// <remarks>Ported from Java <c>com.geodesk.tests.ErrorTest.BadFilter.accept(Feature)</c>.</remarks>
-        public bool Accept(GeoDesk.Feature.Feature feature)
+        public bool Accept(GeoDesk.Feature.IFeature feature)
         {
             var currentCount = Interlocked.Increment(ref _count);
             if (currentCount > 10)

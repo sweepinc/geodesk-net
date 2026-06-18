@@ -45,7 +45,7 @@ public class ReferentialIntegrityTest : IDisposable
     [Fact]
     public void TestNoDuplicates()
     {
-        var results = new HashSet<GeoDesk.Feature.Feature>();
+        var results = new HashSet<GeoDesk.Feature.IFeature>();
         var runs = 1_000;
         long count = 0;
         var start = Stopwatch.GetTimestamp();
@@ -74,12 +74,12 @@ public class ReferentialIntegrityTest : IDisposable
     [Fact]
     public void TestTypeConstraint()
     {
-        var set1 = new HashSet<GeoDesk.Feature.Feature>();
-        var set2 = new HashSet<GeoDesk.Feature.Feature>();
+        var set1 = new HashSet<GeoDesk.Feature.IFeature>();
+        var set2 = new HashSet<GeoDesk.Feature.IFeature>();
 
         foreach (var f in features.Select("ra"))
         {
-            if (f is Relation) set1.Add(f);
+            if (f is IRelation) set1.Add(f);
         }
 
         foreach (var rel in features.Relations())
@@ -94,7 +94,7 @@ public class ReferentialIntegrityTest : IDisposable
         CountAreas("set2", set2);
     }
 
-    void CountAreas(string title, IEnumerable<GeoDesk.Feature.Feature> set)
+    void CountAreas(string title, IEnumerable<GeoDesk.Feature.IFeature> set)
     {
         long count = 0;
         foreach (var f in set) if (f.IsArea()) count++;
@@ -177,13 +177,13 @@ public class ReferentialIntegrityTest : IDisposable
 
         foreach (var f in features)
         {
-            if (f is Node) nodes++;
-            if (f is Way) allWays++;
-            if (f is Relation) allRelations++;
+            if (f is INode) nodes++;
+            if (f is IWay) allWays++;
+            if (f is IRelation) allRelations++;
             if (f.IsArea()) areas++;
             var isHighway = f.HasTag("highway") && f.StringValue("highway") != "no";
             var isRailway = f.HasTag("railway") && f.StringValue("railway") != "no";
-            var isLineal = f is Way && !f.IsArea();
+            var isLineal = f is IWay && !f.IsArea();
 
             if (isHighway) allHighways++;
             if (isHighway && isLineal) linealHighways++;
@@ -246,7 +246,7 @@ public class ReferentialIntegrityTest : IDisposable
         }
     }
 
-    void TestContainsQueries(Features feats, HashSet<GeoDesk.Feature.Feature> others)
+    void TestContainsQueries(IFeatures feats, HashSet<GeoDesk.Feature.IFeature> others)
     {
         CheckContains(feats.Select("a[landuse]"), others);
         CheckContains(feats.Nodes("na[shop]").Select("*[opening_hours]"), others);
@@ -269,9 +269,9 @@ public class ReferentialIntegrityTest : IDisposable
     /// Checks whether contains() returns true/false for features that are in / not in a collection.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.tests.ReferentialIntegrityTest.testContains(Features, Set)</c>.</remarks>
-    void CheckContains(Features feats, HashSet<GeoDesk.Feature.Feature> others)
+    void CheckContains(IFeatures feats, HashSet<GeoDesk.Feature.IFeature> others)
     {
-        var notContained = new HashSet<GeoDesk.Feature.Feature>(others);
+        var notContained = new HashSet<GeoDesk.Feature.IFeature>(others);
         foreach (var f in feats)
         {
             Assert.True(feats.Contains(f));
@@ -284,9 +284,9 @@ public class ReferentialIntegrityTest : IDisposable
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.tests.ReferentialIntegrityTest.randomSample(Features, int)</c>.</remarks>
-    HashSet<GeoDesk.Feature.Feature> RandomSample(Features feats, int sampleInterval)
+    HashSet<GeoDesk.Feature.IFeature> RandomSample(IFeatures feats, int sampleInterval)
     {
-        var sample = new HashSet<GeoDesk.Feature.Feature>();
+        var sample = new HashSet<GeoDesk.Feature.IFeature>();
         var random = new Random();
         var skip = random.Next(sampleInterval);
         foreach (var f in feats)
@@ -318,8 +318,8 @@ public class ReferentialIntegrityTest : IDisposable
             Box wayBox = way.Bounds();
             var calculatedBox = new Box();
 
-            GeoDesk.Feature.Feature? firstNode = null;
-            GeoDesk.Feature.Feature? lastNode = null;
+            GeoDesk.Feature.IFeature? firstNode = null;
+            GeoDesk.Feature.IFeature? lastNode = null;
             var nodeCount = 0;
             var highwayNodeCount = 0;
             var entranceNodeCount = 0;
@@ -419,7 +419,7 @@ public class ReferentialIntegrityTest : IDisposable
         Log.Debug("ParentWay queries consulted %d ways at node location.", waysAtNodes);
     }
 
-    void AssertNotTagged(GeoDesk.Feature.Feature f, string k)
+    void AssertNotTagged(GeoDesk.Feature.IFeature f, string k)
     {
         var v = f.StringValue(k);
         Assert.True(v.Length == 0 || v == "no");

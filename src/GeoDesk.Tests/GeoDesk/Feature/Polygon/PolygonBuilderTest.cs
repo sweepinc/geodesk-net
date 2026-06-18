@@ -41,7 +41,7 @@ public class PolygonBuilderTest
             return;
         }
 
-        var world = Features.Open(gol);
+        var world = FeatureLibrary.Open(gol);
         try
         {
             long areaRelations = 0;

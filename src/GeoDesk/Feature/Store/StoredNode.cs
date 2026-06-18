@@ -1,0 +1,147 @@
+/*
+ * Copyright (c) Clarisma / GeoDesk contributors
+ *
+ * This source code is licensed under the Apache 2.0 license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using GeoDesk.Feature.Filters;
+using GeoDesk.Feature.Match;
+using GeoDesk.Feature.Query;
+using GeoDesk.Geom;
+using NetTopologySuite.Geometries;
+using NioBuffer = Java.Nio.ByteBuffer;
+
+namespace GeoDesk.Feature.Store;
+
+internal class StoredNode : StoredFeature, INode
+{
+    public StoredNode(FeatureStore store, NioBuffer buf, int ptr)
+        : base(store, buf, ptr)
+    {
+    }
+
+    public override IEnumerator<IFeature> GetEnumerator()
+    {
+        return Enumerable.Empty<IFeature>().GetEnumerator();
+    }
+
+    public override FeatureType Type() => FeatureType.Node;
+
+    public bool IsNode() => true;
+
+    public override int X()
+    {
+        return buf.GetInt(ptr - 8);
+    }
+
+    public override int Y()
+    {
+        return buf.GetInt(ptr - 4);
+    }
+
+    public override Box Bounds()
+    {
+        int x = X();
+        int y = Y();
+        if ((x | y) == 0)
+        {
+            // If coordinates are 0/0, return an empty bbox (missing nodes)
+            return new Box();
+        }
+        return new Box(x, y);
+    }
+
+    public override int[] ToXY()
+    {
+        return new int[] { X(), Y() };
+    }
+
+    public override Geometry ToGeometry()
+    {
+        return store.GeometryFactory().CreatePoint(new Coordinate(X(), Y()));
+    }
+
+    public override string ToString()
+    {
+        return "node/" + Id();
+    }
+
+    public override int GetRelationTablePtr()
+    {
+        // A Node's body pointer is the pointer to its reltable
+        int ppBody = ptr + 12;
+        return buf.GetInt(ppBody) + ppBody;
+    }
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.parentWays(int, Matcher, Filter)</c>.</remarks>
+    public WorldView ParentWays(int types, Matcher matcher, IFilter? filter)
+    {
+        IFilter newFilter = new ParentWayFilter(Id());
+        if (filter != null) newFilter = AndFilter.Create(newFilter, filter);
+        return new WorldView(store, types & TypeBits.WAYS &
+            TypeBits.WAYNODE_FLAGGED, Bounds(), matcher, newFilter);
+    }
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.parents(int, Matcher, Filter)</c>.</remarks>
+    public IFeatures Parents(int types, Matcher matcher, IFilter? filter)
+    {
+        int acceptedFlags = ((types & TypeBits.RELATIONS) != 0) ?
+            IFeatureFlags.RELATION_MEMBER_FLAG : 0;
+        acceptedFlags |= ((types & TypeBits.WAYS) != 0) ?
+            IFeatureFlags.WAYNODE_FLAG : 0;
+        int flags = buf.GetInt(ptr) & acceptedFlags;
+
+        if (flags == IFeatureFlags.WAYNODE_FLAG)
+        {
+            return ParentWays(types, matcher, filter);
+        }
+        if (flags == IFeatureFlags.RELATION_MEMBER_FLAG)
+        {
+            return new ParentRelationView(store, buf, GetRelationTablePtr(),
+                types & TypeBits.RELATIONS, matcher, filter);
+        }
+        if (flags == (IFeatureFlags.WAYNODE_FLAG | IFeatureFlags.RELATION_MEMBER_FLAG))
+        {
+            return new NodeParentView(store, buf, this,
+                GetRelationTablePtr(), types, matcher, filter);
+        }
+        return EmptyView.Any;
+    }
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.parents()</c>.</remarks>
+    public override IFeatures Parents()
+    {
+        return Parents(TypeBits.RELATIONS | TypeBits.WAYS, Matcher.ALL, null);
+    }
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.parents(String)</c>.</remarks>
+    public override IFeatures Parents(string query)
+    {
+        Matcher matcher = store.GetMatcher(query);
+        return Parents(matcher.AcceptedTypes(), matcher, null);
+    }
+
+    // TODO: No need to dereference the nodes in a way; we could simply check for
+    //  same buffer and pointer (Nodes always live in one tile only)
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.ParentWayFilter</c>.</remarks>
+    class ParentWayFilter : IdMatcher, IFilter
+    {
+
+        /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.ParentWayFilter(long)</c>.</remarks>
+        public ParentWayFilter(long nodeId)
+            : base(0, nodeId)
+        {
+        }
+
+        /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.ParentWayFilter.accept(Feature)</c>.</remarks>
+        public bool Accept(IFeature feature)
+        {
+            StoredWay way = (StoredWay)feature;
+            return way.FastFeatureNodeIterator(this).HasNext();
+        }
+    }
+}

@@ -43,7 +43,7 @@ public class SpatialFilterTest
         var places = world.Select("a[leisure=pitch][sport=soccer]");
         var count = 0;
 
-        var found = new HashSet<GeoDesk.Feature.Feature>();
+        var found = new HashSet<GeoDesk.Feature.IFeature>();
 
         foreach (var place in places.In(Box.Of(bavariaPoly)))
         {
@@ -156,7 +156,7 @@ public class SpatialFilterTest
     /// <remarks>Ported from Java <c>com.geodesk.tests.SpatialFilterTest.State</c>.</remarks>
     class State
     {
-        internal GeoDesk.Feature.Feature feature = null!;
+        internal GeoDesk.Feature.IFeature feature = null!;
         internal Geometry geom = null!;
         internal IPreparedGeometry prepared = null!;
     }
@@ -198,7 +198,7 @@ public class SpatialFilterTest
             startQuery = Stopwatch.GetTimestamp();
             var counties = world.Select("a[boundary=administrative][admin_level=6][name]");
             var countyCount = 0;
-            var countySet = new HashSet<GeoDesk.Feature.Feature>();
+            var countySet = new HashSet<GeoDesk.Feature.IFeature>();
             var countyGeometries = new List<Geometry>();
 
             foreach (var county in counties.In(Box.Of(germanyPoly)))
@@ -264,7 +264,7 @@ public class SpatialFilterTest
             var start = Stopwatch.GetTimestamp();
             long cityCount = 0;
             long totalBuildingCount = 0;
-            GeoDesk.Feature.Feature? cityWithMostBuildings = null;
+            GeoDesk.Feature.IFeature? cityWithMostBuildings = null;
             long mostBuildings = 0;
             foreach (var city in world.Select("a[boundary=administrative][admin_level=8][name]"))
             {
@@ -296,7 +296,7 @@ public class SpatialFilterTest
             var start = Stopwatch.GetTimestamp();
             long cityCount = 0;
             long totalChurchCount = 0;
-            GeoDesk.Feature.Feature? cityWithMostChurches = null;
+            GeoDesk.Feature.IFeature? cityWithMostChurches = null;
             long mostChurches = 0;
             foreach (var city in world.Select("a[boundary=administrative][admin_level=8][name]"))
             {
@@ -327,7 +327,7 @@ public class SpatialFilterTest
             var start = Stopwatch.GetTimestamp();
             long cityCount = 0;
             long totalChurchCount = 0;
-            GeoDesk.Feature.Feature? cityWithMostChurches = null;
+            GeoDesk.Feature.IFeature? cityWithMostChurches = null;
             long mostChurches = 0;
             foreach (var city in world.Select("a[boundary=administrative][admin_level=8][name]"))
             {

@@ -24,7 +24,7 @@ namespace GeoDesk.Tests;
 public class ConcurTest : IDisposable
 {
 
-    readonly Features world;
+    readonly IFeatures world;
     readonly FeatureLibrary _lib;
 
     public ConcurTest()

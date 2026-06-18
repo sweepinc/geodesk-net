@@ -18,11 +18,11 @@ namespace GeoDesk.Tests;
 public class MapMakerTest : IDisposable
 {
 
-    readonly Features features;
+    readonly IFeatures features;
 
     public MapMakerTest()
     {
-        features = Features.Open(TestSettings.Resolve("w-good.gol"));
+        features = FeatureLibrary.Open(TestSettings.Resolve("w-good.gol"));
     }
 
     public void Dispose() => ((IDisposable)features).Dispose();

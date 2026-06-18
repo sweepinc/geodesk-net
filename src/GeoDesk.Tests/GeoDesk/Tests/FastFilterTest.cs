@@ -47,7 +47,7 @@ public class FastFilterTest : IDisposable
 
         var tileCount = 0;
         var walker = new TileIndexWalker(world.Store());
-        Filter filter = new IntersectsFilter(bavariaPoly);
+        IFilter filter = new IntersectsFilter(bavariaPoly);
         walker.Start(bavaria.Bounds(), filter);
         while (walker.Next())
         {
@@ -127,7 +127,7 @@ public class FastFilterTest : IDisposable
 
         var tileCount = 0;
         var walker = new TileIndexWalker(world.Store());
-        Filter filter = new CrossesFilter(rhineGeom);
+        IFilter filter = new CrossesFilter(rhineGeom);
         walker.Start(rhine.Bounds(), filter);
         while (walker.Next())
         {

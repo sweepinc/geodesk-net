@@ -41,7 +41,7 @@ public class WorldQueryTest
             return;
         }
 
-        Features world = Features.Open(gol);
+        IFeatures world = FeatureLibrary.Open(gol);
         try
         {
             // Count all highways (ways tagged highway) across the whole library.
@@ -57,7 +57,7 @@ public class WorldQueryTest
             Assert.True(highwaysInBox <= highways);
 
             // Spot-check that we can read tags off a returned feature.
-            Feature? first = world.Ways("w[highway]").First();
+            IFeature? first = world.Ways("w[highway]").First();
             Assert.NotNull(first);
             Assert.True(first!.HasTag("highway"));
         }
