@@ -10,25 +10,32 @@ namespace Clarisma.Common.Ast;
 /// <remarks>Ported from Java <c>com.clarisma.common.ast.ConditionalExpression</c>.</remarks>
 public class ConditionalExpression : Expression
 {
-    private readonly Expression condition;
-    private readonly Expression ifTrue;
-    private readonly Expression ifFalse;
 
+    readonly Expression _condition;
+    readonly Expression _ifTrue;
+    readonly Expression _ifFalse;
+
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.ConditionalExpression(Expression, Expression, Expression)</c>.</remarks>
     public ConditionalExpression(Expression condition, Expression ifTrue, Expression ifFalse)
     {
-        this.condition = condition;
-        this.ifTrue = ifTrue;
-        this.ifFalse = ifFalse;
+        _condition = condition;
+        _ifTrue = ifTrue;
+        _ifFalse = ifFalse;
     }
 
-    public Expression Condition => condition;
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.ConditionalExpression.condition()</c>.</remarks>
+    public Expression Condition => _condition;
 
-    public Expression IfTrue => ifTrue;
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.ConditionalExpression.ifTrue()</c>.</remarks>
+    public Expression IfTrue => _ifTrue;
 
-    public Expression IfFalse => ifFalse;
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.ConditionalExpression.ifFalse()</c>.</remarks>
+    public Expression IfFalse => _ifFalse;
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.ConditionalExpression.accept(AstVisitor)</c>.</remarks>
     public override R Accept<R>(IAstVisitor<R> visitor)
     {
         return visitor.VisitConditional(this);
     }
+
 }

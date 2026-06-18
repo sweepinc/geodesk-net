@@ -17,29 +17,40 @@ namespace Clarisma.Common.Ast;
 /// <remarks>Ported from Java <c>com.clarisma.common.ast.ExpressionCoder</c>.</remarks>
 public class ExpressionCoder : IAstVisitor<object?>
 {
+
     protected TypeChecker? typeChecker;
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.ExpressionCoder.setTypeChecker(TypeChecker)</c>.</remarks>
     public void SetTypeChecker(TypeChecker typeChecker)
     {
         this.typeChecker = typeChecker;
     }
 
-    private static Exception NotPortable() => new NotImplementedException(
+    static Exception NotPortable() => new NotImplementedException(
         "PORT-BLOCKED: ExpressionCoder requires runtime bytecode/IL generation (ASM in Java).");
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.ExpressionCoder.visitBinary(BinaryExpression)</c>.</remarks>
     public object? VisitBinary(BinaryExpression exp) => throw NotPortable();
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.ExpressionCoder.visitUnary(UnaryExpression)</c>.</remarks>
     public object? VisitUnary(UnaryExpression exp) => throw NotPortable();
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.ExpressionCoder.visitString(StringExpression)</c>.</remarks>
     public object? VisitString(StringExpression exp) => throw NotPortable();
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.ExpressionCoder.visitLiteral(Literal)</c>.</remarks>
     public object? VisitLiteral(Literal exp) => throw NotPortable();
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.ExpressionCoder.visitVariable(Variable)</c>.</remarks>
     public object? VisitVariable(Variable exp) => throw NotPortable();
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.ExpressionCoder.visitCall(CallExpression)</c>.</remarks>
     public object? VisitCall(CallExpression exp) => throw NotPortable();
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.ExpressionCoder.visitConditional(ConditionalExpression)</c>.</remarks>
     public object? VisitConditional(ConditionalExpression exp) => throw NotPortable();
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.ExpressionCoder.visitExpression(Expression)</c>.</remarks>
     public object? VisitExpression(Expression exp) => throw NotPortable();
+
 }

@@ -10,6 +10,7 @@ namespace GeoDesk.Feature.Store;
 /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureFlags</c>.</remarks>
 public interface IFeatureFlags
 {
+
     const int LAST_SPATIAL_ITEM_FLAG = 1;
     const int AREA_FLAG = 1 << 1;
     const int RELATION_MEMBER_FLAG = 1 << 2;
@@ -25,4 +26,5 @@ public interface IFeatureFlags
     const int EXCEPTION_NODE_FLAG = 1 << 9;
     const int UNMODIFIED_FLAG = 1 << 10;
     const int DELETED_FLAG = 1 << 11;
+
 }

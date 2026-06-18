@@ -10,5 +10,8 @@ namespace Clarisma.Common.Ast;
 /// <remarks>Ported from Java <c>com.clarisma.common.ast.Ast</c>.</remarks>
 public abstract class Ast
 {
+
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.Ast.accept(AstVisitor)</c>.</remarks>
     public abstract R Accept<R>(IAstVisitor<R> visitor);
+
 }

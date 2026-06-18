@@ -12,34 +12,42 @@ namespace Clarisma.Common.Ast;
 /// <remarks>Ported from Java <c>com.clarisma.common.ast.UnaryExpression</c>.</remarks>
 public class UnaryExpression : Expression
 {
-    private readonly Operator op;
-    private readonly Expression operand;
 
+    readonly Operator _op;
+    readonly Expression _operand;
+
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.UnaryExpression(Operator, Expression)</c>.</remarks>
     public UnaryExpression(Operator op, Expression operand)
     {
-        this.op = op;
-        this.operand = operand;
+        _op = op;
+        _operand = operand;
     }
 
-    public Operator Operator => op;
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.UnaryExpression.operator()</c>.</remarks>
+    public Operator Operator => _op;
 
-    public Expression Operand => operand;
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.UnaryExpression.operand()</c>.</remarks>
+    public Expression Operand => _operand;
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.UnaryExpression.accept(AstVisitor)</c>.</remarks>
     public override R Accept<R>(IAstVisitor<R> visitor)
     {
         return visitor.VisitUnary(this);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.UnaryExpression.equals(Object)</c>.</remarks>
     public override bool Equals(object? o)
     {
         if (ReferenceEquals(this, o)) return true;
         if (o == null || GetType() != o.GetType()) return false;
-        UnaryExpression that = (UnaryExpression)o;
-        return Equals(op, that.op) && Equals(operand, that.operand);
+        var that = (UnaryExpression)o;
+        return Equals(_op, that._op) && Equals(_operand, that._operand);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.UnaryExpression.hashCode()</c>.</remarks>
     public override int GetHashCode()
     {
-        return HashCode.Combine(op, operand);
+        return HashCode.Combine(_op, _operand);
     }
+
 }

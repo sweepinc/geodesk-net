@@ -12,30 +12,37 @@ namespace Clarisma.Common.Ast;
 /// <remarks>Ported from Java <c>com.clarisma.common.ast.Literal</c>.</remarks>
 public class Literal : Expression
 {
-    private readonly object? value;
 
+    readonly object? _value;
+
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.Literal(Object)</c>.</remarks>
     public Literal(object? value)
     {
-        this.value = value;
+        _value = value;
     }
 
-    public object? Value => value;
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.Literal.value()</c>.</remarks>
+    public object? Value => _value;
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.Literal.equals(Object)</c>.</remarks>
     public override bool Equals(object? o)
     {
         if (ReferenceEquals(this, o)) return true;
         if (o == null || GetType() != o.GetType()) return false;
-        Literal literal = (Literal)o;
-        return Equals(value, literal.value);
+        var literal = (Literal)o;
+        return Equals(_value, literal._value);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.Literal.hashCode()</c>.</remarks>
     public override int GetHashCode()
     {
-        return HashCode.Combine(value);
+        return HashCode.Combine(_value);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.Literal.accept(AstVisitor)</c>.</remarks>
     public override R Accept<R>(IAstVisitor<R> visitor)
     {
         return visitor.VisitLiteral(this);
     }
+
 }

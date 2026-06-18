@@ -10,45 +10,53 @@ namespace Clarisma.Common.Ast;
 /// <remarks>Ported from Java <c>com.clarisma.common.ast.Operator</c>.</remarks>
 public class Operator
 {
-    private readonly string name;
-    private readonly string? symbol;
-    private readonly float precedence;
+
+    readonly string _name;
+    readonly string? _symbol;
+    readonly float _precedence;
 
     // TODO: associativity
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.Operator(String, String, float)</c>.</remarks>
     public Operator(string name, string? symbol, float precedence)
     {
-        this.name = name;
-        this.symbol = symbol;
-        this.precedence = precedence;
+        _name = name;
+        _symbol = symbol;
+        _precedence = precedence;
     }
 
-    public string Name => name;
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.Operator.name()</c>.</remarks>
+    public string Name => _name;
 
-    public string? Symbol => symbol;
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.Operator.symbol()</c>.</remarks>
+    public string? Symbol => _symbol;
 
-    public float Precedence => precedence;
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.Operator.precedence()</c>.</remarks>
+    public float Precedence => _precedence;
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.Operator.hashCode()</c>.</remarks>
     public override int GetHashCode()
     {
-        return symbol?.GetHashCode() ?? 0;
+        return _symbol?.GetHashCode() ?? 0;
     }
 
     // TODO: operator should always be treated as singleton
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.Operator.equals(Object)</c>.</remarks>
     public override bool Equals(object? obj)
     {
         if (ReferenceEquals(this, obj)) return true;
         if (obj is Operator other)
         {
-            return name.Equals(other.name) &&
-                string.Equals(symbol, other.symbol);
+            return _name.Equals(other._name) &&
+                string.Equals(_symbol, other._symbol);
         }
         return false;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.Operator.toString()</c>.</remarks>
     public override string ToString()
     {
-        return symbol ?? "";
+        return _symbol ?? "";
     }
 
     public const float COMPARISON_LEVEL = 40;
@@ -84,4 +92,5 @@ public class Operator
     public static readonly Operator AND = new Operator("and", "and", COMPARISON_LEVEL - 10);
     public static readonly Operator OR = new Operator("or", "or", COMPARISON_LEVEL - 20);
     public static readonly Operator NOT = new Operator("not", "not", COMPARISON_LEVEL - 5);
+
 }

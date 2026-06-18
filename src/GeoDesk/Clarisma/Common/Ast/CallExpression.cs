@@ -10,21 +10,27 @@ namespace Clarisma.Common.Ast;
 /// <remarks>Ported from Java <c>com.clarisma.common.ast.CallExpression</c>.</remarks>
 public class CallExpression : Expression
 {
-    private readonly Expression callee;
-    private readonly Expression[] arguments;
 
+    readonly Expression _callee;
+    readonly Expression[] _arguments;
+
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.CallExpression(Expression, Expression[])</c>.</remarks>
     public CallExpression(Expression callee, Expression[] arguments)
     {
-        this.callee = callee;
-        this.arguments = arguments;
+        _callee = callee;
+        _arguments = arguments;
     }
 
-    public Expression Callee => callee;
+    /// <remarks>Exposes the Java field <c>com.clarisma.common.ast.CallExpression.callee</c> (no getter in Java).</remarks>
+    public Expression Callee => _callee;
 
-    public Expression[] Arguments => arguments;
+    /// <remarks>Exposes the Java field <c>com.clarisma.common.ast.CallExpression.arguments</c> (no getter in Java).</remarks>
+    public Expression[] Arguments => _arguments;
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.CallExpression.accept(AstVisitor)</c>.</remarks>
     public override R Accept<R>(IAstVisitor<R> visitor)
     {
         return visitor.VisitCall(this);
     }
+
 }

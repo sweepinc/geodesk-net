@@ -10,17 +10,22 @@ namespace Clarisma.Common.Ast;
 /// <remarks>Ported from Java <c>com.clarisma.common.ast.StringExpression</c>.</remarks>
 public class StringExpression : Expression
 {
-    private readonly Expression[] parts;
 
+    readonly Expression[] _parts;
+
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.StringExpression(Expression[])</c>.</remarks>
     public StringExpression(Expression[] parts)
     {
-        this.parts = parts;
+        _parts = parts;
     }
 
-    public Expression[] Parts => parts;
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.StringExpression.parts()</c>.</remarks>
+    public Expression[] Parts => _parts;
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.StringExpression.accept(AstVisitor)</c>.</remarks>
     public override R Accept<R>(IAstVisitor<R> visitor)
     {
         return visitor.VisitString(this);
     }
+
 }

@@ -10,17 +10,22 @@ namespace Clarisma.Common.Ast;
 /// <remarks>Ported from Java <c>com.clarisma.common.ast.Variable</c>.</remarks>
 public class Variable : Expression
 {
-    private readonly string name;
 
+    readonly string _name;
+
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.Variable(String)</c>.</remarks>
     public Variable(string name)
     {
-        this.name = name;
+        _name = name;
     }
 
-    public string Name => name;
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.Variable.name()</c>.</remarks>
+    public string Name => _name;
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.Variable.accept(AstVisitor)</c>.</remarks>
     public override R Accept<R>(IAstVisitor<R> visitor)
     {
         return visitor.VisitVariable(this);
     }
+
 }

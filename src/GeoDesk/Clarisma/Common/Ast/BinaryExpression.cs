@@ -12,38 +12,47 @@ namespace Clarisma.Common.Ast;
 /// <remarks>Ported from Java <c>com.clarisma.common.ast.BinaryExpression</c>.</remarks>
 public class BinaryExpression : Expression
 {
-    private readonly Operator op;
-    private readonly Expression left;
-    private readonly Expression right;
 
+    readonly Operator _op;
+    readonly Expression _left;
+    readonly Expression _right;
+
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.BinaryExpression(Operator, Expression, Expression)</c>.</remarks>
     public BinaryExpression(Operator op, Expression left, Expression right)
     {
-        this.op = op;
-        this.left = left;
-        this.right = right;
+        _op = op;
+        _left = left;
+        _right = right;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.BinaryExpression.equals(Object)</c>.</remarks>
     public override bool Equals(object? o)
     {
         if (ReferenceEquals(this, o)) return true;
         if (o == null || GetType() != o.GetType()) return false;
-        BinaryExpression that = (BinaryExpression)o;
-        return Equals(op, that.op) && Equals(left, that.left) && Equals(right, that.right);
+        var that = (BinaryExpression)o;
+        return Equals(_op, that._op) && Equals(_left, that._left) && Equals(_right, that._right);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.BinaryExpression.hashCode()</c>.</remarks>
     public override int GetHashCode()
     {
-        return HashCode.Combine(op, left, right);
+        return HashCode.Combine(_op, _left, _right);
     }
 
-    public Operator Operator => op;
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.BinaryExpression.operator()</c>.</remarks>
+    public Operator Operator => _op;
 
-    public Expression Left => left;
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.BinaryExpression.left()</c>.</remarks>
+    public Expression Left => _left;
 
-    public Expression Right => right;
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.BinaryExpression.right()</c>.</remarks>
+    public Expression Right => _right;
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.ast.BinaryExpression.accept(AstVisitor)</c>.</remarks>
     public override R Accept<R>(IAstVisitor<R> visitor)
     {
         return visitor.VisitBinary(this);
     }
+
 }

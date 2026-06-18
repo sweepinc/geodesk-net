@@ -17,11 +17,6 @@ namespace GeoDesk.Feature.Match;
 /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagClause</c>.</remarks>
 public class TagClause : Variable, IComparable<TagClause>
 {
-    private int flags;
-    private readonly int key;
-    private readonly int category;
-    private Expression? exp;
-    public TagClause? next;
 
     // explicit is [k], implicit are all others except [k!=v] and [k!~v]
     public const int KEY_REQUIRED_EXPLICITLY = 128;
@@ -34,68 +29,93 @@ public class TagClause : Variable, IComparable<TagClause>
     public const int VALUE_DOUBLE = 8;
     public const int VALUE_ANY = 15;
 
+    int _flags;
+    readonly int _key;
+    readonly int _category;
+    Expression? _exp;
+    public TagClause? next;
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagClause(int, String, int, int, Expression)</c>.</remarks>
     public TagClause(int flags, string keyString, int key, int category, Expression? exp)
         : base(keyString)
     {
-        this.flags = flags;
-        this.key = key;
-        this.category = category;
-        this.exp = exp;
+        _flags = flags;
+        _key = key;
+        _category = category;
+        _exp = exp;
     }
 
-    public int Flags() => flags;
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagClause.flags()</c>.</remarks>
+    public int Flags() => _flags;
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagClause.next()</c>.</remarks>
     public TagClause? Next()
     {
         return next;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagClause.expression()</c>.</remarks>
     public Expression? Expression()
     {
-        return exp;
+        return _exp;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagClause.setExpression(Expression)</c>.</remarks>
     public void SetExpression(Expression? exp)
     {
-        this.exp = exp;
+        _exp = exp;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagClause.keyCode()</c>.</remarks>
     public int KeyCode()
     {
-        return key;
+        return _key;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagClause.category()</c>.</remarks>
     public int Category()
     {
-        return category;
+        return _category;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagClause.isKeyRequired()</c>.</remarks>
     public bool IsKeyRequired()
     {
-        return (flags & (KEY_REQUIRED_EXPLICITLY | KEY_REQUIRED_IMPLICITLY)) != 0;
+        return (_flags & (KEY_REQUIRED_EXPLICITLY | KEY_REQUIRED_IMPLICITLY)) != 0;
     }
 
-    public bool IsLocalKey() => key == 0;
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagClause.isLocalKey()</c>.</remarks>
+    public bool IsLocalKey() => _key == 0;
 
-    public bool IsGlobalKey() => key != 0;
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagClause.isGlobalKey()</c>.</remarks>
+    public bool IsGlobalKey() => _key != 0;
 
     /// <summary>
     /// Tag Clauses are grouped and sorted as follows:
     /// - Common tags in ascending order of the key code
     /// - Uncommon tags in ascending alphabetical order
     /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagClause.compareTo(TagClause)</c>.</remarks>
     public int CompareTo(TagClause? other)
     {
-        if (key == 0)
+        if (_key == 0)
         {
-            return other!.key == 0 ? string.CompareOrdinal(Name, other.Name) : 1;
+            return other!._key == 0 ? string.CompareOrdinal(Name, other.Name) : 1;
         }
-        return other!.key == 0 ? -1 : key.CompareTo(other.key);
+        return other!._key == 0 ? -1 : _key.CompareTo(other._key);
     }
 
-    private bool CheckConjoined(TagClause other)
+    /// <summary>
+    /// Checks if this clause can be AND-combined with another clause. If so, returns true. If the
+    /// other clause is superfluous, changes both clauses to make sense and returns false, in which
+    /// case no further merging steps should be taken. If a combination of clauses is nonsensical,
+    /// throws QueryException.
+    /// </summary>
+    /// <returns>true if the clauses can be combined, false if they are problematic but have been fixed</returns>
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagClause.checkConjoined(TagClause)</c>.</remarks>
+    bool CheckConjoined(TagClause other)
     {
-        if (!IsKeyRequired() && exp == null)
+        if (!IsKeyRequired() && _exp == null)
         {
             if (other.IsKeyRequired())
             {
@@ -103,10 +123,10 @@ public class TagClause : Variable, IComparable<TagClause>
                 throw new QueryException(string.Format(CultureInfo.InvariantCulture,
                     "Conflicting clauses for key {0}", Name));
             }
-            else if (other.exp != null)
+            else if (other._exp != null)
             {
                 // [!k] combined with [k!=v] is simply [!k]
-                other.exp = null;
+                other._exp = null;
                 return false;
             }
         }
@@ -114,23 +134,28 @@ public class TagClause : Variable, IComparable<TagClause>
     }
 
     /// <summary>
-    /// Merges another TagClause into this one (e.g. <c>[k&gt;3][k&lt;8]</c> become one clause
-    /// with an AND expression).
+    /// Merges another TagClause into this one. For example, a filter query may consist of two clauses
+    /// with the same key, e.g. <c>[k&gt;3][k&lt;8]</c>. The generated code expects to visit each tag
+    /// only once, so we need to merge the two clauses into a single one that contains an AND
+    /// expression.
     /// </summary>
+    /// <param name="other">another TagClause with the same key</param>
+    /// <param name="conjoin">true if the expressions should be combined using AND, or false if logical OR should be used</param>
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagClause.absorb(TagClause, boolean)</c>.</remarks>
     public void Absorb(TagClause other, bool conjoin)
     {
         if (conjoin)
         {
             if (!CheckConjoined(other)) return;
             if (!other.CheckConjoined(this)) return;
-            flags |= other.flags;
-            if (exp == null)
+            _flags |= other._flags;
+            if (_exp == null)
             {
-                exp = other.exp;
+                _exp = other._exp;
             }
-            else if (other.exp != null)
+            else if (other._exp != null)
             {
-                exp = new BinaryExpression(Operator.AND, exp, other.exp);
+                _exp = new BinaryExpression(Operator.AND, _exp, other._exp);
             }
         }
         else
@@ -138,4 +163,5 @@ public class TagClause : Variable, IComparable<TagClause>
             // TODO
         }
     }
+
 }
