@@ -14,6 +14,7 @@ namespace GeoDesk.Feature.Store;
 /// <remarks>Ported from Java <c>com.geodesk.feature.store.TagValues</c>.</remarks>
 public static class TagValues
 {
+
     /// <summary>
     /// The last entry in the Global String Table that can serve as a Global-Key code.
     /// </summary>
@@ -32,13 +33,15 @@ public static class TagValues
     /// <summary>
     /// Checks whether the given decimal can be represented as a narrow number.
     /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.TagValues.isNarrowNumber(long)</c>.</remarks>
     public static bool IsNarrowNumber(long decimalValue)
     {
         if (DecimalType.Scale(decimalValue) != 0) return false;
-        long mantissa = DecimalType.Mantissa(decimalValue);
+        var mantissa = DecimalType.Mantissa(decimalValue);
         return mantissa >= MIN_NUMBER && mantissa <= MAX_NARROW_NUMBER;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.TagValues.wideNumberToDouble(int)</c>.</remarks>
     public static double WideNumberToDouble(int number)
     {
         double mantissa = (int)((uint)number >> 2) + MIN_NUMBER;
@@ -51,9 +54,10 @@ public static class TagValues
         }
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.TagValues.wideNumberToString(int)</c>.</remarks>
     public static string? WideNumberToString(int number)
     {
-        int mantissa = (int)((uint)number >> 2) + MIN_NUMBER;
+        var mantissa = (int)((uint)number >> 2) + MIN_NUMBER;
         switch (number & 3)
         {
             case 0: return mantissa.ToString(CultureInfo.InvariantCulture);
@@ -64,18 +68,22 @@ public static class TagValues
         return null; // cannot reach this
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.TagValues.toInt(String)</c>.</remarks>
     public static int ToInt(string s)
     {
         return (int)MathUtils.DoubleFromString(s);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.TagValues.toLong(String)</c>.</remarks>
     public static long ToLong(string s)
     {
         return (long)MathUtils.DoubleFromString(s);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.TagValues.toDouble(String)</c>.</remarks>
     public static double ToDouble(string s)
     {
         return MathUtils.DoubleFromString(s);
     }
+
 }

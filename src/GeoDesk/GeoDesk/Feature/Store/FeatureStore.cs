@@ -18,37 +18,40 @@ using ZoomLevelsUtil = GeoDesk.Feature.Store.ZoomLevels;
 
 namespace GeoDesk.Feature.Store;
 
+/// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore</c>.</remarks>
 public class FeatureStore : FreeStore
 {
-    private int minZoom;
-    private int zoomSteps;
-    private NioBuffer? tileIndexBuf;
-    private int tileIndexOfs;
-
-    public FeatureStore(string path)
-        : base(path)
-    {
-    }
-
-    private Dictionary<string, int> stringsToCodes = new Dictionary<string, int>();
-    private string[] codesToStrings = Array.Empty<string>();
-    private Dictionary<int, int> keysToCategories = new Dictionary<int, int>();
-    private MatcherCompiler? matchers;
-    private ExecutorService? executor;
-    private GeometryFactory? geometryFactory;
-    private int maxPendingTiles;
-    private readonly object matchersLock = new object();
 
     public new const int MAGIC = 0x1CE50D6E; // "geodesic"
     public new const int VERSION = 1_000_000;
 
     public const int SNAPSHOT_TILE_INDEX_OFS = 24;
     public const int SNAPSHOT_TILE_COUNT_OFS = 28;
-    private const int STRING_TABLE_PTR_OFS = 84;
-    private const int INDEX_SCHEMA_PTR_OFS = 88;
-    private const int PROPERTIES_PTR_OFS = 92;
+    const int STRING_TABLE_PTR_OFS = 84;
+    const int INDEX_SCHEMA_PTR_OFS = 88;
+    const int PROPERTIES_PTR_OFS = 92;
     public const int ZOOM_LEVELS_OFS = 96;
 
+    int _minZoom;
+    int _zoomSteps;
+    NioBuffer? _tileIndexBuf;
+    int _tileIndexOfs;
+    Dictionary<string, int> _stringsToCodes = new Dictionary<string, int>();
+    string[] _codesToStrings = Array.Empty<string>();
+    Dictionary<int, int> _keysToCategories = new Dictionary<int, int>();
+    MatcherCompiler? _matchers;
+    ExecutorService? _executor;
+    GeometryFactory? _geometryFactory;
+    int _maxPendingTiles;
+    readonly object _matchersLock = new object();
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore(Path)</c>.</remarks>
+    public FeatureStore(string path)
+        : base(path)
+    {
+    }
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.initialize()</c>.</remarks>
     protected override void Initialize()
     {
         base.Initialize();
@@ -56,113 +59,125 @@ public class FeatureStore : FreeStore
         ReadStringTable();
         ReadIndexSchema();
 
-        int pSnapshot = 128 + ActiveSnapshot() * 64;
-        int tileIndexPage = baseMapping!.GetInt(pSnapshot + SNAPSHOT_TILE_INDEX_OFS);
-        tileIndexBuf = BufferOfPage(tileIndexPage);
-        tileIndexOfs = OffsetOfPage(tileIndexPage);
+        var pSnapshot = 128 + ActiveSnapshot() * 64;
+        var tileIndexPage = baseMapping!.GetInt(pSnapshot + SNAPSHOT_TILE_INDEX_OFS);
+        _tileIndexBuf = BufferOfPage(tileIndexPage);
+        _tileIndexOfs = OffsetOfPage(tileIndexPage);
 
         EnableQueries();
-        int zoomLevels = ZoomLevels();
-        minZoom = ZoomLevelsUtil.MinZoom(zoomLevels);
-        zoomSteps = ZoomLevelsUtil.ZoomSteps(zoomLevels);
+        var zoomLevels = ZoomLevels();
+        _minZoom = ZoomLevelsUtil.MinZoom(zoomLevels);
+        _zoomSteps = ZoomLevelsUtil.ZoomSteps(zoomLevels);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.tileIndexBuf()</c>.</remarks>
     public NioBuffer TileIndexBuf()
     {
-        return tileIndexBuf!;
+        return _tileIndexBuf!;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.tileIndexOfs()</c>.</remarks>
     public int TileIndexOfs()
     {
-        return tileIndexOfs;
+        return _tileIndexOfs;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.zoomLevels()</c>.</remarks>
     public int ZoomLevels()
     {
         return baseMapping!.GetInt(ZOOM_LEVELS_OFS);
     }
 
-    private void ReadStringTable()
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.readStringTable()</c>.</remarks>
+    void ReadStringTable()
     {
-        int p = baseMapping!.GetInt(STRING_TABLE_PTR_OFS);
-        int count = baseMapping.GetInt(p) & 0xffff;
-        PbfDecoder reader = new PbfDecoder(baseMapping, p + 2);
-        codesToStrings = new string[count];
+        var p = baseMapping!.GetInt(STRING_TABLE_PTR_OFS);
+        var count = baseMapping.GetInt(p) & 0xffff;
+        var reader = new PbfDecoder(baseMapping, p + 2);
+        _codesToStrings = new string[count];
         var stringMap = new Dictionary<string, int>(count + (count >> 1));
 
-        for (int i = 0; i < count; i++)
+        for (var i = 0; i < count; i++)
         {
-            string s = reader.ReadString();
-            codesToStrings[i] = s;
+            var s = reader.ReadString();
+            _codesToStrings[i] = s;
             stringMap[s] = i;
         }
-        stringsToCodes = stringMap;
+        _stringsToCodes = stringMap;
     }
 
-    private void ReadIndexSchema()
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.readIndexSchema()</c>.</remarks>
+    void ReadIndexSchema()
     {
-        int p = baseMapping!.GetInt(INDEX_SCHEMA_PTR_OFS);
-        int count = baseMapping.GetInt(p);
+        var p = baseMapping!.GetInt(INDEX_SCHEMA_PTR_OFS);
+        var count = baseMapping.GetInt(p);
         var map = new Dictionary<int, int>(count);
-        for (int i = 0; i < count; i++)
+        for (var i = 0; i < count; i++)
         {
             p += 4;
-            int entry = baseMapping.GetInt(p);
+            var entry = baseMapping.GetInt(p);
             map[(char)entry] = entry >> 16;
         }
-        keysToCategories = map;
+        _keysToCategories = map;
     }
 
-    private void EnableQueries()
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.enableQueries()</c>.</remarks>
+    void EnableQueries()
     {
-        matchers = new MatcherCompiler(stringsToCodes, codesToStrings, keysToCategories);
-        executor = new ForkJoinPool(); // TODO: ability to set parallelism
-        maxPendingTiles = Environment.ProcessorCount * 2;
-        geometryFactory = new GeometryFactory();
+        _matchers = new MatcherCompiler(_stringsToCodes, _codesToStrings, _keysToCategories);
+        _executor = new ForkJoinPool(); // TODO: ability to set parallelism
+        _maxPendingTiles = Environment.ProcessorCount * 2;
+        _geometryFactory = new GeometryFactory();
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.executor()</c>.</remarks>
     public ExecutorService Executor()
     {
-        return executor!;
+        return _executor!;
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.maxPendingTiles()</c>.</remarks>
     public int MaxPendingTiles()
     {
-        return maxPendingTiles;
+        return _maxPendingTiles;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.tileIndexEntry(int)</c>.</remarks>
     public int TileIndexEntry(int tip)
     {
-        return tileIndexBuf!.GetInt(tileIndexOfs + tip * 4);
+        return _tileIndexBuf!.GetInt(_tileIndexOfs + tip * 4);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.pageFromEntry(int)</c>.</remarks>
     public static int PageFromEntry(int entry)
     {
         return (int)((uint)entry >> 2);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.isTileLoadedAndCurrent(int)</c>.</remarks>
     public static bool IsTileLoadedAndCurrent(int entry)
     {
         return (entry & 2) != 0;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.tilePage(int)</c>.</remarks>
     public int TilePage(int tip)
     {
-        return (int)((uint)tileIndexBuf!.GetInt(tileIndexOfs + tip * 4) >> 2);
+        return (int)((uint)_tileIndexBuf!.GetInt(_tileIndexOfs + tip * 4) >> 2);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.isTileReady(int)</c>.</remarks>
     public bool IsTileReady(int tip)
     {
-        return (tileIndexBuf!.GetInt(tileIndexOfs + tip * 4) & 2) != 0;
+        return (_tileIndexBuf!.GetInt(_tileIndexOfs + tip * 4) & 2) != 0;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.stringFromCode(int)</c>.</remarks>
     public string StringFromCode(int code)
     {
         try
         {
-            return codesToStrings[code];
+            return _codesToStrings[code];
         }
         catch (IndexOutOfRangeException)
         {
@@ -171,31 +186,33 @@ public class FeatureStore : FreeStore
         }
     }
 
-    /// <summary>
-    /// Returns the global string code for a given string, or -1 if not in the GST.
-    /// </summary>
+    /// <summary>Returns the global string code for a given string, or -1 if not in the GST.</summary>
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.codeFromString(String)</c>.</remarks>
     public int CodeFromString(string s)
     {
-        return stringsToCodes.TryGetValue(s, out int v) ? v : -1;
+        return _stringsToCodes.TryGetValue(s, out var v) ? v : -1;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.geometryFactory()</c>.</remarks>
     public GeometryFactory GeometryFactory()
     {
-        return geometryFactory!;
+        return _geometryFactory!;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.getMatcher(String)</c>.</remarks>
     public Matcher GetMatcher(string query)
     {
-        lock (matchersLock)
+        lock (_matchersLock)
         {
-            return matchers!.GetMatcher(query);
+            return _matchers!.GetMatcher(query);
         }
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.getFeature(ByteBuffer, int)</c>.</remarks>
     public StoredFeature GetFeature(NioBuffer buf, int p)
     {
-        int flags = buf.GetInt(p);
-        int type = (flags >> 3) & 3;
+        var flags = buf.GetInt(p);
+        var type = (flags >> 3) & 3;
         if (type == 1)
         {
             return new StoredWay(this, buf, p);
@@ -212,15 +229,15 @@ public class FeatureStore : FreeStore
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.close()</c>.</remarks>
     public new void Close()
     {
-        if (executor != null)
+        if (_executor != null)
         {
             // Wait for pending tasks to complete before allowing
             // Store.close() to unmap the buffers (otherwise risk of crash)
 
-            executor.Shutdown();
+            _executor.Shutdown();
             try
             {
-                executor.AwaitTermination(24, TimeUnit.Hours);
+                _executor.AwaitTermination(24, TimeUnit.Hours);
             }
             catch (InterruptedException)
             {
@@ -230,18 +247,22 @@ public class FeatureStore : FreeStore
         base.Close();
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.keysToCategories()</c>.</remarks>
     public IReadOnlyDictionary<int, int> KeysToCategories()
     {
-        return keysToCategories;
+        return _keysToCategories;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.stringsToCodes()</c>.</remarks>
     public IReadOnlyDictionary<string, int> StringsToCodes()
     {
-        return stringsToCodes;
+        return _stringsToCodes;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.codesToStrings()</c>.</remarks>
     public string[] CodesToStrings()
     {
-        return codesToStrings;
+        return _codesToStrings;
     }
+
 }

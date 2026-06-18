@@ -14,6 +14,7 @@ namespace GeoDesk.Feature.Store;
 /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStoreConstants</c>.</remarks>
 public static class FeatureStoreConstants
 {
+
     public const int MAGIC = 0x1CE50D6E; // 6E0DE51C "geodesic/geodesk"
     public const int VERSION = 1_000_000;
 
@@ -24,4 +25,5 @@ public static class FeatureStoreConstants
     public const int PROPERTIES_PTR_OFS = 48;
     public const int STRING_TABLE_PTR_OFS = 52;
     public const int INDEX_SCHEMA_PTR_OFS = 56;
+
 }

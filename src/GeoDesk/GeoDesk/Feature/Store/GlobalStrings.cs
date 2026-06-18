@@ -10,9 +10,11 @@ namespace GeoDesk.Feature.Store;
 /// <remarks>Ported from Java <c>com.geodesk.feature.store.GlobalStrings</c>.</remarks>
 public static class GlobalStrings
 {
+
     public const int EMPTY = 0;
     public const int NO = 1;
     public const int YES = 2;
     public const int OUTER = 3;
     public const int INNER = 4;
+
 }

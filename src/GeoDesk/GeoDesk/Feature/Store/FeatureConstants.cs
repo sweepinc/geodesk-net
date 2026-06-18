@@ -10,6 +10,7 @@ namespace GeoDesk.Feature.Store;
 /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureConstants</c>.</remarks>
 public static class FeatureConstants
 {
+
     /// <summary>
     /// The initial TIP used in iterators for relation members, relation tables, and
     /// feature nodes of ways. We start at this value (rather than 0) so a range of TIPs
@@ -19,4 +20,5 @@ public static class FeatureConstants
     public const int MEMBERS_START_TEX = 0x400;
     public const int RELATIONS_START_TEX = 0x800;
     public const int WAYNODES_START_TEX = 0x800;
+
 }
