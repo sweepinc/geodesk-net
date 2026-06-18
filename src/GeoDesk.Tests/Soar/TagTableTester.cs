@@ -22,8 +22,9 @@ namespace GeoDesk.Feature.Query;
 
 public class TagTableTester
 {
-    private readonly Dictionary<string, Dictionary<string, object?>> cases = new Dictionary<string, Dictionary<string, object?>>();
-    private readonly Dictionary<string, int> stringTable;
+
+    readonly Dictionary<string, Dictionary<string, object?>> cases = new Dictionary<string, Dictionary<string, object?>>();
+    readonly Dictionary<string, int> stringTable;
 
     public TagTableTester()
     {
@@ -36,20 +37,19 @@ public class TagTableTester
         return Path.Combine(AppContext.BaseDirectory, "TestResources", "feature", name);
     }
 
-    private static Dictionary<string, int> LoadStringTable(string path)
+    static Dictionary<string, int> LoadStringTable(string path)
     {
         var st = new Dictionary<string, int>();
         foreach (string s in File.ReadLines(path))
-        {
             st[s] = st.Count + 1; // 1-based index
-        }
+
         return st;
     }
 
-    private sealed class CaseReader : FabReader
+    sealed class CaseReader : FabReader
     {
-        private readonly TagTableTester owner;
-        private readonly TagsParser parser = new TagsParser();
+        readonly TagTableTester owner;
+        readonly TagsParser parser = new TagsParser();
 
         public CaseReader(TagTableTester owner)
         {
@@ -68,7 +68,7 @@ public class TagTableTester
         return cases.TryGetValue(name, out var t) ? t : null;
     }
 
-    private static string ValueToString(object? v)
+    static string ValueToString(object? v)
     {
         return v switch
         {
@@ -94,12 +94,13 @@ public class TagTableTester
     internal NioBuffer MakeCase(string name, int maxRandomTags, ISet<string>? excludeTags)
     {
         Dictionary<string, object?>? tags = GetTags(name);
-        if (tags == null) throw new InvalidOperationException($"TagTable case \"{name}\" not found");
+        if (tags == null)
+            throw new InvalidOperationException($"TagTable case \"{name}\" not found");
         var archive = new TagTestArchive(TagsAsStringArray(tags), stringTable);
         return archive.Create(name);
     }
 
-    private sealed class TagTestArchive : Archive
+    sealed class TagTestArchive : Archive
     {
         public TagTestArchive(string[] tags, Dictionary<string, int> stringTable)
         {
@@ -125,7 +126,7 @@ public class TagTableTester
         }
     }
 
-    private sealed class STestFeature : Struct
+    sealed class STestFeature : Struct
     {
         private readonly STagTable tagTable;
 
@@ -141,5 +142,7 @@ public class TagTableTester
             @out.WritePointer(tagTable, tagTable.UncommonKeyCount() > 0 ? 1 : 0);
             @out.WriteInt(0);
         }
+
     }
+
 }
