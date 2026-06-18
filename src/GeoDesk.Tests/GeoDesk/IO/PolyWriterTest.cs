@@ -7,8 +7,11 @@
 
 using System;
 using System.IO;
+
 using GeoDesk.Util;
+
 using NetTopologySuite.Geometries;
+
 using Xunit;
 
 namespace GeoDesk.IO;

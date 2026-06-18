@@ -16,7 +16,6 @@ using Xunit;
 namespace GeoDesk.Tests;
 
 /// <remarks>Ported from Java <c>com.geodesk.tests.IntersectsTest</c>.</remarks>
-[Collection("GolFixture")]
 public class IntersectsTest : AbstractFeatureTest
 {
 

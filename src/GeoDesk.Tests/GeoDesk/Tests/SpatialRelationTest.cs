@@ -18,7 +18,6 @@ namespace GeoDesk.Tests;
 /// GeometryCollections. This test checks for exceptions thrown by the JTS library.
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.tests.SpatialRelationTest</c>.</remarks>
-[Collection("GolFixture")]
 public class SpatialRelationTest : AbstractFeatureTest
 {
 

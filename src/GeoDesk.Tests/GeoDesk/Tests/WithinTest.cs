@@ -6,12 +6,12 @@
  */
 
 using GeoDesk.Feature.Filters;
+
 using Xunit;
 
 namespace GeoDesk.Tests;
 
 /// <remarks>Ported from Java <c>com.geodesk.tests.WithinTest</c>.</remarks>
-[Collection("GolFixture")]
 public class WithinTest : AbstractFeatureTest
 {
 

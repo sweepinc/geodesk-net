@@ -6,11 +6,12 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+
 using GeoDesk.Feature;
 using GeoDesk.Geom;
+
 using Xunit;
 
 namespace GeoDesk.Tests;
@@ -20,7 +21,6 @@ namespace GeoDesk.Tests;
 // names are retained deliberately — the runner discovers the methods by their underscores. The
 // Java main() becomes the RunAll [Fact].
 /// <remarks>Ported from Java <c>com.geodesk.tests.ConcurTest</c>.</remarks>
-[Collection("GolFixture")]
 public class ConcurTest : IDisposable
 {
 

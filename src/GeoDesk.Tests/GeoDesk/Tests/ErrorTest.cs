@@ -16,7 +16,6 @@ using Xunit;
 namespace GeoDesk.Tests;
 
 /// <remarks>Ported from Java <c>com.geodesk.tests.ErrorTest</c>.</remarks>
-[Collection("GolFixture")]
 public class ErrorTest : AbstractFeatureTest
 {
 

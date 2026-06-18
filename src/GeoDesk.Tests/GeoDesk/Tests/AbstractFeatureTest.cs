@@ -6,6 +6,7 @@
  */
 
 using System;
+
 using GeoDesk.Feature;
 
 namespace GeoDesk.Tests;

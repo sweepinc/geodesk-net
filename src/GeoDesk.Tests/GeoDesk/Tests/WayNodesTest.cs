@@ -12,7 +12,6 @@ using Xunit;
 namespace GeoDesk.Tests;
 
 /// <remarks>Ported from Java <c>com.geodesk.tests.WayNodesTest</c>.</remarks>
-[Collection("GolFixture")]
 public class WayNodesTest : AbstractFeatureTest
 {
 
@@ -20,7 +19,7 @@ public class WayNodesTest : AbstractFeatureTest
     [Fact]
     public void TestNodeParentCounts()
     {
-var streets = world.Select("w[highway]");
+        var streets = world.Select("w[highway]");
         foreach (var street in streets)
         {
             var nNodes = street.Nodes().Count();
@@ -48,7 +47,7 @@ var streets = world.Select("w[highway]");
     [Fact]
     public void TestNodesInRelations()
     {
-foreach (var rel in world.Relations())
+        foreach (var rel in world.Relations())
         {
             foreach (var node in rel.Members().Nodes())
             {

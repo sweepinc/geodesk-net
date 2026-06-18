@@ -5,8 +5,6 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-using System;
-
 using GeoDesk.Common.Util;
 using GeoDesk.Feature;
 using GeoDesk.Geom;
@@ -16,7 +14,6 @@ using Xunit;
 namespace GeoDesk.Tests;
 
 /// <remarks>Ported from Java <c>com.geodesk.tests.PolyformQueryTest</c>.</remarks>
-[Collection("GolFixture")]
 public class PolyformQueryTest
 {
 

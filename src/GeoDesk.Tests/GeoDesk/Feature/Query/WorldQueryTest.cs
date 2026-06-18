@@ -7,7 +7,9 @@
 
 using System;
 using System.IO;
+
 using GeoDesk.Geom;
+
 using Xunit;
 using Xunit.Abstractions;
 

@@ -12,7 +12,6 @@ using Xunit;
 namespace GeoDesk.Tests;
 
 /// <remarks>Ported from Java <c>com.geodesk.tests.MultiSelectorTest</c>.</remarks>
-[Collection("GolFixture")]
 public class MultiSelectorTest : AbstractFeatureTest
 {
 

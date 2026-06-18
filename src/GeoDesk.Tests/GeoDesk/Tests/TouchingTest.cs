@@ -6,12 +6,12 @@
  */
 
 using System;
+
 using Xunit;
 
 namespace GeoDesk.Tests;
 
 /// <remarks>Ported from Java <c>com.geodesk.tests.TouchingTest</c>.</remarks>
-[Collection("GolFixture")]
 public class TouchingTest : AbstractFeatureTest
 {
 
@@ -19,7 +19,7 @@ public class TouchingTest : AbstractFeatureTest
     [Fact]
     public void TestTouching()
     {
-var adminAreas = world.Select("a[boundary=administrative]");
+        var adminAreas = world.Select("a[boundary=administrative]");
         var counties = world.Select("a[boundary=administrative][admin_level=6]");
 
         foreach (var county in counties)

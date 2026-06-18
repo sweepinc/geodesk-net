@@ -7,14 +7,15 @@
 
 using System;
 using System.IO;
+
 using GeoDesk.Feature;
 using GeoDesk.Util;
+
 using Xunit;
 
 namespace GeoDesk.Tests;
 
 /// <remarks>Ported from Java <c>com.geodesk.tests.MapMakerTest</c>.</remarks>
-[Collection("GolFixture")]
 public class MapMakerTest : IDisposable
 {
 

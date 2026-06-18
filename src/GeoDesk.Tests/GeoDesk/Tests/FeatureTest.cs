@@ -10,7 +10,6 @@ using Xunit;
 namespace GeoDesk.Tests;
 
 /// <remarks>Ported from Java <c>com.geodesk.tests.FeatureTest</c>.</remarks>
-[Collection("GolFixture")]
 public class FeatureTest : AbstractFeatureTest
 {
 

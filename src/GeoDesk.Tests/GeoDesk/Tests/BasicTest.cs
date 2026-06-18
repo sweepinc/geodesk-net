@@ -6,13 +6,14 @@
  */
 
 using System;
+
 using GeoDesk.Feature;
+
 using Xunit;
 
 namespace GeoDesk.Tests;
 
 /// <remarks>Ported from Java <c>com.geodesk.tests.BasicTest</c>.</remarks>
-[Collection("GolFixture")]
 public class BasicTest : IDisposable
 {
 

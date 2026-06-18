@@ -14,7 +14,6 @@ using Xunit;
 namespace GeoDesk.Tests;
 
 /// <remarks>Ported from Java <c>com.geodesk.tests.MaxMetersFromTest</c>.</remarks>
-[Collection("GolFixture")]
 public class MaxMetersFromTest : IDisposable
 {
 

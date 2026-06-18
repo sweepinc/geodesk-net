@@ -10,7 +10,6 @@ using Xunit;
 namespace GeoDesk.Tests;
 
 /// <remarks>Ported from Java <c>com.geodesk.tests.ContainingTest</c>.</remarks>
-[Collection("GolFixture")]
 public class ContainingTest : AbstractFeatureTest
 {
 
@@ -18,7 +17,7 @@ public class ContainingTest : AbstractFeatureTest
     [Fact]
     public void TestWithin()
     {
-var counties = world.Select("a[boundary=administrative][admin_level=6]");
+        var counties = world.Select("a[boundary=administrative][admin_level=6]");
 
         foreach (var county in counties)
         {

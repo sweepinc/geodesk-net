@@ -21,7 +21,6 @@ using Xunit;
 namespace GeoDesk.Tests;
 
 /// <remarks>Ported from Java <c>com.geodesk.tests.WithinTest_old</c>.</remarks>
-[Collection("GolFixture")]
 public class WithinTest_old
 {
 

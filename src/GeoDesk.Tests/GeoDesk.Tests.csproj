@@ -1,30 +1,30 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
-        <LangVersion>latest</LangVersion>
-        <IsPackable>false</IsPackable>
-        <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    </PropertyGroup>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
 
-    <ItemGroup>
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
-        <PackageReference Include="xunit" Version="2.9.2" />
-        <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
-    </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
 
-    <ItemGroup>
-        <ProjectReference Include="..\GeoDesk\GeoDesk.csproj" />
-    </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\GeoDesk\GeoDesk.csproj" />
+  </ItemGroup>
 
-    <ItemGroup>
-        <Content Include="TestResources\**\*">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <Link>TestResources\%(RecursiveDir)%(Filename)%(Extension)</Link>
-        </Content>
-    </ItemGroup>
+  <ItemGroup>
+    <Content Include="TestResources\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>TestResources\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Content>
+  </ItemGroup>
 
-    <!--
+  <!--
       ===========================================================================================
       GOL test fixtures
       ===========================================================================================
@@ -39,89 +39,74 @@
         and the dependent integration tests skip at runtime).
       - Disable with -p:GenerateGolFixtures=false (e.g. offline / CI without the tool).
     -->
-    <PropertyGroup>
-        <GolTool Condition="'$(GolTool)' == ''">gol</GolTool>
-        <GenerateGolFixtures Condition="'$(GenerateGolFixtures)' == ''">true</GenerateGolFixtures>
-    </PropertyGroup>
+  <PropertyGroup>
+    <GolTool Condition="'$(GolTool)' == ''">gol</GolTool>
+    <GenerateGolFixtures Condition="'$(GenerateGolFixtures)' == ''">true</GenerateGolFixtures>
+  </PropertyGroup>
 
-    <ItemGroup>
-        <!-- The GOL fixtures the tests need. Add more by listing them here. -->
-        <GolFixture Include="monaco">
-            <PbfUrl>https://download.geofabrik.de/europe/monaco-latest.osm.pbf</PbfUrl>
-        </GolFixture>
-    </ItemGroup>
+  <ItemGroup>
+    <!-- The GOL fixtures the tests need. Add more by listing them here. -->
+    <GolFixture Include="monaco">
+      <PbfUrl>https://download.geofabrik.de/europe/monaco-latest.osm.pbf</PbfUrl>
+    </GolFixture>
+  </ItemGroup>
 
-    <!--
+  <!--
       Resolves GolFixtureDir (the intermediate/obj dir for generated fixtures). Done in a target,
       not a body PropertyGroup, because IntermediateOutputPath isn't set until the SDK targets run.
       Both GOL targets depend on this, so it's evaluated after IntermediateOutputPath is known.
     -->
-    <Target Name="_InitGolFixtureDir">
-        <PropertyGroup>
-            <GolFixtureDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\$(IntermediateOutputPath)golfixtures'))</GolFixtureDir>
-        </PropertyGroup>
-    </Target>
+  <Target Name="_InitGolFixtureDir">
+    <PropertyGroup>
+      <GolFixtureDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\$(IntermediateOutputPath)golfixtures'))</GolFixtureDir>
+    </PropertyGroup>
+  </Target>
 
-    <!--
+  <!--
       Target 1: build any missing GOL fixtures into the intermediate (obj) dir.
       Incremental: skipped unless an output .gol is missing or older than the project (Inputs/Outputs).
     -->
-    <Target Name="GenerateGolFixtures"
-            Condition="'$(GenerateGolFixtures)' == 'true'"
-            DependsOnTargets="_InitGolFixtureDir"
-            Inputs="$(MSBuildProjectFullPath)"
-            Outputs="@(GolFixture->'$(GolFixtureDir)\%(Identity).gol')">
-        <MakeDir Directories="$(GolFixtureDir)" />
+  <Target Name="GenerateGolFixtures" Condition="'$(GenerateGolFixtures)' == 'true'" DependsOnTargets="_InitGolFixtureDir" Inputs="$(MSBuildProjectFullPath)" Outputs="@(GolFixture->'$(GolFixtureDir)\%(Identity).gol')">
+    <MakeDir Directories="$(GolFixtureDir)" />
 
-        <Message Importance="high"
-                 Condition="!Exists('$(GolFixtureDir)\%(GolFixture.Identity).gol')"
-                 Text="GOL fixture: building '%(GolFixture.Identity).gol' (download PBF + '$(GolTool) build')..." />
+    <Message Importance="high" Condition="!Exists('$(GolFixtureDir)\%(GolFixture.Identity).gol')" Text="GOL fixture: building '%(GolFixture.Identity).gol' (download PBF + '$(GolTool) build')..." />
 
-        <!-- 1. Download the .osm.pbf extract (once) -->
-        <DownloadFile SourceUrl="%(GolFixture.PbfUrl)"
-                      DestinationFolder="$(GolFixtureDir)"
-                      DestinationFileName="%(GolFixture.Identity).osm.pbf"
-                      SkipUnchangedFiles="true"
-                      ContinueOnError="true"
-                      Condition="!Exists('$(GolFixtureDir)\%(GolFixture.Identity).gol') And !Exists('$(GolFixtureDir)\%(GolFixture.Identity).osm.pbf')" />
+    <!-- 1. Download the .osm.pbf extract (once) -->
+    <DownloadFile SourceUrl="%(GolFixture.PbfUrl)"
+                  DestinationFolder="$(GolFixtureDir)"
+                  DestinationFileName="%(GolFixture.Identity).osm.pbf"
+                  SkipUnchangedFiles="true"
+                  ContinueOnError="true"
+                  Condition="!Exists('$(GolFixtureDir)\%(GolFixture.Identity).gol') And !Exists('$(GolFixtureDir)\%(GolFixture.Identity).osm.pbf')" />
 
-        <!-- 2. Build the GOL (`gol build <name> <pbf>` writes <name>.gol into the working dir) -->
-        <Exec Command="&quot;$(GolTool)&quot; build %(GolFixture.Identity) &quot;$(GolFixtureDir)\%(GolFixture.Identity).osm.pbf&quot;"
-              WorkingDirectory="$(GolFixtureDir)"
-              ContinueOnError="true"
-              Condition="!Exists('$(GolFixtureDir)\%(GolFixture.Identity).gol') And Exists('$(GolFixtureDir)\%(GolFixture.Identity).osm.pbf')" />
+    <!-- 2. Build the GOL (`gol build <name> <pbf>` writes <name>.gol into the working dir) -->
+    <Exec Command="&quot;$(GolTool)&quot; build %(GolFixture.Identity) &quot;$(GolFixtureDir)\%(GolFixture.Identity).osm.pbf&quot;"
+          WorkingDirectory="$(GolFixtureDir)"
+          ContinueOnError="true"
+          Condition="!Exists('$(GolFixtureDir)\%(GolFixture.Identity).gol') And Exists('$(GolFixtureDir)\%(GolFixture.Identity).osm.pbf')" />
 
-        <Warning Condition="!Exists('$(GolFixtureDir)\%(GolFixture.Identity).gol')"
-                 Text="Could not generate %(GolFixture.Identity).gol. Install GOL Tool 2.0 (https://github.com/clarisma/geodesk-gol) so '$(GolTool)' is on PATH (or place the file in Fixtures\ manually). Integration tests needing this GOL will be skipped." />
-    </Target>
+    <Warning Condition="!Exists('$(GolFixtureDir)\%(GolFixture.Identity).gol')"
+             Text="Could not generate %(GolFixture.Identity).gol. Install GOL Tool 2.0 (https://github.com/clarisma/geodesk-gol) so '$(GolTool)' is on PATH (or place the file in Fixtures\ manually). Integration tests needing this GOL will be skipped." />
+  </Target>
 
-    <!-- Manually placed GOL fixtures (evaluation-time; safe to use %(Filename) here). -->
-    <ItemGroup>
-        <None Include="Fixtures\**\*.gol">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <Link>Fixtures\%(Filename)%(Extension)</Link>
-        </None>
-    </ItemGroup>
-
-    <!--
+  <!--
       Target 2: register the generated GOL fixtures (in obj) as None items copied to Fixtures\ in
       the output dir. Depends on Target 1 and runs before AssignTargetPaths so a freshly built GOL
       is copied in the same build. Collect into an intermediate item group FIRST, then transform it
       into None items — this scopes the %(Filename) metadata batch to those files and avoids
       cross-batching against the project's other copy items.
     -->
-    <Target Name="AddGolFixturesToOutput"
-            DependsOnTargets="_InitGolFixtureDir;GenerateGolFixtures"
-            BeforeTargets="AssignTargetPaths">
-        <ItemGroup>
-            <_GolFixtureFile Include="$(GolFixtureDir)\**\*.gol" />
-        </ItemGroup>
-        <ItemGroup>
-            <None Include="@(_GolFixtureFile)">
-                <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-                <Link>Fixtures\%(Filename)%(Extension)</Link>
-            </None>
-        </ItemGroup>
-    </Target>
+  <Target Name="AddGolFixturesToOutput" DependsOnTargets="_InitGolFixtureDir;GenerateGolFixtures" BeforeTargets="AssignTargetPaths">
+    <ItemGroup>
+      <_GolFixtureFile Include="$(GolFixtureDir)\**\*.gol" />
+    </ItemGroup>
+    <ItemGroup>
+      <None Include="@(_GolFixtureFile)">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        <Link>Fixtures\%(Filename)%(Extension)</Link>
+      </None>
+    </ItemGroup>
+  </Target>
 
 </Project>

@@ -15,7 +15,6 @@ using Xunit;
 namespace GeoDesk.Tests;
 
 /// <remarks>Ported from Java <c>com.geodesk.tests.FilterTest</c>.</remarks>
-[Collection("GolFixture")]
 public class FilterTest
 {
 

@@ -28,7 +28,6 @@ namespace GeoDesk.Tests;
 // PORT: the two disabled (non-@Test) methods testSuperRelations / testMemberQueriesX are omitted.
 /// <summary>A series of basic integrity tests.</summary>
 /// <remarks>Ported from Java <c>com.geodesk.tests.ReferentialIntegrityTest</c>.</remarks>
-[Collection("GolFixture")]
 public class ReferentialIntegrityTest : IDisposable
 {
 

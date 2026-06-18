@@ -8,7 +8,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+
 using GeoDesk.Feature.Match;
+
 using Xunit;
 
 namespace GeoDesk.Feature.Query;

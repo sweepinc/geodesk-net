@@ -14,7 +14,6 @@ using Xunit;
 namespace GeoDesk.Tests;
 
 /// <remarks>Ported from Java <c>com.geodesk.tests.NodeDiscrepancyTest</c>.</remarks>
-[Collection("GolFixture")]
 public class NodeDiscrepancyTest
 {
 

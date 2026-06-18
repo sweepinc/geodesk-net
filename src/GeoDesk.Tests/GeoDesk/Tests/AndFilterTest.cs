@@ -24,7 +24,6 @@ namespace GeoDesk.Tests;
 // PORT: testAndFilterPerformance is omitted — it depends on com.geodesk.benchmark.BridgesBenchmark,
 // which is part of the (un-ported) benchmark harness.
 /// <remarks>Ported from Java <c>com.geodesk.tests.AndFilterTest</c>.</remarks>
-[Collection("GolFixture")]
 public class AndFilterTest : IDisposable
 {
 

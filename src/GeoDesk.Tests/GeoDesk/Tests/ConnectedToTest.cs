@@ -12,7 +12,6 @@ using Xunit;
 namespace GeoDesk.Tests;
 
 /// <remarks>Ported from Java <c>com.geodesk.tests.ConnectedToTest</c>.</remarks>
-[Collection("GolFixture")]
 public class ConnectedToTest : AbstractFeatureTest
 {
 
