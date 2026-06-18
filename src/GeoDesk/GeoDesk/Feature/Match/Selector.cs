@@ -18,87 +18,96 @@ namespace GeoDesk.Feature.Match;
 /// <remarks>Ported from Java <c>com.geodesk.feature.match.Selector</c>.</remarks>
 public class Selector : Expression
 {
+
     public const int CLAUSE_LOCAL_REQUIRED = 1;
     public const int CLAUSE_LOCAL_OPTIONAL = 2;
     public const int CLAUSE_GLOBAL_REQUIRED = 4;
     public const int CLAUSE_GLOBAL_OPTIONAL = 8;
 
-    private int matchTypes;
-    private int clauseTypes;
-    private int indexBits;
-    private Selector? next;
-    private TagClause? firstClause;
+    int _matchTypes;
+    int _clauseTypes;
+    int _indexBits;
+    Selector? _next;
+    TagClause? _firstClause;
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.Selector(int)</c>.</remarks>
     public Selector(int matchTypes)
     {
-        this.matchTypes = matchTypes;
+        _matchTypes = matchTypes;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.Selector.matchTypes()</c>.</remarks>
     public int MatchTypes()
     {
-        return matchTypes;
+        return _matchTypes;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.Selector.clauseTypes()</c>.</remarks>
     public int ClauseTypes()
     {
-        return clauseTypes;
+        return _clauseTypes;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.Selector.indexBits()</c>.</remarks>
     public int IndexBitsValue()
     {
-        return indexBits;
+        return _indexBits;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.Selector.next()</c>.</remarks>
     public Selector? Next()
     {
-        return next;
+        return _next;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.Selector.setNext(Selector)</c>.</remarks>
     public void SetNext(Selector? sel)
     {
-        next = sel;
+        _next = sel;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.Selector.firstClause()</c>.</remarks>
     internal TagClause? FirstClause()
     {
-        return firstClause;
+        return _firstClause;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.Selector.add(TagClause)</c>.</remarks>
     public void Add(TagClause clause)
     {
         if (clause.IsKeyRequired())
         {
-            clauseTypes |= clause.KeyCode() == 0 ?
+            _clauseTypes |= clause.KeyCode() == 0 ?
                 CLAUSE_LOCAL_REQUIRED : CLAUSE_GLOBAL_REQUIRED;
-            indexBits |= IndexBits.FromCategory(clause.Category());
+            _indexBits |= IndexBits.FromCategory(clause.Category());
         }
         else
         {
-            clauseTypes |= clause.KeyCode() == 0 ?
+            _clauseTypes |= clause.KeyCode() == 0 ?
                 CLAUSE_LOCAL_OPTIONAL : CLAUSE_GLOBAL_OPTIONAL;
         }
-        if (firstClause == null)
+        if (_firstClause == null)
         {
-            firstClause = clause;
+            _firstClause = clause;
             clause.next = null;
             return;
         }
-        int comp = clause.CompareTo(firstClause);
+        var comp = clause.CompareTo(_firstClause);
         if (comp == 0)
         {
-            firstClause.Absorb(clause, true);
+            _firstClause.Absorb(clause, true);
             return;
         }
         if (comp < 0)
         {
-            clause.next = firstClause;
-            firstClause = clause;
+            clause.next = _firstClause;
+            _firstClause = clause;
             return;
         }
-        TagClause prev = firstClause;
+        var prev = _firstClause;
         for (; ; )
         {
-            TagClause? c = prev.next;
+            var c = prev.next;
             if (c == null)
             {
                 prev.next = clause;
@@ -122,24 +131,27 @@ public class Selector : Expression
     }
 
     /// <summary>
-    /// Splits off a shallow copy of this Selector matching the given type bits;
-    /// those bits are removed from this Selector.
+    /// Splits off a shallow copy of this Selector matching the given type bits; those bits are removed
+    /// from this Selector.
     /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.Selector.split(int)</c>.</remarks>
     public Selector Split(int type)
     {
-        Debug.Assert((matchTypes & type) == type, "Selector does not match this type");
-        Debug.Assert((matchTypes ^ type) != 0, "No reason to split this selector");
-        Selector other = new Selector(type);
-        other.clauseTypes = clauseTypes;
-        other.indexBits = indexBits;
-        other.firstClause = firstClause;
-        matchTypes &= ~type;
+        Debug.Assert((_matchTypes & type) == type, "Selector does not match this type");
+        Debug.Assert((_matchTypes ^ type) != 0, "No reason to split this selector");
+        var other = new Selector(type);
+        other._clauseTypes = _clauseTypes;
+        other._indexBits = _indexBits;
+        other._firstClause = _firstClause;
+        _matchTypes &= ~type;
         return other;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.Selector.accept(AstVisitor)</c>.</remarks>
     public override R Accept<R>(IAstVisitor<R> visitor)
     {
         visitor.VisitExpression(this);
         return default!;
     }
+
 }

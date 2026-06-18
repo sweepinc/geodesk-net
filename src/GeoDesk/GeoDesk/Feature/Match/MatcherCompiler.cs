@@ -20,43 +20,47 @@ namespace GeoDesk.Feature.Match;
 /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherCompiler</c>.</remarks>
 public class MatcherCompiler
 {
-    private readonly MatcherParser parser;
-    private readonly string[] codesToStrings;
-    private readonly int valueNo;
-    private readonly Dictionary<string, Matcher> matchers = new Dictionary<string, Matcher>();
 
+    readonly MatcherParser _parser;
+    readonly string[] _codesToStrings;
+    readonly int _valueNo;
+    readonly Dictionary<string, Matcher> _matchers = new Dictionary<string, Matcher>();
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherCompiler(ObjectIntMap, String[], IntIntMap)</c>.</remarks>
     public MatcherCompiler(IReadOnlyDictionary<string, int> stringsToCodes, string[] codesToStrings,
         IReadOnlyDictionary<int, int> keysToCategories)
     {
-        this.codesToStrings = codesToStrings;
-        valueNo = stringsToCodes.TryGetValue("no", out int v) ? v : 0;
-        if (valueNo == 0) throw new QueryException("String table must include \"no\"");
-        parser = new MatcherParser(stringsToCodes, keysToCategories);
+        _codesToStrings = codesToStrings;
+        _valueNo = stringsToCodes.TryGetValue("no", out var v) ? v : 0;
+        if (_valueNo == 0) throw new QueryException("String table must include \"no\"");
+        _parser = new MatcherParser(stringsToCodes, keysToCategories);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherCompiler.getMatcher(String)</c>.</remarks>
     public Matcher GetMatcher(string query)
     {
-        if (matchers.TryGetValue(query, out Matcher? matcher)) return matcher;
+        if (_matchers.TryGetValue(query, out var matcher)) return matcher;
         matcher = CreateMatcher(query);
-        matchers[query] = matcher;
+        _matchers[query] = matcher;
         return matcher;
     }
 
-    private Matcher CreateMatcher(string query)
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherCompiler.createMatcher(String)</c>.</remarks>
+    Matcher CreateMatcher(string query)
     {
-        parser.Parse(query);
-        Selector? selectors = parser.Query();
+        _parser.Parse(query);
+        var selectors = _parser.Query();
         if (selectors == null)
         {
             // empty query matches everything
             return Matcher.ALL;
         }
 
-        Selector? sel = selectors;
-        int commonType = 0;
+        var sel = selectors;
+        var commonType = 0;
         while (sel != null)
         {
-            int type = sel.MatchTypes();
+            var type = sel.MatchTypes();
             if (commonType == 0)
             {
                 commonType = type;
@@ -68,6 +72,7 @@ public class MatcherCompiler
             sel = sel.Next();
         }
 
-        return new InterpretedMatcher(selectors, codesToStrings, valueNo);
+        return new InterpretedMatcher(selectors, _codesToStrings, _valueNo);
     }
+
 }

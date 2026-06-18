@@ -17,6 +17,7 @@ namespace GeoDesk.Feature.Match;
 /// <remarks>Ported from Java <c>com.geodesk.feature.match.TypeBits</c>.</remarks>
 public static class TypeBits
 {
+
     public const int NODES = 0b00000000_00000101_00000000_00000101;
     public const int WAYS = 0b00000000_11110000_00000000_11110000;
     public const int RELATIONS = 0b00001111_00000000_00001111_00000000;
@@ -27,16 +28,18 @@ public static class TypeBits
     public const int NONAREA_RELATIONS = RELATIONS & (~AREAS);
     public const int ALL = NODES | WAYS | RELATIONS;
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.TypeBits.fromFeatureFlags(int)</c>.</remarks>
     public static int FromFeatureFlags(int flags)
     {
         Debug.Assert((1 << 31) == (1 << unchecked((int)0xffff_ffff)));
         return 1 << (flags >> 1); // Don't need & 0x1F, C#'s shift only considers lowest 5 bits
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.TypeBits.toString(int)</c>.</remarks>
     public static string ToString(int flags)
     {
-        StringBuilder s = new StringBuilder();
-        for (int type = 0; type < 28; type++)
+        var s = new StringBuilder();
+        for (var type = 0; type < 28; type++)
         {
             if ((flags & (1 << type)) != 0)
             {
@@ -55,4 +58,5 @@ public static class TypeBits
         }
         return s.ToString();
     }
+
 }

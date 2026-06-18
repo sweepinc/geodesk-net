@@ -12,37 +12,44 @@ namespace GeoDesk.Feature.Match;
 /// <remarks>Ported from Java <c>com.geodesk.feature.match.AndMatcher</c>.</remarks>
 public class AndMatcher : Matcher
 {
-    private readonly Matcher a;
-    private readonly Matcher b;
 
+    readonly Matcher _a;
+    readonly Matcher _b;
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.AndMatcher(Matcher, Matcher)</c>.</remarks>
     public AndMatcher(Matcher a, Matcher b)
         : base(a.AcceptedTypes() & b.AcceptedTypes())
     {
-        this.a = a;
-        this.b = b;
+        _a = a;
+        _b = b;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.AndMatcher.accept(ByteBuffer, int)</c>.</remarks>
     public override bool Accept(NioBuffer buf, int pos)
     {
-        return a.Accept(buf, pos) && b.Accept(buf, pos);
+        return _a.Accept(buf, pos) && _b.Accept(buf, pos);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.AndMatcher.acceptTyped(int, ByteBuffer, int)</c>.</remarks>
     public override bool AcceptTyped(int types, NioBuffer buf, int pos)
     {
-        return a.AcceptTyped(types, buf, pos) && b.AcceptTyped(types, buf, pos);
+        return _a.AcceptTyped(types, buf, pos) && _b.AcceptTyped(types, buf, pos);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.AndMatcher.acceptIndex(int)</c>.</remarks>
     public override bool AcceptIndex(int keys)
     {
-        return a.AcceptIndex(keys) && b.AcceptIndex(keys);
+        return _a.AcceptIndex(keys) && _b.AcceptIndex(keys);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.AndMatcher.acceptRole(int, String)</c>.</remarks>
     public override Matcher? AcceptRole(int roleCode, string? roleString)
     {
-        Matcher? ma = a.AcceptRole(roleCode, roleString);
+        var ma = _a.AcceptRole(roleCode, roleString);
         if (ma == null) return null;
-        Matcher? mb = b.AcceptRole(roleCode, roleString);
+        var mb = _b.AcceptRole(roleCode, roleString);
         if (mb == null) return null;
         return new AndMatcher(ma, mb);
     }
+
 }

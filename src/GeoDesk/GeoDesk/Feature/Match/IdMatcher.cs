@@ -12,18 +12,22 @@ namespace GeoDesk.Feature.Match;
 /// <remarks>Ported from Java <c>com.geodesk.feature.match.IdMatcher</c>.</remarks>
 public class IdMatcher : Matcher
 {
-    private readonly long idBits;
-    private const long TYPE_ID_MASK = unchecked((long)0xffff_ffff_ffff_f018UL);
 
+    readonly long _idBits;
+    const long TypeIdMask = unchecked((long)0xffff_ffff_ffff_f018UL);
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.IdMatcher(int, long)</c>.</remarks>
     public IdMatcher(int typeCode, long id)
         : base(TypeBits.ALL)
     {
-        idBits = (id << 12) | ((long)typeCode << 3);
+        _idBits = (id << 12) | ((long)typeCode << 3);
         // TODO: change if FeatureFlags change
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.IdMatcher.accept(ByteBuffer, int)</c>.</remarks>
     public override bool Accept(NioBuffer buf, int pos)
     {
-        return (buf.GetLong(pos) & TYPE_ID_MASK) == idBits;
+        return (buf.GetLong(pos) & TypeIdMask) == _idBits;
     }
+
 }

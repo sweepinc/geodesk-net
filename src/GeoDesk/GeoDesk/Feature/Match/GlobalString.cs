@@ -13,26 +13,33 @@ namespace GeoDesk.Feature.Match;
 /// <remarks>Ported from Java <c>com.geodesk.feature.match.GlobalString</c>.</remarks>
 public class GlobalString : IComparable<GlobalString>
 {
-    private readonly string stringValue;
-    private readonly int value;
 
+    readonly string _stringValue;
+    readonly int _value;
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.GlobalString(String, int)</c>.</remarks>
     public GlobalString(string stringValue, int value)
     {
-        this.stringValue = stringValue;
-        this.value = value;
+        _stringValue = stringValue;
+        _value = value;
     }
 
-    public int Value => value;
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.GlobalString.value()</c>.</remarks>
+    public int Value => _value;
 
-    public string StringValue => stringValue;
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.GlobalString.stringValue()</c>.</remarks>
+    public string StringValue => _stringValue;
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.GlobalString.toString()</c>.</remarks>
     public override string ToString()
     {
-        return string.Format(CultureInfo.InvariantCulture, "\"{0}\" (#{1})", stringValue, value);
+        return string.Format(CultureInfo.InvariantCulture, "\"{0}\" (#{1})", _stringValue, _value);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.GlobalString.compareTo(GlobalString)</c>.</remarks>
     public int CompareTo(GlobalString? other)
     {
-        return value.CompareTo(other!.value);
+        return _value.CompareTo(other!._value);
     }
+
 }

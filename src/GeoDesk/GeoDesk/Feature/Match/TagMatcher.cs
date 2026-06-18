@@ -14,11 +14,13 @@ namespace GeoDesk.Feature.Match;
 /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagMatcher</c>.</remarks>
 public abstract class TagMatcher : Matcher
 {
+
     protected readonly string[] globalStrings;
     protected readonly int keyMask;
     protected readonly int keyMin;
 
     // TODO: take FeatureStore, resources
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagMatcher(int, String[], int, int)</c>.</remarks>
     protected TagMatcher(int types, string[] globalStrings, int keyMask, int keyMin)
         : base(types)
     {
@@ -27,6 +29,7 @@ public abstract class TagMatcher : Matcher
         this.keyMin = keyMin;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagMatcher.acceptTyped(int, ByteBuffer, int)</c>.</remarks>
     public override bool AcceptTyped(int types, NioBuffer buf, int pos)
     {
         types &= 1 << ((sbyte)buf.Get(pos) >> 1);
@@ -34,22 +37,26 @@ public abstract class TagMatcher : Matcher
         return Accept(buf, pos);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagMatcher.acceptIndex(int)</c>.</remarks>
     public override bool AcceptIndex(int keys)
     {
         return (keys & keyMask) >= keyMin;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagMatcher.doubleToString(double)</c>.</remarks>
     protected static string DoubleToString(double d)
     {
         if (d == (long)d) return ((long)d).ToString(CultureInfo.InvariantCulture);
         return d.ToString("R", CultureInfo.InvariantCulture);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagMatcher.stringToDouble(String)</c>.</remarks>
     protected static double StringToDouble(string s)
     {
         return MathUtils.DoubleFromString(s);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagMatcher.globalString(int)</c>.</remarks>
     protected string GlobalString(int code)
     {
         try
@@ -63,4 +70,5 @@ public abstract class TagMatcher : Matcher
                 "Invalid global string code: {0}", code));
         }
     }
+
 }

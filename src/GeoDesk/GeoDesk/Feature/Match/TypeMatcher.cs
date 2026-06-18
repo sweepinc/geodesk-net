@@ -12,29 +12,35 @@ namespace GeoDesk.Feature.Match;
 /// <remarks>Ported from Java <c>com.geodesk.feature.match.TypeMatcher</c>.</remarks>
 public class TypeMatcher : Matcher
 {
-    private readonly Matcher matcher;
 
+    readonly Matcher _matcher;
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.TypeMatcher(int, Matcher)</c>.</remarks>
     public TypeMatcher(int acceptedTypes, Matcher matcher)
         : base(acceptedTypes)
     {
-        this.matcher = matcher;
+        _matcher = matcher;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.TypeMatcher.accept(ByteBuffer, int)</c>.</remarks>
     public override bool Accept(NioBuffer buf, int pos)
     {
         int flags = (sbyte)buf.Get(pos);
-        int type = 1 << ((int)((uint)flags >> 1) & 0x1f);
+        var type = 1 << ((int)((uint)flags >> 1) & 0x1f);
         if ((type & acceptedTypes) == 0) return false;
-        return matcher.Accept(buf, pos);
+        return _matcher.Accept(buf, pos);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.TypeMatcher.acceptTyped(int, ByteBuffer, int)</c>.</remarks>
     public override bool AcceptTyped(int types, NioBuffer buf, int pos)
     {
-        return matcher.AcceptTyped(types & acceptedTypes, buf, pos);
+        return _matcher.AcceptTyped(types & acceptedTypes, buf, pos);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.TypeMatcher.acceptIndex(int)</c>.</remarks>
     public override bool AcceptIndex(int keys)
     {
-        return matcher.AcceptIndex(keys);
+        return _matcher.AcceptIndex(keys);
     }
+
 }

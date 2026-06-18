@@ -12,44 +12,54 @@ namespace GeoDesk.Feature.Match;
 /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherSet</c>.</remarks>
 public class MatcherSet
 {
-    private readonly int types;
-    private readonly Matcher? nodes;
-    private readonly Matcher? ways;
-    private readonly Matcher? areas;
-    private readonly Matcher? relations;
-    private readonly Matcher? members;
 
     public static readonly MatcherSet ALL = new MatcherSet(TypeBits.ALL, Matcher.ALL);
 
+    readonly int _types;
+    readonly Matcher? _nodes;
+    readonly Matcher? _ways;
+    readonly Matcher? _areas;
+    readonly Matcher? _relations;
+    readonly Matcher? _members;
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherSet(int, Matcher)</c>.</remarks>
     public MatcherSet(int types, Matcher matcher)
     {
-        this.types = types;
-        nodes = ways = areas = relations = members = matcher;
+        _types = types;
+        _nodes = _ways = _areas = _relations = _members = matcher;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherSet(int, Matcher, Matcher, Matcher, Matcher, Matcher)</c>.</remarks>
     public MatcherSet(int types, Matcher? n, Matcher? w, Matcher? a, Matcher? r, Matcher? m)
     {
-        this.types = types;
-        nodes = n;
-        ways = w;
-        areas = a;
-        relations = r;
-        members = m;
+        _types = types;
+        _nodes = n;
+        _ways = w;
+        _areas = a;
+        _relations = r;
+        _members = m;
     }
 
-    public int Types => types;
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherSet.types()</c>.</remarks>
+    public int Types => _types;
 
-    public Matcher? Nodes => nodes;
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherSet.nodes()</c>.</remarks>
+    public Matcher? Nodes => _nodes;
 
-    public Matcher? Ways => ways;
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherSet.ways()</c>.</remarks>
+    public Matcher? Ways => _ways;
 
-    public Matcher? Areas => areas;
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherSet.areas()</c>.</remarks>
+    public Matcher? Areas => _areas;
 
-    public Matcher? Relations => relations;
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherSet.relations()</c>.</remarks>
+    public Matcher? Relations => _relations;
 
-    public Matcher? Members => members;
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherSet.members()</c>.</remarks>
+    public Matcher? Members => _members;
 
-    private static Matcher? MergeFilter(int newTypes, int indexType, Matcher? a, Matcher? b)
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherSet.mergeFilter(int, int, Matcher, Matcher)</c>.</remarks>
+    static Matcher? MergeFilter(int newTypes, int indexType, Matcher? a, Matcher? b)
     {
         newTypes &= indexType;
         if (newTypes == 0) return null;
@@ -58,7 +68,8 @@ public class MatcherSet
         return new TypeMatcher(newTypes, filter);
     }
 
-    private static Matcher? ConstrainFilter(int newTypes, int indexType, Matcher? filter)
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherSet.constrainFilter(int, int, Matcher)</c>.</remarks>
+    static Matcher? ConstrainFilter(int newTypes, int indexType, Matcher? filter)
     {
         newTypes &= indexType;
         if (newTypes == 0) return null;
@@ -66,24 +77,27 @@ public class MatcherSet
         return new TypeMatcher(newTypes, filter!);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherSet.and(int, MatcherSet)</c>.</remarks>
     public MatcherSet And(int newTypes, MatcherSet other)
     {
-        newTypes &= types & other.types;
-        Matcher? n = MergeFilter(newTypes, NODES, nodes, other.nodes);
-        Matcher? w = MergeFilter(newTypes, NONAREA_WAYS, ways, other.ways);
-        Matcher? a = MergeFilter(newTypes, AREAS, areas, other.areas);
-        Matcher? r = MergeFilter(newTypes, NONAREA_RELATIONS, relations, other.relations);
-        Matcher m = new AndMatcher(members!, other.members!);
+        newTypes &= _types & other._types;
+        var n = MergeFilter(newTypes, NODES, _nodes, other._nodes);
+        var w = MergeFilter(newTypes, NONAREA_WAYS, _ways, other._ways);
+        var a = MergeFilter(newTypes, AREAS, _areas, other._areas);
+        var r = MergeFilter(newTypes, NONAREA_RELATIONS, _relations, other._relations);
+        Matcher m = new AndMatcher(_members!, other._members!);
         return new MatcherSet(newTypes, n, w, a, r, m);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherSet.and(int)</c>.</remarks>
     public MatcherSet And(int newTypes)
     {
-        newTypes &= types;
-        Matcher? n = ConstrainFilter(newTypes, NODES, nodes);
-        Matcher? w = ConstrainFilter(newTypes, NONAREA_WAYS, ways);
-        Matcher? a = ConstrainFilter(newTypes, AREAS, areas);
-        Matcher? r = ConstrainFilter(newTypes, NONAREA_RELATIONS, relations);
-        return new MatcherSet(newTypes, n, w, a, r, members);
+        newTypes &= _types;
+        var n = ConstrainFilter(newTypes, NODES, _nodes);
+        var w = ConstrainFilter(newTypes, NONAREA_WAYS, _ways);
+        var a = ConstrainFilter(newTypes, AREAS, _areas);
+        var r = ConstrainFilter(newTypes, NONAREA_RELATIONS, _relations);
+        return new MatcherSet(newTypes, n, w, a, r, _members);
     }
+
 }
