@@ -10,6 +10,11 @@ namespace Clarisma.Common.Util;
 /// <remarks>Ported from Java <c>com.clarisma.common.util.ProgressListener</c>.</remarks>
 public interface IProgressListener
 {
+
+    /// <remarks>Ported from Java <c>com.clarisma.common.util.ProgressListener.progress(int)</c>.</remarks>
     void Progress(int units);
+
+    /// <remarks>Ported from Java <c>com.clarisma.common.util.ProgressListener.finished()</c>.</remarks>
     void Finished();
+
 }

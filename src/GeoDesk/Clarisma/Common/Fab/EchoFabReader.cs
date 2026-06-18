@@ -13,45 +13,53 @@ namespace Clarisma.Common.Fab;
 /// <remarks>Ported from Java <c>com.clarisma.common.fab.EchoFabReader</c>.</remarks>
 public class EchoFabReader : FabReader
 {
-    private int level;
 
+    int _level;
+
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.EchoFabReader.indent()</c>.</remarks>
     protected void Indent()
     {
-        for (int i = 0; i < level; i++)
+        for (var i = 0; i < _level; i++)
         {
             Console.Out.Write("   ");
         }
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.EchoFabReader.beginKey(String, String)</c>.</remarks>
     protected override void BeginKey(string key, string value)
     {
         KeyValue(key, "");
-        level++;
+        _level++;
         KeyValue("value", value);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.EchoFabReader.beginKey(String)</c>.</remarks>
     protected override void BeginKey(string key)
     {
         Indent();
         Console.Out.Write(JavaFormat.Format("%s:\n", key));
-        level++;
+        _level++;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.EchoFabReader.keyValue(String, String)</c>.</remarks>
     protected override void KeyValue(string key, string value)
     {
         Indent();
         Console.Out.Write(JavaFormat.Format("%s: %s\n", key, value));
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.EchoFabReader.endKey()</c>.</remarks>
     protected override void EndKey()
     {
-        level--;
+        _level--;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.EchoFabReader.error(String)</c>.</remarks>
     protected override void Error(string msg)
     {
         Console.Out.Write(JavaFormat.Format("ERROR: %s:%d: %s\n",
             fileName == null ? "<none>" : fileName,
             lineNumber, msg));
     }
+
 }

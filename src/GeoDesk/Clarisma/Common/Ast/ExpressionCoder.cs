@@ -26,8 +26,7 @@ public class ExpressionCoder : IAstVisitor<object?>
         this.typeChecker = typeChecker;
     }
 
-    static Exception NotPortable() => new NotImplementedException(
-        "PORT-BLOCKED: ExpressionCoder requires runtime bytecode/IL generation (ASM in Java).");
+    static Exception NotPortable() => new NotImplementedException("PORT-BLOCKED: ExpressionCoder requires runtime bytecode/IL generation (ASM in Java).");
 
     /// <remarks>Ported from Java <c>com.clarisma.common.ast.ExpressionCoder.visitBinary(BinaryExpression)</c>.</remarks>
     public object? VisitBinary(BinaryExpression exp) => throw NotPortable();

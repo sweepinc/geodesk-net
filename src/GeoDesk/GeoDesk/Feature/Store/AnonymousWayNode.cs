@@ -8,10 +8,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+
 using GeoDesk.Feature.Filters;
 using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Query;
 using GeoDesk.Geom;
+
 using NetTopologySuite.Geometries;
 
 namespace GeoDesk.Feature.Store;
@@ -125,7 +127,8 @@ public class AnonymousWayNode : Node
             var iter = way.IterXY(0);
             while (iter.HasNext())
             {
-                if (iter.NextXY() == xy) return true;
+                if (iter.NextXY() == xy)
+                    return true;
             }
         }
         return false;
@@ -192,7 +195,8 @@ public class AnonymousWayNode : Node
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.AnonymousWayNode.equals(Object)</c>.</remarks>
     public override bool Equals(object? other)
     {
-        if (!(other is Node otherNode)) return false;
+        if (!(other is Node otherNode))
+            return false;
         return otherNode.Id() == 0 && otherNode.X() == _x && otherNode.Y() == _y;
     }
 
@@ -211,9 +215,11 @@ public class AnonymousWayNode : Node
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.AnonymousWayNode.parents(int, Matcher, Filter)</c>.</remarks>
     public Features Parents(int types, Matcher matcher, Filter? filter)
     {
-        if ((types & TypeBits.WAYS) == 0) return EmptyView.Any;
+        if ((types & TypeBits.WAYS) == 0)
+            return EmptyView.Any;
         Filter newFilter = new ParentWayFilter(_x, _y);
-        if (filter != null) newFilter = AndFilter.Create(newFilter, filter);
+        if (filter != null)
+            newFilter = AndFilter.Create(newFilter, filter);
         return new WorldView(_store, types, Bounds(), matcher, newFilter);
     }
 
@@ -227,7 +233,8 @@ public class AnonymousWayNode : Node
     public Features Parents(string query)
     {
         var matcher = _store.GetMatcher(query);
-        if ((matcher.AcceptedTypes() & TypeBits.WAYS) == 0) return EmptyView.Any;
+        if ((matcher.AcceptedTypes() & TypeBits.WAYS) == 0)
+            return EmptyView.Any;
         return new WorldView(_store, matcher.AcceptedTypes(), Bounds(), matcher, new ParentWayFilter(_x, _y));
     }
 
@@ -250,7 +257,8 @@ public class AnonymousWayNode : Node
             var iter = way.IterXY(0);
             while (iter.HasNext())
             {
-                if (iter.NextXY() == _xy) return true;
+                if (iter.NextXY() == _xy)
+                    return true;
             }
             return false;
         }

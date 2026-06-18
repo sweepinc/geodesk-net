@@ -13,52 +13,58 @@ namespace Clarisma.Common.Util;
 /// <remarks>Ported from Java <c>com.clarisma.common.util.ProgressReporter</c>.</remarks>
 public class ProgressReporter : IProgressListener
 {
-    private readonly string? progressVerb;
-    private readonly string? resultVerb;
-    private readonly string? unitsNoun;
-    private readonly long totalUnits;
-    private readonly long startTime;
-    private long unitsProcessed;
-    private int percentageReported;
 
+    readonly string? _progressVerb;
+    readonly string? _resultVerb;
+    readonly string? _unitsNoun;
+    readonly long _totalUnits;
+    readonly long _startTime;
+    long _unitsProcessed;
+    int _percentageReported;
+
+    /// <remarks>Ported from Java <c>com.clarisma.common.util.ProgressReporter(long, String, String, String)</c>.</remarks>
     public ProgressReporter(long totalUnits, string? unitsNoun, string? progressVerb, string? resultVerb)
     {
-        this.totalUnits = totalUnits;
-        this.progressVerb = progressVerb;
-        this.unitsNoun = unitsNoun;
-        this.resultVerb = resultVerb;
-        startTime = CurrentTimeMillis();
+        _totalUnits = totalUnits;
+        _progressVerb = progressVerb;
+        _unitsNoun = unitsNoun;
+        _resultVerb = resultVerb;
+        _startTime = CurrentTimeMillis();
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.util.ProgressReporter.progress(int)</c>.</remarks>
     public void Progress(int units)
     {
-        if (progressVerb != null)
+        if (_progressVerb != null)
         {
             lock (this)
             {
-                unitsProcessed += units;
-                int percentageCompleted = (int)(unitsProcessed * 100 / totalUnits);
-                if (percentageCompleted != percentageReported)
+                _unitsProcessed += units;
+                var percentageCompleted = (int)(_unitsProcessed * 100 / _totalUnits);
+                if (percentageCompleted != _percentageReported)
                 {
-                    Console.Error.Write(JavaFormat.Format("%s... %d%%\r", progressVerb, percentageCompleted));
-                    percentageReported = percentageCompleted;
+                    Console.Error.Write(JavaFormat.Format("%s... %d%%\r", _progressVerb, percentageCompleted));
+                    _percentageReported = percentageCompleted;
                 }
             }
         }
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.util.ProgressReporter.finished()</c>.</remarks>
     public void Finished()
     {
-        if (resultVerb != null)
+        if (_resultVerb != null)
         {
-            long endTime = CurrentTimeMillis();
-            Console.Error.Write(JavaFormat.Format("%s %d %s in %s\n", resultVerb, totalUnits,
-                unitsNoun, Format.FormatTimespan(endTime - startTime)));
+            var endTime = CurrentTimeMillis();
+            Console.Error.Write(JavaFormat.Format("%s %d %s in %s\n", _resultVerb, _totalUnits,
+                _unitsNoun, Format.FormatTimespan(endTime - _startTime)));
         }
     }
 
-    private static long CurrentTimeMillis()
+    // Port-only helper standing in for Java's System.currentTimeMillis().
+    static long CurrentTimeMillis()
     {
         return DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
     }
+
 }

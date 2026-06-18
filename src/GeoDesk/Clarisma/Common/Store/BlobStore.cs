@@ -12,20 +12,49 @@ using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Numerics;
+
+using static Clarisma.Common.Store.BlobStoreConstants;
+
 using ByteOrder = Java.Nio.ByteOrder;
 using NioBuffer = Java.Nio.ByteBuffer;
-using static Clarisma.Common.Store.BlobStoreConstants;
 
 namespace Clarisma.Common.Store;
 
 /// <summary>
-/// A Blob Store is a file containing a large number of individual binary objects (blobs)
-/// that span multiple contiguous file pages. See the Java original for the full format
-/// description. Uses the journaling mechanism of <see cref="Store"/>.
+/// A Blob Store is a file containing a large numbers of individual binary
+/// objects (blobs) that span multiple contiguous file pages. Page size is
+/// configurable and must be a power-of-2 multiple of 4 KB.
+///
+/// Blobs are identified by their starting page (a 32-bit integer).
+/// The maximum size of a Blob Store is dependent on its page size;
+/// at the 4 KB default, the file can grow to 16 TB.
+///
+/// The maximum size of each blob (including its 4-byte header) is 1 GB
+/// (regardless of page size). Assuming 4 KB pages, a blob can contain up
+/// to 256K pages.
+///
+/// There is no restriction on the structure and type of content of the blobs,
+/// except for the following: The first 4 bytes contain the size of the blob
+/// and two marker bits. The user must not modify this header. Apart from the
+/// blobs, the Blob Store file contains metadata that maintains allocation
+/// statistics and free lists. An additional user-defined metadata section
+/// can be used to store an index.
+///
+/// Blob Stores allow concurrent access by multiple processes, with some
+/// restrictions. Write access is mediated through the use of locks.
+/// A process may add blobs and alter metadata while other processes are
+/// reading, but deletion or modification of blobs requires an exclusive lock.
+///
+/// Blob Stores use the journaling mechanism of the Store baseclass to track
+/// modifications, in order to prevent data corruption due to abnormal process
+/// termination (such as power loss). Using the Journal, a Blob Store can
+/// restore itself to a consistent state by either applying the failed
+/// modifications, or rolling them back.
 /// </summary>
 /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore</c>.</remarks>
 public class BlobStore : Store
 {
+
     /// <summary>
     /// The number of bits to shift left to turn number of pages into number of bytes
     /// (Page size is always a power of two).
@@ -33,23 +62,26 @@ public class BlobStore : Store
     protected internal int pageSizeShift = 12; // 4KB default page
     protected Downloader? downloader;
 
-    private static int Ushr(int v, int n) => (int)((uint)v >> n);
+    static int Ushr(int v, int n) => (int)((uint)v >> n);
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.downloadBlob(URL)</c>.</remarks>
     protected int DownloadBlob(Uri url)
     {
         return 0; // TODO
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.setRepository(String)</c>.</remarks>
     public void SetRepository(string url)
     {
         Debug.Assert(downloader == null);
         downloader = new Downloader(this, url);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.createStore()</c>.</remarks>
     protected override void CreateStore()
     {
         // TODO: should this be inside a transaction?
-        NioBuffer buf = baseMapping!;
+        var buf = baseMapping!;
         buf.PutInt(0, MAGIC);
         buf.PutInt(VERSION_OFS, VERSION);
         buf.PutLong(TIMESTAMP_OFS, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
@@ -58,6 +90,7 @@ public class BlobStore : Store
         // TODO: page size
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.getTimestamp()</c>.</remarks>
     protected override long GetTimestamp()
     {
         return baseMapping!.GetLong(TIMESTAMP_OFS);
@@ -65,16 +98,18 @@ public class BlobStore : Store
 
     // PORT NOTE: .NET Guid byte layout differs from Java UUID(high,low); this reads the
     // 16 raw GUID bytes. Not exercised by tests.
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.getGuid()</c>.</remarks>
     public Guid GetGuid()
     {
-        byte[] bytes = new byte[GUID_LEN];
+        var bytes = new byte[GUID_LEN];
         baseMapping!.Get(GUID_OFS, bytes);
         return new Guid(bytes);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.verifyHeader()</c>.</remarks>
     protected override void VerifyHeader()
     {
-        NioBuffer buf = baseMapping!;
+        var buf = baseMapping!;
         if (buf.GetInt(0) != MAGIC)
         {
             throw new StoreException("Not a BlobStore file", Path);
@@ -90,65 +125,76 @@ public class BlobStore : Store
     /// <summary>
     /// Checks whether this BlobStore is *empty*. An empty store is valid, but has no contents.
     /// </summary>
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.isEmpty()</c>.</remarks>
     protected internal bool IsEmpty()
     {
         return baseMapping!.GetInt(INDEX_PTR_OFS) == 0; // TODO
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.initialize()</c>.</remarks>
     protected override void Initialize()
     {
         base.Initialize();
         if (IsEmpty() && downloader != null)
         {
-            Downloader.Ticket ticket = downloader.Request(Downloader.METADATA_ID, null);
+            var ticket = downloader.Request(Downloader.METADATA_ID, null);
             ticket.AwaitCompletion();
             ticket.ThrowError();
         }
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.getTrueSize()</c>.</remarks>
     protected override long GetTrueSize()
     {
         return ((long)baseMapping!.GetInt(TOTAL_PAGES_OFS)) << pageSizeShift;
     }
 
     // TODO: naming
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.baseMapping()</c>.</remarks>
     public NioBuffer BaseMapping()
     {
         return baseMapping!;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.bufferOfPage(int)</c>.</remarks>
     public NioBuffer BufferOfPage(int page)
     {
         return GetMapping(page >> (30 - pageSizeShift));
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.offsetOfPage(int)</c>.</remarks>
     public int OffsetOfPage(int page)
     {
         return (page << pageSizeShift) & 0x3fff_ffff;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.absoluteOffsetOfPage(int)</c>.</remarks>
     public long AbsoluteOffsetOfPage(int page)
     {
         return ((long)page) << pageSizeShift;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.getBlockOfPage(int)</c>.</remarks>
     protected internal NioBuffer GetBlockOfPage(int page)
     {
         Debug.Assert(page >= 0); // TODO: treat page as unsigned int?
         return GetBlock(((long)page) << pageSizeShift);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.pageSize()</c>.</remarks>
     public int PageSize()
     {
         return 1 << pageSizeShift;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.indexPointer()</c>.</remarks>
     public int IndexPointer()
     {
         return baseMapping!.GetInt(INDEX_PTR_OFS) + INDEX_PTR_OFS;
     }
 
     // TODO: should also make sure page does not lie in meta space
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.checkPage(int)</c>.</remarks>
     protected void CheckPage(int page)
     {
         if (page < 0 || page >= baseMapping!.GetInt(TOTAL_PAGES_OFS))
@@ -160,6 +206,9 @@ public class BlobStore : Store
     /// <summary>
     /// Determines the number of pages needed to store a blob.
     /// </summary>
+    /// <param name="size">the size (excluding 4-byte header) of the blob</param>
+    /// <returns>the number of pages needed to store the blob</returns>
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.pagesForPayloadSize(int)</c>.</remarks>
     protected internal int PagesForPayloadSize(int size)
     {
         Debug.Assert(size > 0 && size <= ((1 << 30) - 4));
@@ -167,8 +216,13 @@ public class BlobStore : Store
     }
 
     /// <summary>
-    /// Determines the number of pages needed to store the given number of bytes.
+    /// Determines the number of pages needed to store the given number
+    /// of bytes. (The range of bytes is assumed to start at the beginning
+    /// of the first page.)
     /// </summary>
+    /// <param name="len">the number of bytes</param>
+    /// <returns>the number of pages needed to store the bytes</returns>
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.bytesToPages(int)</c>.</remarks>
     protected internal int BytesToPages(int len)
     {
         Debug.Assert(len > 0 && len <= (1 << 30));
@@ -176,23 +230,28 @@ public class BlobStore : Store
     }
 
     /// <summary>
-    /// Allocates a blob of a given size.
+    /// Allocates a blob of a given size. If possible, the smallest existing free blob that can
+    /// accommodate the requested number of bytes will be reused; otherwise, a new blob will be
+    /// appended to the store file.
+    ///
+    /// TODO: guard against exceeding maximum file size
     /// </summary>
     /// <param name="size">the size of the blob, not including its 4-byte header</param>
     /// <returns>the first page of the blob</returns>
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.allocateBlob(int)</c>.</remarks>
     protected internal int AllocateBlob(int size)
     {
         Debug.Assert(size >= 0 && size <= ((1 << 30) - 4));
-        int precedingBlobFreeFlag = 0;
-        int requiredPages = PagesForPayloadSize(size);
-        NioBuffer rootBlock = GetBlock(0);
-        int trunkRanges = rootBlock.GetInt(TRUNK_FT_RANGE_BITS_OFS);
+        var precedingBlobFreeFlag = 0;
+        var requiredPages = PagesForPayloadSize(size);
+        var rootBlock = GetBlock(0);
+        var trunkRanges = rootBlock.GetInt(TRUNK_FT_RANGE_BITS_OFS);
         if (trunkRanges != 0)
         {
-            int trunkSlot = (requiredPages - 1) / 512;
-            int leafSlot = (requiredPages - 1) % 512;
-            int trunkOfs = TRUNK_FREE_TABLE_OFS + trunkSlot * 4;
-            int trunkEnd = (trunkOfs & unchecked((int)0xffff_ffc0)) + 64;
+            var trunkSlot = (requiredPages - 1) / 512;
+            var leafSlot = (requiredPages - 1) % 512;
+            var trunkOfs = TRUNK_FREE_TABLE_OFS + trunkSlot * 4;
+            var trunkEnd = (trunkOfs & unchecked((int)0xffff_ffc0)) + 64;
 
             trunkRanges = Ushr(trunkRanges, trunkSlot / 16);
 
@@ -202,7 +261,7 @@ public class BlobStore : Store
                 {
                     if (trunkRanges == 0) break;
 
-                    int rangesToSkip = BitOperations.TrailingZeroCount((uint)trunkRanges);
+                    var rangesToSkip = BitOperations.TrailingZeroCount((uint)trunkRanges);
                     trunkEnd += rangesToSkip * 64;
                     trunkOfs = trunkEnd - 64;
 
@@ -212,13 +271,13 @@ public class BlobStore : Store
 
                 for (; trunkOfs < trunkEnd; trunkOfs += 4)
                 {
-                    int leafTableBlob = rootBlock.GetInt(trunkOfs);
+                    var leafTableBlob = rootBlock.GetInt(trunkOfs);
                     if (leafTableBlob == 0) continue;
 
-                    NioBuffer leafBlock = GetBlockOfPage(leafTableBlob);
-                    int leafRanges = leafBlock.GetInt(LEAF_FT_RANGE_BITS_OFS);
-                    int leafOfs = LEAF_FREE_TABLE_OFS + leafSlot * 4;
-                    int leafEnd = (leafOfs & unchecked((int)0xffff_ffc0)) + 64;
+                    var leafBlock = GetBlockOfPage(leafTableBlob);
+                    var leafRanges = leafBlock.GetInt(LEAF_FT_RANGE_BITS_OFS);
+                    var leafOfs = LEAF_FREE_TABLE_OFS + leafSlot * 4;
+                    var leafEnd = (leafOfs & unchecked((int)0xffff_ffc0)) + 64;
 
                     Debug.Assert((leafBlock.GetInt(0) & FREE_BLOB_FLAG) != 0,
                         string.Format(CultureInfo.InvariantCulture, "Leaf FB blob {0} must be a free blob", leafTableBlob));
@@ -230,31 +289,31 @@ public class BlobStore : Store
                         if ((leafRanges & 1) == 0)
                         {
                             if (leafRanges == 0) break;
-                            int rangesToSkip = BitOperations.TrailingZeroCount((uint)leafRanges);
+                            var rangesToSkip = BitOperations.TrailingZeroCount((uint)leafRanges);
                             leafEnd += rangesToSkip * 64;
                             leafOfs = leafEnd - 64;
                         }
                         for (; leafOfs < leafEnd; leafOfs += 4)
                         {
-                            int freeBlob = leafBlock.GetInt(leafOfs);
+                            var freeBlob = leafBlock.GetInt(leafOfs);
                             if (freeBlob == 0) continue;
 
-                            int freePages = ((trunkOfs - TRUNK_FREE_TABLE_OFS) << 7) +
+                            var freePages = ((trunkOfs - TRUNK_FREE_TABLE_OFS) << 7) +
                                 ((leafOfs - LEAF_FREE_TABLE_OFS) >> 2) + 1;
                             if (freeBlob == leafTableBlob)
                             {
-                                int nextFreeBlob = leafBlock.GetInt(NEXT_FREE_BLOB_OFS);
+                                var nextFreeBlob = leafBlock.GetInt(NEXT_FREE_BLOB_OFS);
                                 if (nextFreeBlob != 0)
                                 {
                                     freeBlob = nextFreeBlob;
                                 }
                             }
 
-                            NioBuffer freeBlock = GetBlockOfPage(freeBlob);
-                            int header = freeBlock.GetInt(0);
+                            var freeBlock = GetBlockOfPage(freeBlob);
+                            var header = freeBlock.GetInt(0);
                             Debug.Assert((header & FREE_BLOB_FLAG) != 0,
                                 string.Format(CultureInfo.InvariantCulture, "Blob {0} is not free", freeBlob));
-                            int freeBlobPayloadSize = header & PAYLOAD_SIZE_MASK;
+                            var freeBlobPayloadSize = header & PAYLOAD_SIZE_MASK;
                             Debug.Assert((freeBlobPayloadSize + 4) >> pageSizeShift == freePages);
                             Debug.Assert(freePages >= requiredPages);
 
@@ -263,7 +322,7 @@ public class BlobStore : Store
 
                             if (freeBlob == leafTableBlob)
                             {
-                                int newLeafBlob = RelocateFreeTable(freeBlob, freePages);
+                                var newLeafBlob = RelocateFreeTable(freeBlob, freePages);
                                 if (newLeafBlob != 0)
                                 {
                                     Debug.Assert(rootBlock.GetInt(trunkOfs) == newLeafBlob);
@@ -280,8 +339,8 @@ public class BlobStore : Store
                             }
                             else
                             {
-                                NioBuffer nextBlock = GetBlockOfPage(freeBlob + freePages);
-                                int nextSizeAndFlags = nextBlock.GetInt(0);
+                                var nextBlock = GetBlockOfPage(freeBlob + freePages);
+                                var nextSizeAndFlags = nextBlock.GetInt(0);
                                 nextBlock.PutInt(0, nextSizeAndFlags & ~PRECEDING_BLOB_FREE_FLAG);
                             }
 
@@ -301,9 +360,9 @@ public class BlobStore : Store
 
         // If we weren't able to find a suitable free blob, we'll grow the store
 
-        int totalPages = rootBlock.GetInt(TOTAL_PAGES_OFS);
-        int pagesPerSegment = (1 << 30) >> pageSizeShift;
-        int remainingPages = pagesPerSegment - (totalPages & (pagesPerSegment - 1));
+        var totalPages = rootBlock.GetInt(TOTAL_PAGES_OFS);
+        var pagesPerSegment = (1 << 30) >> pageSizeShift;
+        var remainingPages = pagesPerSegment - (totalPages & (pagesPerSegment - 1));
         if (remainingPages < requiredPages)
         {
             AddFreeBlob(totalPages, remainingPages, 0);
@@ -312,19 +371,21 @@ public class BlobStore : Store
         }
         rootBlock.PutInt(TOTAL_PAGES_OFS, totalPages + requiredPages);
 
-        NioBuffer newBlock = GetBlockOfPage(totalPages);
+        var newBlock = GetBlockOfPage(totalPages);
         newBlock.PutInt(0, size | precedingBlobFreeFlag);
         return totalPages;
     }
 
-    private bool IsFirstPageOfSegment(int page)
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.isFirstPageOfSegment(int)</c>.</remarks>
+    bool IsFirstPageOfSegment(int page)
     {
         return (page & ((0x3fff_ffff) >> pageSizeShift)) == 0;
     }
 
-    private static int GetFreeTableBlob(NioBuffer rootBlock, int pages)
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.getFreeTableBlob(ByteBuffer, int)</c>.</remarks>
+    static int GetFreeTableBlob(NioBuffer rootBlock, int pages)
     {
-        int trunkSlot = (pages - 1) / 512;
+        var trunkSlot = (pages - 1) / 512;
         return rootBlock.GetInt(TRUNK_FREE_TABLE_OFS + trunkSlot * 4);
     }
 
@@ -332,13 +393,15 @@ public class BlobStore : Store
     /// Deallocates a blob. Any adjacent free blobs are coalesced, provided that they are
     /// located in the same 1-GB segment.
     /// </summary>
+    /// <param name="firstPage">the first page of the blob</param>
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.freeBlob(int)</c>.</remarks>
     protected void FreeBlob(int firstPage)
     {
-        NioBuffer rootBlock = GetBlock(0);
-        NioBuffer block = GetBlockOfPage(firstPage);
-        int sizeAndFlags = block.GetInt(0);
-        int freeFlag = sizeAndFlags & FREE_BLOB_FLAG;
-        int precedingBlobFree = sizeAndFlags & PRECEDING_BLOB_FREE_FLAG;
+        var rootBlock = GetBlock(0);
+        var block = GetBlockOfPage(firstPage);
+        var sizeAndFlags = block.GetInt(0);
+        var freeFlag = sizeAndFlags & FREE_BLOB_FLAG;
+        var precedingBlobFree = sizeAndFlags & PRECEDING_BLOB_FREE_FLAG;
 
         if (freeFlag != 0)
         {
@@ -346,20 +409,20 @@ public class BlobStore : Store
                 "Attempt to free blob that is already marked as free", Path);
         }
 
-        int totalPages = rootBlock.GetInt(TOTAL_PAGES_OFS);
+        var totalPages = rootBlock.GetInt(TOTAL_PAGES_OFS);
 
-        int pages = PagesForPayloadSize(sizeAndFlags & PAYLOAD_SIZE_MASK);
-        int prevBlob = 0;
-        int nextBlob = firstPage + pages;
-        int prevPages = 0;
-        int nextPages = 0;
+        var pages = PagesForPayloadSize(sizeAndFlags & PAYLOAD_SIZE_MASK);
+        var prevBlob = 0;
+        var nextBlob = firstPage + pages;
+        var prevPages = 0;
+        var nextPages = 0;
 
         if (precedingBlobFree != 0 && !IsFirstPageOfSegment(firstPage))
         {
-            NioBuffer prevTailBlock = GetBlockOfPage(firstPage - 1);
+            var prevTailBlock = GetBlockOfPage(firstPage - 1);
             prevPages = prevTailBlock.GetInt(TRAILER_OFS);
             prevBlob = firstPage - prevPages;
-            NioBuffer prevBlock = GetBlockOfPage(prevBlob);
+            var prevBlock = GetBlockOfPage(prevBlob);
 
             precedingBlobFree = prevBlock.GetInt(0) & PRECEDING_BLOB_FREE_FLAG;
             RemoveFreeBlob(prevBlock);
@@ -367,8 +430,8 @@ public class BlobStore : Store
 
         if (nextBlob < totalPages && !IsFirstPageOfSegment(nextBlob))
         {
-            NioBuffer nextBlock = GetBlockOfPage(nextBlob);
-            int nextSizeAndFlags = nextBlock.GetInt(0);
+            var nextBlock = GetBlockOfPage(nextBlob);
+            var nextSizeAndFlags = nextBlock.GetInt(0);
             if ((nextSizeAndFlags & FREE_BLOB_FLAG) != 0)
             {
                 nextPages = PagesForPayloadSize(nextSizeAndFlags & PAYLOAD_SIZE_MASK);
@@ -378,7 +441,7 @@ public class BlobStore : Store
 
         if (prevPages != 0)
         {
-            int prevFreeTableBlob = GetFreeTableBlob(rootBlock, prevPages);
+            var prevFreeTableBlob = GetFreeTableBlob(rootBlock, prevPages);
             if (prevFreeTableBlob == prevBlob)
             {
                 RelocateFreeTable(prevFreeTableBlob, prevPages);
@@ -386,7 +449,7 @@ public class BlobStore : Store
         }
         if (nextPages != 0)
         {
-            int nextFreeTableBlob = GetFreeTableBlob(rootBlock, nextPages);
+            var nextFreeTableBlob = GetFreeTableBlob(rootBlock, nextPages);
             if (nextFreeTableBlob == nextBlob)
             {
                 RelocateFreeTable(nextFreeTableBlob, nextPages);
@@ -401,21 +464,21 @@ public class BlobStore : Store
             totalPages = firstPage;
             while (precedingBlobFree != 0)
             {
-                NioBuffer prevTailBlock = GetBlockOfPage(totalPages - 1);
+                var prevTailBlock = GetBlockOfPage(totalPages - 1);
                 prevPages = prevTailBlock.GetInt(TRAILER_OFS);
                 totalPages -= prevPages;
                 prevBlob = totalPages;
-                NioBuffer prevBlock = GetBlockOfPage(prevBlob);
+                var prevBlock = GetBlockOfPage(prevBlob);
                 RemoveFreeBlob(prevBlock);
 
-                int prevFreeTableBlob = GetFreeTableBlob(rootBlock, prevPages);
+                var prevFreeTableBlob = GetFreeTableBlob(rootBlock, prevPages);
                 if (prevFreeTableBlob == prevBlob)
                 {
                     RelocateFreeTable(prevBlob, prevPages);
                 }
 
                 if (!IsFirstPageOfSegment(totalPages)) break;
-                int prevSizeAndFlags = prevBlock.GetInt(0);
+                var prevSizeAndFlags = prevBlock.GetInt(0);
                 precedingBlobFree = prevSizeAndFlags & PRECEDING_BLOB_FREE_FLAG;
             }
             rootBlock.PutInt(TOTAL_PAGES_OFS, totalPages);
@@ -423,106 +486,120 @@ public class BlobStore : Store
         else
         {
             AddFreeBlob(firstPage, pages, precedingBlobFree);
-            NioBuffer nextBlock = GetBlockOfPage(firstPage + pages);
-            int nextSizeAndFlags = nextBlock.GetInt(0);
+            var nextBlock = GetBlockOfPage(firstPage + pages);
+            var nextSizeAndFlags = nextBlock.GetInt(0);
             nextBlock.PutInt(0, nextSizeAndFlags | PRECEDING_BLOB_FREE_FLAG);
         }
     }
 
     /// <summary>
-    /// Removes a free blob from its freetable.
+    /// Removes a free blob from its freetable. If this blob is the last free blob in a given size
+    /// range, removes the leaf freetable from the trunk freetable. If this free blob contains the
+    /// leaf freetable, and this freetable is still needed, it is the responsibility of the caller
+    /// to copy it to another free blob in the same size range.
+    ///
+    /// This method does not affect the PRECEDING_BLOB_FREE_FLAG of the successor blob; it is the
+    /// responsibility of the caller to clear the flag, if necessary.
     /// </summary>
-    private void RemoveFreeBlob(NioBuffer freeBlock)
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.removeFreeBlob(ByteBuffer)</c>.</remarks>
+    void RemoveFreeBlob(NioBuffer freeBlock)
     {
-        int prevBlob = freeBlock.GetInt(PREV_FREE_BLOB_OFS);
-        int nextBlob = freeBlock.GetInt(NEXT_FREE_BLOB_OFS);
+        var prevBlob = freeBlock.GetInt(PREV_FREE_BLOB_OFS);
+        var nextBlob = freeBlock.GetInt(NEXT_FREE_BLOB_OFS);
 
         if (nextBlob != 0)
         {
-            NioBuffer nextBlock = GetBlockOfPage(nextBlob);
+            var nextBlock = GetBlockOfPage(nextBlob);
             nextBlock.PutInt(PREV_FREE_BLOB_OFS, prevBlob);
         }
         if (prevBlob != 0)
         {
-            NioBuffer prevBlock = GetBlockOfPage(prevBlob);
+            var prevBlock = GetBlockOfPage(prevBlob);
             prevBlock.PutInt(NEXT_FREE_BLOB_OFS, nextBlob);
             return;
         }
 
-        int payloadSize = freeBlock.GetInt(0) & 0x3fff_ffff;
+        var payloadSize = freeBlock.GetInt(0) & 0x3fff_ffff;
         Debug.Assert(((payloadSize + 4) & Ushr(unchecked((int)0xffff_ffff), 32 - pageSizeShift)) == 0,
             "Payload size + 4 of a free blob must be multiple of page size");
-        int pages = (payloadSize + 4) >> pageSizeShift;
-        int trunkSlot = (pages - 1) / 512;
-        int leafSlot = (pages - 1) % 512;
+        var pages = (payloadSize + 4) >> pageSizeShift;
+        var trunkSlot = (pages - 1) / 512;
+        var leafSlot = (pages - 1) % 512;
 
-        NioBuffer rootBlock = GetBlock(0);
-        int trunkOfs = TRUNK_FREE_TABLE_OFS + trunkSlot * 4;
-        int leafOfs = LEAF_FREE_TABLE_OFS + leafSlot * 4;
-        int leafBlob = rootBlock.GetInt(trunkOfs);
+        var rootBlock = GetBlock(0);
+        var trunkOfs = TRUNK_FREE_TABLE_OFS + trunkSlot * 4;
+        var leafOfs = LEAF_FREE_TABLE_OFS + leafSlot * 4;
+        var leafBlob = rootBlock.GetInt(trunkOfs);
 
         Debug.Assert(leafBlob != 0);
 
-        NioBuffer leafBlock = GetBlockOfPage(leafBlob);
+        var leafBlock = GetBlockOfPage(leafBlob);
         leafBlock.PutInt(leafOfs, nextBlob);
         if (nextBlob != 0) return;
 
-        int leafRange = leafSlot / 16;
+        var leafRange = leafSlot / 16;
         Debug.Assert(leafRange >= 0 && leafRange < 32);
 
         leafOfs = LEAF_FREE_TABLE_OFS + (leafRange * 64);
-        int leafEnd = leafOfs + 64;
+        var leafEnd = leafOfs + 64;
         for (; leafOfs < leafEnd; leafOfs += 4)
         {
             if (leafBlock.GetInt(leafOfs) != 0) return;
         }
 
-        int leafRangeBits = leafBlock.GetInt(LEAF_FT_RANGE_BITS_OFS);
+        var leafRangeBits = leafBlock.GetInt(LEAF_FT_RANGE_BITS_OFS);
         leafRangeBits &= ~(1 << leafRange);
         leafBlock.PutInt(LEAF_FT_RANGE_BITS_OFS, leafRangeBits);
         if (leafRangeBits != 0) return;
 
         rootBlock.PutInt(trunkOfs, 0);
 
-        int trunkRange = trunkSlot / 16;
+        var trunkRange = trunkSlot / 16;
         Debug.Assert(trunkRange >= 0 && trunkRange < 32);
 
         trunkOfs = TRUNK_FREE_TABLE_OFS + (trunkRange * 64);
-        int trunkEnd = trunkOfs + 64;
+        var trunkEnd = trunkOfs + 64;
         for (; trunkOfs < trunkEnd; trunkOfs += 4)
         {
             if (rootBlock.GetInt(trunkOfs) != 0) return;
         }
 
-        int trunkRangeBits = rootBlock.GetInt(TRUNK_FT_RANGE_BITS_OFS);
+        var trunkRangeBits = rootBlock.GetInt(TRUNK_FT_RANGE_BITS_OFS);
         trunkRangeBits &= ~(1 << trunkRange);
         rootBlock.PutInt(TRUNK_FT_RANGE_BITS_OFS, trunkRangeBits);
     }
 
     /// <summary>
     /// Adds a blob to the freetable, and sets its size, header flags and trailer.
+    ///
+    /// This method does not affect the PRECEDING_BLOB_FREE_FLAG of the successor blob; it is the
+    /// responsibility of the caller to set the flag, if necessary.
     /// </summary>
-    private void AddFreeBlob(int firstPage, int pages, int freeFlags)
+    /// <param name="firstPage">the first page of the blob</param>
+    /// <param name="pages">the number of pages of this blob</param>
+    /// <param name="freeFlags">PRECEDING_BLOB_FREE_FLAG or 0</param>
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.addFreeBlob(int, int, int)</c>.</remarks>
+    void AddFreeBlob(int firstPage, int pages, int freeFlags)
     {
         Debug.Assert(freeFlags == 0 || freeFlags == PRECEDING_BLOB_FREE_FLAG);
-        NioBuffer firstBlock = GetBlockOfPage(firstPage);
-        int payloadSize = (pages << pageSizeShift) - 4;
+        var firstBlock = GetBlockOfPage(firstPage);
+        var payloadSize = (pages << pageSizeShift) - 4;
         firstBlock.PutInt(0, payloadSize | FREE_BLOB_FLAG | freeFlags);
         firstBlock.PutInt(PREV_FREE_BLOB_OFS, 0);
-        NioBuffer lastBlock = GetBlockOfPage(firstPage + pages - 1);
+        var lastBlock = GetBlockOfPage(firstPage + pages - 1);
         lastBlock.PutInt(TRAILER_OFS, pages);
-        NioBuffer rootBlock = GetBlock(0);
-        int trunkSlot = (pages - 1) / 512;
-        int leafBlob = rootBlock.GetInt(TRUNK_FREE_TABLE_OFS + trunkSlot * 4);
+        var rootBlock = GetBlock(0);
+        var trunkSlot = (pages - 1) / 512;
+        var leafBlob = rootBlock.GetInt(TRUNK_FREE_TABLE_OFS + trunkSlot * 4);
         NioBuffer leafBlock;
         if (leafBlob == 0)
         {
             firstBlock.PutInt(LEAF_FT_RANGE_BITS_OFS, 0);
-            for (int i = 0; i < 2048; i += 4)
+            for (var i = 0; i < 2048; i += 4)
             {
                 firstBlock.PutInt(LEAF_FREE_TABLE_OFS + i, 0);
             }
-            int trunkRanges = rootBlock.GetInt(TRUNK_FT_RANGE_BITS_OFS);
+            var trunkRanges = rootBlock.GetInt(TRUNK_FT_RANGE_BITS_OFS);
             trunkRanges |= 1 << (trunkSlot / 16);
             rootBlock.PutInt(TRUNK_FT_RANGE_BITS_OFS, trunkRanges);
             rootBlock.PutInt(TRUNK_FREE_TABLE_OFS + trunkSlot * 4, firstPage);
@@ -533,54 +610,61 @@ public class BlobStore : Store
             leafBlock = GetBlockOfPage(leafBlob);
         }
 
-        int leafSlot = (pages - 1) % 512;
-        int leafOfs = LEAF_FREE_TABLE_OFS + leafSlot * 4;
-        int nextBlob = leafBlock.GetInt(leafOfs);
+        var leafSlot = (pages - 1) % 512;
+        var leafOfs = LEAF_FREE_TABLE_OFS + leafSlot * 4;
+        var nextBlob = leafBlock.GetInt(leafOfs);
         if (nextBlob != 0)
         {
-            NioBuffer nextBlock = GetBlockOfPage(nextBlob);
+            var nextBlock = GetBlockOfPage(nextBlob);
             nextBlock.PutInt(PREV_FREE_BLOB_OFS, firstPage);
         }
         firstBlock.PutInt(NEXT_FREE_BLOB_OFS, nextBlob);
 
         leafBlock.PutInt(leafOfs, firstPage);
-        int leafRanges = leafBlock.GetInt(LEAF_FT_RANGE_BITS_OFS);
+        var leafRanges = leafBlock.GetInt(LEAF_FT_RANGE_BITS_OFS);
         leafRanges |= 1 << (leafSlot / 16);
         leafBlock.PutInt(LEAF_FT_RANGE_BITS_OFS, leafRanges);
     }
 
     /// <summary>
-    /// Copies a blob's free table to another free blob.
+    /// Copies a blob's free table to another free blob. The original blob's free table and the
+    /// free-range bits must be valid, all other data is allowed to have been modified at this point.
     /// </summary>
-    /// <returns>the page of the blob to which the free table has been assigned, or 0.</returns>
-    private int RelocateFreeTable(int page, int sizeInPages)
+    /// <param name="page">the first page of the original blob</param>
+    /// <param name="sizeInPages">the blob's size in pages</param>
+    /// <returns>
+    /// the page of the blob to which the free table has been assigned, or 0 if the table has not
+    /// been relocated.
+    /// </returns>
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.relocateFreeTable(int, int)</c>.</remarks>
+    int RelocateFreeTable(int page, int sizeInPages)
     {
-        NioBuffer block = GetBlockOfPage(page);
-        int ranges = block.GetInt(LEAF_FT_RANGE_BITS_OFS);
-        int originalRanges = ranges;
-        int p = LEAF_FREE_TABLE_OFS;
+        var block = GetBlockOfPage(page);
+        var ranges = block.GetInt(LEAF_FT_RANGE_BITS_OFS);
+        var originalRanges = ranges;
+        var p = LEAF_FREE_TABLE_OFS;
         while (ranges != 0)
         {
             if ((ranges & 1) != 0)
             {
-                int pEnd = p + 64;
+                var pEnd = p + 64;
                 for (; p < pEnd; p += 4)
                 {
-                    int otherPage = block.GetInt(p);
+                    var otherPage = block.GetInt(p);
                     if (otherPage != 0 && otherPage != page)
                     {
-                        NioBuffer otherBlock = GetBlockOfPage(otherPage);
+                        var otherBlock = GetBlockOfPage(otherPage);
                         Debug.Assert((otherBlock.GetInt(0) & FREE_BLOB_FLAG) != 0,
                             string.Format(CultureInfo.InvariantCulture, "Found allocated blob (First page = {0}) in FT", otherPage));
 
-                        for (int i = LEAF_FREE_TABLE_OFS;
+                        for (var i = LEAF_FREE_TABLE_OFS;
                              i < LEAF_FREE_TABLE_OFS + FREE_TABLE_LEN; i += 4)
                         {
                             otherBlock.PutInt(i, block.GetInt(i));
                         }
                         otherBlock.PutInt(LEAF_FT_RANGE_BITS_OFS, originalRanges);
-                        NioBuffer rootBlock = GetBlock(0);
-                        int trunkSlot = (sizeInPages - 1) / 512;
+                        var rootBlock = GetBlock(0);
+                        var trunkSlot = (sizeInPages - 1) / 512;
                         rootBlock.PutInt(TRUNK_FREE_TABLE_OFS + trunkSlot * 4, otherPage);
 
                         return otherPage;
@@ -591,7 +675,7 @@ public class BlobStore : Store
             }
             else
             {
-                int rangesToSkip = BitOperations.TrailingZeroCount((uint)ranges);
+                var rangesToSkip = BitOperations.TrailingZeroCount((uint)ranges);
                 ranges = Ushr(ranges, rangesToSkip);
                 p += rangesToSkip * 64;
             }
@@ -600,20 +684,21 @@ public class BlobStore : Store
     }
 
     // TODO: remove
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.export(int, Path)</c>.</remarks>
     public void Export(int page, string path)
     {
-        NioBuffer buf = BufferOfPage(page);
-        int p = OffsetOfPage(page);
-        int len = buf.GetInt(p) & 0x3fff_ffff;
+        var buf = BufferOfPage(page);
+        var p = OffsetOfPage(page);
+        var len = buf.GetInt(p) & 0x3fff_ffff;
         const int BUF_SIZE = 64 * 1024;
-        byte[] b = new byte[BUF_SIZE];
-        int bytesRemaining = len;
+        var b = new byte[BUF_SIZE];
+        var bytesRemaining = len;
         using FileStream fout = new FileStream(path, FileMode.Create, FileAccess.Write);
         using GZipStream @out = new GZipStream(fout, CompressionMode.Compress);
         byte flagMask = 0x3f;
         while (bytesRemaining > 0)
         {
-            int chunkSize = System.Math.Min(bytesRemaining, BUF_SIZE);
+            var chunkSize = System.Math.Min(bytesRemaining, BUF_SIZE);
             buf.Get(b, 0, chunkSize);
             b[3] &= flagMask;
             flagMask = 0xff;
@@ -623,46 +708,51 @@ public class BlobStore : Store
         }
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.getIndexEntry(int)</c>.</remarks>
     protected internal int GetIndexEntry(int id)
     {
         return baseMapping!.GetInt(IndexPointer() + id * 4);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.setIndexEntry(int, int)</c>.</remarks>
     protected internal void SetIndexEntry(int id, int page)
     {
-        int pIndexEntry = IndexPointer() + id * 4;
-        NioBuffer indexBlock = GetBlock(pIndexEntry & unchecked((int)0xffff_f000)); // TODO: assumes block length 4096
+        var pIndexEntry = IndexPointer() + id * 4;
+        var indexBlock = GetBlock(pIndexEntry & unchecked((int)0xffff_f000)); // TODO: assumes block length 4096
         indexBlock.PutInt(pIndexEntry % BLOCK_LEN, page);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.fetchBlob(int)</c>.</remarks>
     public int FetchBlob(int id)
     {
-        int page = GetIndexEntry(id);
+        var page = GetIndexEntry(id);
         if (page != 0) return page;
         if (downloader == null)
         {
             throw new StoreException(string.Format(CultureInfo.InvariantCulture,
                 "Cannot download {0:X6}; repository URL must be specified", id), Path);
         }
-        Downloader.Ticket ticket = downloader.Request(id, null);
+        var ticket = downloader.Request(id, null);
         ticket.AwaitCompletion();
         ticket.ThrowError();
         return ticket.Page();
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.close()</c>.</remarks>
     public new void Close()
     {
         if (downloader != null) downloader.Shutdown();
         base.Close();
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.removeBlobs(IntIterator)</c>.</remarks>
     public void RemoveBlobs(IEnumerator<int> iter)
     {
         BeginTransaction(LOCK_EXCLUSIVE);
         while (iter.MoveNext())
         {
-            int id = iter.Current;
-            int page = GetIndexEntry(id);
+            var id = iter.Current;
+            var page = GetIndexEntry(id);
             FreeBlob(page);
             SetIndexEntry(id, 0);
         }
@@ -671,19 +761,27 @@ public class BlobStore : Store
     }
 
     /// <summary>
-    /// Resets the metadata section to a blank state (so it can be copied or exported).
+    /// Resets the metadata section to a blank state (so it can be copied or exported). This method
+    /// is *never* applied to the BlobStore's live metadata, but always a copy.
+    ///
+    /// The base implementation clears the free-blob table and sets the total page count to zero
+    /// (to use the metadata in a new BlobStore, this count will need to be recalculated to the
+    /// number of pages occupied by the metadata section, based on the new BlobStore's page size).
     /// </summary>
+    /// <param name="buf">the buffer containing a copy of the BlobStore's metadata</param>
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.resetMetadata(ByteBuffer)</c>.</remarks>
     protected virtual void ResetMetadata(NioBuffer buf)
     {
         buf.PutInt(TRUNK_FT_RANGE_BITS_OFS, 0);
-        for (int i = 0; i < 512; i++) buf.PutInt(TRUNK_FREE_TABLE_OFS + i, 0);
+        for (var i = 0; i < 512; i++) buf.PutInt(TRUNK_FREE_TABLE_OFS + i, 0);
         buf.PutInt(TOTAL_PAGES_OFS, 0);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.createCopy(Path)</c>.</remarks>
     public void CreateCopy(string newPath)
     {
-        int metadataSize = baseMapping!.GetInt(METADATA_SIZE_OFS);
-        NioBuffer buf = NioBuffer.Allocate(metadataSize);
+        var metadataSize = baseMapping!.GetInt(METADATA_SIZE_OFS);
+        var buf = NioBuffer.Allocate(metadataSize);
         buf.Order(ByteOrder.LittleEndian);
         buf.Put(0, baseMapping!, 0, metadataSize);
         ResetMetadata(buf);
@@ -692,4 +790,5 @@ public class BlobStore : Store
         using FileStream channel = new FileStream(newPath, FileMode.Create, FileAccess.Write);
         channel.Write(buf.Array()!, 0, metadataSize);
     }
+
 }

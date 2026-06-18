@@ -16,64 +16,76 @@ namespace Clarisma.Common.Fab;
 /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader</c>.</remarks>
 public class FabReader
 {
+
     protected int tabSize = 4;
-    private const int MAX_NESTING_LEVELS = 32;
-    private readonly int[] indentStack;
-    private int currentNestingLevel;
+    const int MAX_NESTING_LEVELS = 32;
+    readonly int[] _indentStack;
+    int _currentNestingLevel;
     /// <summary>Key which has not been dispatched.</summary>
-    private string? openKey;
+    string? _openKey;
     /// <summary>Value that has not been dispatched.</summary>
-    private readonly StringBuilder openValue;
+    readonly StringBuilder _openValue;
     protected string? fileName;
     /// <summary>The current line (1-based)</summary>
     protected int lineNumber;
     /// <summary>The key in the current line, or null if none</summary>
-    private string? key;
+    string? _key;
     /// <summary>The value in the current line, or null if none</summary>
-    private string? value;
+    string? _value;
     /// <summary>
-    /// the column at which the key or value begins in the current line, or -1 if empty line
+    /// the column at which the key or value begins in the current line,
+    /// or -1 if empty line
     /// </summary>
-    private int lineIndent;
+    int _lineIndent;
     /// <summary>The column at which the last key appeared</summary>
-    private int keyIndent;
+    int _keyIndent;
     /// <summary>
-    /// If a key's value is spread over multiple lines, this is the column where the
-    /// values should line up. -1 if no multi-line value has been seen yet.
+    /// If a key's value is spread over multiple lines, this is the column
+    /// where the values should line up. If a value appears to the right,
+    /// the extra whitespace becomes part of the value.
+    /// A value may not appear to the left
+    /// -1 if no multi-line value has been seen yet
     /// </summary>
-    private int valueIndent;
+    int _valueIndent;
     /// <summary>
-    /// If true, keys and comments in the lines following a key are ignored, and instead
-    /// are included as part of the value.
+    /// If true, keys and comments in the lines following a key are ignored,
+    /// and instead are included as part of the value (This makes it possible
+    /// to have a text value that includes a colon followed by a space)
     /// </summary>
-    private bool literalMode;
+    bool _literalMode;
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader()</c>.</remarks>
     public FabReader()
     {
-        openValue = new StringBuilder();
-        indentStack = new int[MAX_NESTING_LEVELS];
-        valueIndent = -1;
+        _openValue = new StringBuilder();
+        _indentStack = new int[MAX_NESTING_LEVELS];
+        _valueIndent = -1;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader.beginKey(String, String)</c>.</remarks>
     protected virtual void BeginKey(string key, string value)
     {
         BeginKey(key);
         KeyValue("value", value);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader.beginKey(String)</c>.</remarks>
     protected virtual void BeginKey(string key)
     {
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader.keyValue(String, String)</c>.</remarks>
     protected virtual void KeyValue(string key, string value)
     {
         System.Console.Out.Write(JavaFormat.Format("VALUE [%s] = [%s]\n", key, value));
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader.endKey()</c>.</remarks>
     protected virtual void EndKey()
     {
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader.error(String)</c>.</remarks>
     protected virtual void Error(string msg)
     {
         throw new FabException(
@@ -82,11 +94,13 @@ public class FabReader
             lineNumber, msg));
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader.error(String, Object...)</c>.</remarks>
     protected void Error(string msg, params object?[] args)
     {
         Error(JavaFormat.Format(msg, args));
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader.toInt(String)</c>.</remarks>
     protected int ToInt(string s)
     {
         try
@@ -100,31 +114,32 @@ public class FabReader
         }
     }
 
-    private void ParseLine(string line)
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader.parseLine(String)</c>.</remarks>
+    void ParseLine(string line)
     {
-        int pos = 0;
-        lineIndent = 0;
+        var pos = 0;
+        _lineIndent = 0;
         for (; pos < line.Length; pos++)
         {
-            char ch = line[pos];
+            var ch = line[pos];
             if (ch == '\t')
             {
-                lineIndent += tabSize - (lineIndent % tabSize);
+                _lineIndent += tabSize - (_lineIndent % tabSize);
                 continue;
             }
             if (!char.IsWhiteSpace(ch)) break;
-            lineIndent++;
+            _lineIndent++;
         }
-        int valueStart = pos;
-        int valueEnd = line.Length;
-        int keyStart = pos;
-        int keyEnd = -1;
-        if (lineIndent < valueIndent) literalMode = false;
-        if (!literalMode)
+        var valueStart = pos;
+        var valueEnd = line.Length;
+        var keyStart = pos;
+        var keyEnd = -1;
+        if (_lineIndent < _valueIndent) _literalMode = false;
+        if (!_literalMode)
         {
             for (; pos < line.Length; pos++)
             {
-                char ch = line[pos];
+                var ch = line[pos];
                 if (keyEnd < 0 && ch == ':')
                 {
                     if (pos == line.Length - 1 ||
@@ -133,7 +148,7 @@ public class FabReader
                     {
                         keyEnd = pos;
                         pos++;
-                        literalMode = false;
+                        _literalMode = false;
                         continue;
                     }
                     if (line[pos + 1] == '=')
@@ -144,7 +159,7 @@ public class FabReader
                         {
                             keyEnd = pos;
                             pos += 2;
-                            literalMode = true;
+                            _literalMode = true;
                             continue;
                         }
                     }
@@ -153,7 +168,7 @@ public class FabReader
                 {
                     // Check for comment start:
                     // "//" followed by whitespace
-                    int lineLen = line.Length;
+                    var lineLen = line.Length;
                     if (pos > lineLen - 2) break;
                     if (line[pos + 1] == '/' && (pos + 2 == lineLen ||
                         char.IsWhiteSpace(line[pos + 2])))
@@ -170,47 +185,49 @@ public class FabReader
                 valueStart = keyEnd + 2;
                 for (; valueStart < line.Length; valueStart++)
                 {
-                    char ch = line[valueStart];
+                    var ch = line[valueStart];
                     if (!char.IsWhiteSpace(ch)) break;
                 }
             }
             // trim trailing whitespace
             for (; valueEnd > 0; valueEnd--)
             {
-                char ch = line[valueEnd - 1];
+                var ch = line[valueEnd - 1];
                 if (!char.IsWhiteSpace(ch)) break;
             }
         }
-        key = (keyEnd > keyStart) ?
+        _key = (keyEnd > keyStart) ?
             line.Substring(keyStart, keyEnd - keyStart) : null;
-        value = (valueEnd > valueStart) ?
+        _value = (valueEnd > valueStart) ?
             line.Substring(valueStart, valueEnd - valueStart) : null;
-        if (key == null && value == null) lineIndent = -1;
-        if (key != null)
+        if (_key == null && _value == null) _lineIndent = -1;
+        if (_key != null)
         {
-            valueIndent = -1;
+            _valueIndent = -1;
         }
-        else if (valueIndent < 0)
+        else if (_valueIndent < 0)
         {
-            valueIndent = lineIndent;
+            _valueIndent = _lineIndent;
         }
     }
 
-    private void PushIndent()
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader.pushIndent()</c>.</remarks>
+    void PushIndent()
     {
-        indentStack[currentNestingLevel] = keyIndent;
-        currentNestingLevel++;
+        _indentStack[_currentNestingLevel] = _keyIndent;
+        _currentNestingLevel++;
     }
 
-    private void PopIndent(int targetIndent)
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader.popIndent(int)</c>.</remarks>
+    void PopIndent(int targetIndent)
     {
-        while (currentNestingLevel > 0 && keyIndent != targetIndent)
+        while (_currentNestingLevel > 0 && _keyIndent != targetIndent)
         {
-            currentNestingLevel--;
-            keyIndent = indentStack[currentNestingLevel];
+            _currentNestingLevel--;
+            _keyIndent = _indentStack[_currentNestingLevel];
             EndKey();
         }
-        if (keyIndent != targetIndent)
+        if (_keyIndent != targetIndent)
         {
             Error("Unexpected indentation");
         }
@@ -220,52 +237,54 @@ public class FabReader
     /// Dispatches a pending key or key/value.
     /// </summary>
     /// <param name="keepOpen">if true, begins a block, else simply dispatches a key/value</param>
-    private void Dispatch(bool keepOpen)
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader.dispatch(boolean)</c>.</remarks>
+    void Dispatch(bool keepOpen)
     {
-        if (openValue.Length > 0)
+        if (_openValue.Length > 0)
         {
-            string val = openValue.ToString().Trim();
+            var val = _openValue.ToString().Trim();
             if (keepOpen)
             {
-                BeginKey(openKey!, val);
+                BeginKey(_openKey!, val);
             }
             else
             {
-                KeyValue(openKey!, val);
+                KeyValue(_openKey!, val);
             }
-            openValue.Length = 0;
-            valueIndent = -1;
-            openKey = null;
+            _openValue.Length = 0;
+            _valueIndent = -1;
+            _openKey = null;
         }
-        else if (openKey != null)
+        else if (_openKey != null)
         {
             if (keepOpen)
             {
-                BeginKey(openKey);
+                BeginKey(_openKey);
             }
             else
             {
-                KeyValue(openKey, "");
+                KeyValue(_openKey, "");
             }
         }
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader.read(BufferedReader)</c>.</remarks>
     public void Read(TextReader @in)
     {
         for (; ; )
         {
             lineNumber++;
-            string? line = @in.ReadLine();
+            var line = @in.ReadLine();
             if (line == null) break;
             ParseLine(line);
-            if (key != null)
+            if (_key != null)
             {
-                if (lineIndent < keyIndent)
+                if (_lineIndent < _keyIndent)
                 {
                     Dispatch(false);
-                    PopIndent(lineIndent);
+                    PopIndent(_lineIndent);
                 }
-                else if (lineIndent > keyIndent)
+                else if (_lineIndent > _keyIndent)
                 {
                     Dispatch(true);
                     PushIndent();
@@ -274,27 +293,27 @@ public class FabReader
                 {
                     Dispatch(false);
                 }
-                openKey = key;
-                keyIndent = lineIndent;
-                if (value != null) openValue.Append(value);
+                _openKey = _key;
+                _keyIndent = _lineIndent;
+                if (_value != null) _openValue.Append(_value);
             }
-            else if (value != null)
+            else if (_value != null)
             {
-                if (lineIndent <= keyIndent ||
-                    lineIndent < valueIndent ||
-                    openKey == null)
+                if (_lineIndent <= _keyIndent ||
+                    _lineIndent < _valueIndent ||
+                    _openKey == null)
                 {
                     Error("Expected key");
                 }
                 else
                 {
-                    if (openValue.Length > 0) openValue.Append('\n');
-                    if (lineIndent > valueIndent)
+                    if (_openValue.Length > 0) _openValue.Append('\n');
+                    if (_lineIndent > _valueIndent)
                     {
-                        int padding = lineIndent - valueIndent;
-                        for (int i = 0; i < padding; i++) openValue.Append(' ');
+                        var padding = _lineIndent - _valueIndent;
+                        for (var i = 0; i < padding; i++) _openValue.Append(' ');
                     }
-                    openValue.Append(value);
+                    _openValue.Append(_value);
                 }
             }
         }
@@ -302,11 +321,13 @@ public class FabReader
         PopIndent(0);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader.read(InputStream)</c>.</remarks>
     public void Read(Stream @in)
     {
         Read(new StreamReader(@in));
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader.readFile(String)</c>.</remarks>
     public void ReadFile(string fileName)
     {
         using (TextReader @in = new StreamReader(fileName))
@@ -314,4 +335,5 @@ public class FabReader
             Read(@in);
         }
     }
+
 }

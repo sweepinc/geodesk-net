@@ -22,15 +22,17 @@ namespace Clarisma.Common.Util;
 /// <remarks>Port-only helper (no direct Java counterpart): a stand-in for <c>java.util.Formatter</c>.</remarks>
 public static class JavaFormat
 {
+
+    /// <remarks>Port-only: emulates Java's <c>String.format(String, Object...)</c> for the used specifiers.</remarks>
     public static string Format(string format, params object?[] args)
     {
         var sb = new StringBuilder(format.Length + 16);
-        int argIndex = 0;
-        int i = 0;
-        int len = format.Length;
+        var argIndex = 0;
+        var i = 0;
+        var len = format.Length;
         while (i < len)
         {
-            char ch = format[i++];
+            var ch = format[i++];
             if (ch != '%')
             {
                 sb.Append(ch);
@@ -43,22 +45,22 @@ public static class JavaFormat
             {
                 flags.Append(format[i++]);
             }
-            int width = -1;
-            int widthStart = i;
+            var width = -1;
+            var widthStart = i;
             while (i < len && char.IsDigit(format[i])) i++;
             if (i > widthStart) width = int.Parse(format.Substring(widthStart, i - widthStart), CultureInfo.InvariantCulture);
 
-            int precision = -1;
+            var precision = -1;
             if (i < len && format[i] == '.')
             {
                 i++;
-                int precStart = i;
+                var precStart = i;
                 while (i < len && char.IsDigit(format[i])) i++;
                 precision = int.Parse(format.Substring(precStart, i - precStart), CultureInfo.InvariantCulture);
             }
 
             if (i >= len) break;
-            char conv = format[i++];
+            var conv = format[i++];
 
             if (conv == '%')
             {
@@ -71,12 +73,12 @@ public static class JavaFormat
                 continue;
             }
 
-            object? arg = argIndex < args.Length ? args[argIndex++] : null;
-            string flagStr = flags.ToString();
-            bool leftJustify = flagStr.IndexOf('-') >= 0;
-            bool zeroPad = flagStr.IndexOf('0') >= 0;
-            bool grouping = flagStr.IndexOf(',') >= 0;
-            bool plus = flagStr.IndexOf('+') >= 0;
+            var arg = argIndex < args.Length ? args[argIndex++] : null;
+            var flagStr = flags.ToString();
+            var leftJustify = flagStr.IndexOf('-') >= 0;
+            var zeroPad = flagStr.IndexOf('0') >= 0;
+            var grouping = flagStr.IndexOf(',') >= 0;
+            var plus = flagStr.IndexOf('+') >= 0;
 
             string text;
             switch (conv)
@@ -89,7 +91,7 @@ public static class JavaFormat
                     break;
                 case 'd':
                 {
-                    long v = ToLong(arg);
+                    var v = ToLong(arg);
                     text = grouping
                         ? v.ToString("#,##0", CultureInfo.InvariantCulture)
                         : v.ToString(CultureInfo.InvariantCulture);
@@ -98,21 +100,21 @@ public static class JavaFormat
                 }
                 case 'f':
                 {
-                    double v = ToDouble(arg);
-                    int p = precision >= 0 ? precision : 6;
+                    var v = ToDouble(arg);
+                    var p = precision >= 0 ? precision : 6;
                     text = v.ToString((grouping ? "#,##0." : "0.") + new string('0', p), CultureInfo.InvariantCulture);
                     if (plus && v >= 0) text = "+" + text;
                     break;
                 }
                 case 'x':
                 {
-                    long v = ToLong(arg);
+                    var v = ToLong(arg);
                     text = v.ToString("x", CultureInfo.InvariantCulture);
                     break;
                 }
                 case 'X':
                 {
-                    long v = ToLong(arg);
+                    var v = ToLong(arg);
                     text = v.ToString("X", CultureInfo.InvariantCulture);
                     break;
                 }
@@ -131,7 +133,7 @@ public static class JavaFormat
 
             if (width > text.Length)
             {
-                int pad = width - text.Length;
+                var pad = width - text.Length;
                 if (leftJustify)
                 {
                     sb.Append(text).Append(' ', pad);
@@ -161,7 +163,8 @@ public static class JavaFormat
         return sb.ToString();
     }
 
-    private static long ToLong(object? arg)
+    /// <remarks>Port-only: coerces a boxed numeric argument to <c>long</c> for integer specifiers.</remarks>
+    static long ToLong(object? arg)
     {
         return arg switch
         {
@@ -175,7 +178,8 @@ public static class JavaFormat
         };
     }
 
-    private static double ToDouble(object? arg)
+    /// <remarks>Port-only: coerces a boxed numeric argument to <c>double</c> for the <c>%f</c> specifier.</remarks>
+    static double ToDouble(object? arg)
     {
         return arg switch
         {
@@ -187,4 +191,5 @@ public static class JavaFormat
             _ => Convert.ToDouble(arg, CultureInfo.InvariantCulture)
         };
     }
+
 }

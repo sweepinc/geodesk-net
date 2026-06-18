@@ -35,62 +35,69 @@ public class StoredWay : StoredFeature, Way
     }
 
     // Iterates the way's coordinates as packed long x/y values.
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.XYIterator</c>.</remarks>
     public class XYIterator : PbfDecoder
     {
-        private int x;
-        private int y;
-        internal int remaining;
-        private readonly int firstX;
-        private readonly int firstY;
-        private int duplicatedLastCoord;
-        private readonly int flags;
 
+        int _x;
+        int _y;
+        internal int remaining;
+        readonly int _firstX;
+        readonly int _firstY;
+        int _duplicatedLastCoord;
+        readonly int _flags;
+
+        /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.XYIterator(ByteBuffer, int, int, int, int)</c>.</remarks>
         public XYIterator(NioBuffer buf, int pos, int prevX, int prevY, int flags)
             : base(buf, pos)
         {
-            x = prevX;
-            y = prevY;
-            this.flags = flags;
+            _x = prevX;
+            _y = prevY;
+            _flags = flags;
             remaining = (int)ReadVarint();
             if ((flags & IFeatureFlags.AREA_FLAG) != 0)
             {
                 remaining++;
-                duplicatedLastCoord = 0;
+                _duplicatedLastCoord = 0;
             }
             else
             {
-                duplicatedLastCoord = -1;
+                _duplicatedLastCoord = -1;
             }
             ReadNext();
-            firstX = x;
-            firstY = y;
+            _firstX = _x;
+            _firstY = _y;
         }
 
-        private void ReadNext()
+        /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.XYIterator.readNext()</c>.</remarks>
+        void ReadNext()
         {
             remaining--;
-            if (remaining == duplicatedLastCoord)
+            if (remaining == _duplicatedLastCoord)
             {
-                x = firstX;
-                y = firstY;
-                duplicatedLastCoord--;
+                _x = _firstX;
+                _y = _firstY;
+                _duplicatedLastCoord--;
                 return;
             }
-            x += (int)ReadSignedVarint();
-            y += (int)ReadSignedVarint();
+            _x += (int)ReadSignedVarint();
+            _y += (int)ReadSignedVarint();
         }
 
+        /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.XYIterator.hasNext()</c>.</remarks>
         public bool HasNext()
         {
             return remaining >= 0;
         }
 
+        /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.XYIterator.nextXY()</c>.</remarks>
         public long NextXY()
         {
-            long c = XY.Of(x, y);
+            var c = XY.Of(_x, _y);
             ReadNext();
             return c;
         }
+
     }
 
     public override int[] ToXY()

@@ -10,38 +10,42 @@ namespace Clarisma.Common.Math;
 /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal</c>.</remarks>
 public class Decimal
 {
+
     public const long Invalid = long.MinValue;
 
-    private const long Overflow = unchecked((long)0xf800_0000_0000_0000L);
+    const long Overflow = unchecked((long)0xf800_0000_0000_0000L);
 
-    private readonly long value;
+    readonly long _value;
 
-    private Decimal(long value)
+    /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal(long)</c>.</remarks>
+    Decimal(long value)
     {
-        this.value = value;
+        _value = value;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.fromString(String)</c>.</remarks>
     public static Decimal FromString(string s)
     {
         return new Decimal(Parse(s, false));
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.parse(String, boolean)</c>.</remarks>
     public static long Parse(string s, bool strict)
     {
         long value = 0;
-        int scale = 0;
-        bool seenZero = false;
-        bool seenNonZero = false;
-        bool leadingZeroes = false;
-        bool trailingNonNumeric = false;
-        bool seenDot = false;
-        bool negative = false;
+        var scale = 0;
+        var seenZero = false;
+        var seenNonZero = false;
+        var leadingZeroes = false;
+        var trailingNonNumeric = false;
+        var seenDot = false;
+        var negative = false;
 
-        int len = s.Length;
+        var len = s.Length;
         if (len == 0) return Invalid;
 
-        int i = 0;
-        char first = s[i];
+        var i = 0;
+        var first = s[i];
         if (first == '-')
         {
             negative = true;
@@ -57,7 +61,7 @@ public class Decimal
 
         while (i < len)
         {
-            char ch = s[i++];
+            var ch = s[i++];
             if (ch == '0')
             {
                 leadingZeroes |= seenZero && !seenNonZero;
@@ -107,25 +111,28 @@ public class Decimal
 
         if (scale > 15) return Invalid;
 
-        long result = (negative ? -value : value) << 4;
+        var result = (negative ? -value : value) << 4;
         return result | scale;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.scale(long)</c>.</remarks>
     public static int Scale(long d)
     {
         return (int)d & 15;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.mantissa(long)</c>.</remarks>
     public static long Mantissa(long d)
     {
         return d >> 4;
     }
 
     // TODO: use LUT instead of loop
+    /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.toLong(long)</c>.</remarks>
     public static long ToLong(long d)
     {
         if (d == Invalid) return d;
-        int scale = (int)d & 15;
+        var scale = (int)d & 15;
         if (scale == 0) return d >> 4;
         long div = 10;
         for (;;)
@@ -138,11 +145,12 @@ public class Decimal
     }
 
     // TODO: use LUT instead of loop
+    /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.toDouble(long)</c>.</remarks>
     public static double ToDouble(long d)
     {
         if (d == Invalid) return double.NaN;
-        int scale = (int)d & 15;
-        long mantissa = d >> 4;
+        var scale = (int)d & 15;
+        var mantissa = d >> 4;
         if (scale == 0) return mantissa;
         long div = 10;
         for (;;)
@@ -154,38 +162,42 @@ public class Decimal
         return (double)mantissa / div;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.toFloat(long)</c>.</remarks>
     public static float ToFloat(long d)
     {
         return (float)ToDouble(d);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.toInt(long)</c>.</remarks>
     public static int ToInt(long d)
     {
         return (int)ToLong(d);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.of(long, int)</c>.</remarks>
     public static long Of(long mantissa, int scale)
     {
         System.Diagnostics.Debug.Assert(scale >= 0 && scale <= 15);
         return (mantissa << 4) | scale;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.toString(long)</c>.</remarks>
     public static string ToString(long d)
     {
         if (d == Invalid) return "invalid";
-        int scale = (int)d & 15;
-        string s = (d >> 4).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var scale = (int)d & 15;
+        var s = (d >> 4).ToString(System.Globalization.CultureInfo.InvariantCulture);
         if (scale == 0) return s;
-        int len = s.Length;
+        var len = s.Length;
         char[] chars;
         if (d < 0)
         {
             if (len <= scale + 1)
             {
-                int n = scale - len + 4;
+                var n = scale - len + 4;
                 chars = new char[scale + 3];
                 s.CopyTo(1, chars, n, len - 1);
-                for (int i = 1; i < n; i++) chars[i] = '0';
+                for (var i = 1; i < n; i++) chars[i] = '0';
             }
             else
             {
@@ -199,10 +211,10 @@ public class Decimal
         {
             if (len <= scale)
             {
-                int n = scale - len + 2;
+                var n = scale - len + 2;
                 chars = new char[scale + 2];
                 s.CopyTo(0, chars, n, len);
-                for (int i = 0; i < n; i++) chars[i] = '0';
+                for (var i = 0; i < n; i++) chars[i] = '0';
             }
             else
             {
@@ -215,14 +227,15 @@ public class Decimal
         return new string(chars);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.normalized(long)</c>.</remarks>
     public static long Normalized(long d)
     {
         if (d == Invalid) return Invalid;
-        int scale = (int)d & 15;
-        long v = d >> 4;
+        var scale = (int)d & 15;
+        var v = d >> 4;
         while (scale > 0)
         {
-            long x = v / 10;
+            var x = v / 10;
             if (x * 10 != v) break;
             scale--;
             v = x;
@@ -230,16 +243,22 @@ public class Decimal
         return (v << 4) | scale;
     }
 
-    public int IntValue => ToInt(value);
+    /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.intValue()</c>.</remarks>
+    public int IntValue => ToInt(_value);
 
-    public long LongValue => ToLong(value);
+    /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.longValue()</c>.</remarks>
+    public long LongValue => ToLong(_value);
 
-    public float FloatValue => ToFloat(value);
+    /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.floatValue()</c>.</remarks>
+    public float FloatValue => ToFloat(_value);
 
-    public double DoubleValue => ToDouble(value);
+    /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.doubleValue()</c>.</remarks>
+    public double DoubleValue => ToDouble(_value);
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.toString()</c>.</remarks>
     public override string ToString()
     {
-        return ToString(value);
+        return ToString(_value);
     }
+
 }

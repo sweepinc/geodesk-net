@@ -8,6 +8,7 @@
 using System;
 using System.IO;
 using System.Text;
+
 using Java.Nio;
 
 namespace Clarisma.Common.Pbf;
@@ -16,7 +17,9 @@ namespace Clarisma.Common.Pbf;
 /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfOutputStream</c>.</remarks>
 public class PbfOutputStream : MemoryStream
 {
+
     // check encoding of negative varints
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfOutputStream.writeVarint(long)</c>.</remarks>
     public void WriteVarint(long val)
     {
         while (val >= 0x80 || val < 0) // TODO: improve check?
@@ -27,37 +30,43 @@ public class PbfOutputStream : MemoryStream
         WriteByte((byte)val);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfOutputStream.writeSignedVarint(long)</c>.</remarks>
     public void WriteSignedVarint(long val)
     {
         WriteVarint((val << 1) ^ (val >> 63));
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfOutputStream.writeString(String)</c>.</remarks>
     public void WriteString(string val)
     {
-        byte[] bytes = Encoding.UTF8.GetBytes(val);
+        var bytes = Encoding.UTF8.GetBytes(val);
         WriteVarint(bytes.Length);
         Write(bytes, 0, bytes.Length);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfOutputStream.writeString(PbfOutputStream)</c>.</remarks>
     public void WriteString(PbfOutputStream other)
     {
-        int count = (int)other.Length;
+        var count = (int)other.Length;
         WriteVarint(count);
         Write(other.GetBuffer(), 0, count);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfOutputStream.writeString(byte[])</c>.</remarks>
     public void WriteString(byte[] bytes)
     {
         WriteVarint(bytes.Length);
         Write(bytes, 0, bytes.Length);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfOutputStream.writeString(byte[], int, int)</c>.</remarks>
     public void WriteString(byte[] bytes, int start, int len)
     {
         WriteVarint(len);
         Write(bytes, start, len);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfOutputStream.writeMessage(int, ByteArrayOutputStream)</c>.</remarks>
     public void WriteMessage(int tag, MemoryStream other)
     {
         WriteVarint(tag);
@@ -72,6 +81,7 @@ public class PbfOutputStream : MemoryStream
         }
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfOutputStream.writeFixed32(int)</c>.</remarks>
     public void WriteFixed32(int val)
     {
         WriteByte((byte)(val & 0xff));
@@ -80,6 +90,7 @@ public class PbfOutputStream : MemoryStream
         WriteByte((byte)((val >> 24) & 0xff));
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfOutputStream.writeFixed64(long)</c>.</remarks>
     public void WriteFixed64(long val)
     {
         WriteFixed32((int)val);
@@ -87,24 +98,29 @@ public class PbfOutputStream : MemoryStream
     }
 
     // TODO: check
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfOutputStream.writeFloat(float)</c>.</remarks>
     public void WriteFloat(float val)
     {
         WriteFixed32(BitConverter.SingleToInt32Bits(val));
     }
 
     // TODO: check
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfOutputStream.writeDouble(double)</c>.</remarks>
     public void WriteDouble(double val)
     {
         WriteFixed64(BitConverter.DoubleToInt64Bits(val));
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfOutputStream.writeTo(ByteBuffer)</c>.</remarks>
     public void WriteTo(ByteBuffer @out)
     {
         @out.Put(GetBuffer(), 0, (int)Length);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfOutputStream.buffer()</c>.</remarks>
     public byte[] Buffer()
     {
         return GetBuffer();
     }
+
 }

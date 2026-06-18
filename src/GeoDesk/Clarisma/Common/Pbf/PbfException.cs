@@ -12,13 +12,19 @@ namespace Clarisma.Common.Pbf;
 /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfException</c>.</remarks>
 public class PbfException : Exception
 {
-    public PbfException(string msg)
-        : base(msg)
+
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfException(String)</c>.</remarks>
+    public PbfException(string msg) :
+        base(msg)
     {
+
     }
 
-    public PbfException(string msg, Exception root)
-        : base(msg, root)
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfException(String, Exception)</c>.</remarks>
+    public PbfException(string msg, Exception root) :
+        base(msg, root)
     {
+
     }
+
 }

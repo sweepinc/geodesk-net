@@ -12,6 +12,8 @@ namespace Clarisma.Common.Text;
 /// <remarks>Ported from Java <c>com.clarisma.common.text.Format</c>.</remarks>
 public static class Format
 {
+
+    /// <remarks>Ported from Java <c>com.clarisma.common.text.Format.formatTimespan(long)</c>.</remarks>
     public static string FormatTimespan(long ms)
     {
         var c = CultureInfo.InvariantCulture;
@@ -22,15 +24,16 @@ public static class Format
         }
         if (ms < 60 * 60 * 1000)
         {
-            long s = (ms + 500) / 1000;
+            var s = (ms + 500) / 1000;
             return string.Format(c, "{0}m {1}s", s / 60, s % 60);
         }
         if (ms < 24 * 60 * 60 * 1000L)
         {
-            long m = (ms + 30 * 1000) / (60 * 1000);
+            var m = (ms + 30 * 1000) / (60 * 1000);
             return string.Format(c, "{0}h {1}m", m / 60, m % 60);
         }
-        long h = (ms + 30 * 60 * 1000) / (60 * 60 * 1000);
+        var h = (ms + 30 * 60 * 1000) / (60 * 60 * 1000);
         return string.Format(c, "{0}d {1}h", h / 24, h % 24);
     }
+
 }

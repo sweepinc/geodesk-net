@@ -70,11 +70,13 @@ public class CoordinateTransformer
         {
         }
 
+        /// <remarks>Ported from Java <c>com.geodesk.util.CoordinateTransformer.FromMercator.transformX(double)</c>.</remarks>
         public override double TransformX(double x)
         {
             return Mercator.LonFromX(x);
         }
 
+        /// <remarks>Ported from Java <c>com.geodesk.util.CoordinateTransformer.FromMercator.transformY(double)</c>.</remarks>
         public override double TransformY(double y)
         {
             return Mercator.LatFromY(y);
@@ -93,11 +95,13 @@ public class CoordinateTransformer
             // TODO: technically, imps are always integer
         }
 
+        /// <remarks>Ported from Java <c>com.geodesk.util.CoordinateTransformer.ToMercator.transformX(double)</c>.</remarks>
         public override double TransformX(double x)
         {
             return Mercator.XFromLon(x);
         }
 
+        /// <remarks>Ported from Java <c>com.geodesk.util.CoordinateTransformer.ToMercator.transformY(double)</c>.</remarks>
         public override double TransformY(double y)
         {
             return Mercator.YFromLat(y);

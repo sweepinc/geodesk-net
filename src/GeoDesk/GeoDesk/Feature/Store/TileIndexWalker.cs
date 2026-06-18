@@ -7,9 +7,10 @@
 
 using System.Collections.Generic;
 using System.Numerics;
-using GeoDesk.Feature;
+
 using GeoDesk.Feature.Filters;
 using GeoDesk.Geom;
+
 using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace GeoDesk.Feature.Store;
@@ -19,7 +20,6 @@ namespace GeoDesk.Feature.Store;
 /// returning all tiles that intersect a given bounding box.
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker</c>.</remarks>
-// TODO: no need to create top level (leaf)
 public class TileIndexWalker
 {
 

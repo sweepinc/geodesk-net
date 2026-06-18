@@ -15,8 +15,6 @@ public class Operator
     readonly string? _symbol;
     readonly float _precedence;
 
-    // TODO: associativity
-
     /// <remarks>Ported from Java <c>com.clarisma.common.ast.Operator(String, String, float)</c>.</remarks>
     public Operator(string name, string? symbol, float precedence)
     {

@@ -13,41 +13,49 @@ namespace Clarisma.Common.Fab;
 /// <remarks>Ported from Java <c>com.clarisma.common.fab.PropertyFabReader</c>.</remarks>
 public class PropertyFabReader : FabReader
 {
-    private readonly Dictionary<string, string> properties = new Dictionary<string, string>();
-    private string? prefix;
 
+    readonly Dictionary<string, string> _properties = new Dictionary<string, string>();
+    string? _prefix;
+
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.PropertyFabReader.beginKey(String, String)</c>.</remarks>
     protected override void BeginKey(string key, string value)
     {
-        if (prefix != null) key = prefix + key;
-        properties[key] = value;
-        prefix = key + ".";
+        if (_prefix != null) key = _prefix + key;
+        _properties[key] = value;
+        _prefix = key + ".";
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.PropertyFabReader.beginKey(String)</c>.</remarks>
     protected override void BeginKey(string key)
     {
-        if (prefix != null) key = prefix + key;
-        prefix = key + ".";
+        if (_prefix != null) key = _prefix + key;
+        _prefix = key + ".";
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.PropertyFabReader.keyValue(String, String)</c>.</remarks>
     protected override void KeyValue(string key, string value)
     {
-        if (prefix != null) key = prefix + key;
-        properties[key] = value;
+        if (_prefix != null) key = _prefix + key;
+        _properties[key] = value;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.PropertyFabReader.endKey()</c>.</remarks>
     protected override void EndKey()
     {
-        Debug.Assert(prefix != null);
-        int n = prefix!.LastIndexOf('.', prefix.Length - 2);
+        Debug.Assert(_prefix != null);
+        var n = _prefix!.LastIndexOf('.', _prefix.Length - 2);
         Debug.Assert(n > 0);
-        prefix = prefix.Substring(0, n + 1);
+        _prefix = _prefix.Substring(0, n + 1);
     }
 
-    public Dictionary<string, string> Properties => properties;
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.PropertyFabReader.properties()</c>.</remarks>
+    public Dictionary<string, string> Properties => _properties;
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.PropertyFabReader.readProperties(String)</c>.</remarks>
     public Dictionary<string, string> ReadProperties(string filename)
     {
         ReadFile(filename);
-        return properties;
+        return _properties;
     }
+
 }

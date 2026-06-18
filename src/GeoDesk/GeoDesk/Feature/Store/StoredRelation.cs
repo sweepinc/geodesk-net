@@ -45,7 +45,7 @@ public class StoredRelation : StoredFeature, Relation
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredRelation.isEmpty(int)</c>.</remarks>
-    private bool IsEmpty(int pMembers)
+    bool IsEmpty(int pMembers)
     {
         return buf.GetInt(pMembers) == 0;
     }
@@ -144,7 +144,7 @@ public class StoredRelation : StoredFeature, Relation
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredRelation.members(int, String)</c>.</remarks>
-    private Features Members(int types, string query)
+    Features Members(int types, string query)
     {
         Matcher matcher = store.GetMatcher(query);
         return Members(types & matcher.AcceptedTypes(), matcher, null);

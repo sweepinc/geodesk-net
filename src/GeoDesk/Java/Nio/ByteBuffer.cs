@@ -7,6 +7,7 @@
 
 using System;
 using System.Buffers.Binary;
+using System.Runtime.InteropServices;
 
 namespace Java.Nio;
 
@@ -15,34 +16,89 @@ namespace Java.Nio;
 /// position, limit, capacity and configurable byte order. Supports absolute and relative
 /// get/put of bytes and 16/32/64-bit integers, plus slice/duplicate.
 ///
-/// Concrete backings: <see cref="HeapByteBuffer"/> (byte[]) and
-/// <see cref="MappedByteBuffer"/> (memory-mapped file segment).
+/// A single implementation backed by <see cref="System.Memory{Byte}"/>: heap buffers wrap a
+/// managed <c>byte[]</c>; mapped buffers wrap a memory-mapped file view exposed via a
+/// <see cref="System.Buffers.MemoryManager{Byte}"/>. A mapped buffer is given the manager as its
+/// <see cref="IDisposable"/> owner (deterministic unmap) and a flush delegate for <see cref="Force"/>;
+/// heap buffers and slices have neither.
 ///
 /// Only the operations used by the GeoDesk port are implemented; this is not a complete
 /// reimplementation of java.nio.
 /// </summary>
 /// <remarks>.NET stand-in for <c>java.nio.ByteBuffer</c> (no <c>com.*</c> Java source; mirrors the JDK type).</remarks>
-public abstract class ByteBuffer
+public sealed class ByteBuffer : IDisposable
 {
-    protected int position;
-    protected int limit;
-    protected int capacity;
-    protected ByteOrder order = ByteOrder.BigEndian; // Java's default
+    readonly Memory<byte> _mem;
+    readonly IDisposable? _owner;
+    readonly Action? _onForce;
+    int position;
+    int limit;
+    int capacity;
+    ByteOrder order = ByteOrder.BigEndian; // Java's default
 
-    // --- backing primitives (implemented by subclasses) ---
+    ByteBuffer(Memory<byte> mem, IDisposable? owner, Action? onForce)
+    {
+        _mem = mem;
+        _owner = owner;
+        _onForce = onForce;
+        capacity = mem.Length;
+        limit = capacity;
+        position = 0;
+    }
 
-    public abstract byte Get(int index);
-    public abstract ByteBuffer Put(int index, byte b);
-    protected abstract void GetBytes(int index, Span<byte> dst);
-    protected abstract void PutBytes(int index, ReadOnlySpan<byte> src);
+    // --- backing primitives (over the Memory<byte> window) ---
+
+    public byte Get(int index)
+    {
+        return _mem.Span[index];
+    }
+
+    public ByteBuffer Put(int index, byte b)
+    {
+        _mem.Span[index] = b;
+        return this;
+    }
+
+    void GetBytes(int index, Span<byte> dst)
+    {
+        _mem.Span.Slice(index, dst.Length).CopyTo(dst);
+    }
+
+    void PutBytes(int index, ReadOnlySpan<byte> src)
+    {
+        src.CopyTo(_mem.Span.Slice(index, src.Length));
+    }
 
     /// <summary>The backing array (heap buffers only); null for mapped buffers.</summary>
-    public abstract byte[]? Array();
+    public byte[]? Array()
+    {
+        return MemoryMarshal.TryGetArray<byte>(_mem, out var seg) ? seg.Array : null;
+    }
 
-    public abstract ByteBuffer Slice();
+    public ByteBuffer Slice()
+    {
+        // Slices share the underlying memory but do not own it (only the root buffer disposes/flushes).
+        var s = new ByteBuffer(_mem.Slice(position, limit - position), null, null);
+        s.order = order;
+        return s;
+    }
+
     /// <summary>Absolute slice (Java 13+): a buffer over [index, index+length).</summary>
-    public abstract ByteBuffer Slice(int index, int length);
-    public abstract ByteBuffer Duplicate();
+    public ByteBuffer Slice(int index, int length)
+    {
+        var s = new ByteBuffer(_mem.Slice(index, length), null, null);
+        s.order = order;
+        return s;
+    }
+
+    public ByteBuffer Duplicate()
+    {
+        var d = new ByteBuffer(_mem, null, null);
+        d.position = position;
+        d.limit = limit;
+        d.order = order;
+        return d;
+    }
 
     // --- absolute typed accessors (honor byte order) ---
 
@@ -306,15 +362,39 @@ public abstract class ByteBuffer
         return position < limit;
     }
 
+    // --- mapped-backing lifetime (no-op for heap buffers) ---
+
+    /// <summary>Flushes a mapped buffer's pending writes to disk (Java's <c>MappedByteBuffer.force()</c>).</summary>
+    public void Force()
+    {
+        _onForce?.Invoke();
+    }
+
+    /// <summary>Releases the mapped backing (view + mapping). No-op for heap buffers and for slices.</summary>
+    public void Dispose()
+    {
+        _owner?.Dispose();
+    }
+
     // --- factories ---
 
     public static ByteBuffer Allocate(int capacity)
     {
-        return new HeapByteBuffer(new byte[capacity], 0, capacity);
+        return new ByteBuffer(new byte[capacity], null, null);
     }
 
     public static ByteBuffer Wrap(byte[] array)
     {
-        return new HeapByteBuffer(array, 0, array.Length);
+        return new ByteBuffer(array, null, null);
+    }
+
+    /// <summary>
+    /// Wraps an arbitrary <see cref="System.Memory{Byte}"/> window. For a mapped backing, pass the
+    /// <paramref name="owner"/> (disposed to unmap) and an <paramref name="onForce"/> delegate
+    /// (the view's flush). Heap buffers pass neither.
+    /// </summary>
+    public static ByteBuffer Of(Memory<byte> memory, IDisposable? owner = null, Action? onForce = null)
+    {
+        return new ByteBuffer(memory, owner, onForce);
     }
 }

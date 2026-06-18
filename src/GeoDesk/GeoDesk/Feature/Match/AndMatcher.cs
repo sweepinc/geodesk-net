@@ -17,8 +17,8 @@ public class AndMatcher : Matcher
     readonly Matcher _b;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.AndMatcher(Matcher, Matcher)</c>.</remarks>
-    public AndMatcher(Matcher a, Matcher b)
-        : base(a.AcceptedTypes() & b.AcceptedTypes())
+    public AndMatcher(Matcher a, Matcher b) :
+        base(a.AcceptedTypes() & b.AcceptedTypes())
     {
         _a = a;
         _b = b;
@@ -46,9 +46,13 @@ public class AndMatcher : Matcher
     public override Matcher? AcceptRole(int roleCode, string? roleString)
     {
         var ma = _a.AcceptRole(roleCode, roleString);
-        if (ma == null) return null;
+        if (ma == null)
+            return null;
+
         var mb = _b.AcceptRole(roleCode, roleString);
-        if (mb == null) return null;
+        if (mb == null)
+            return null;
+
         return new AndMatcher(ma, mb);
     }
 

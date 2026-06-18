@@ -32,35 +32,40 @@ namespace GeoDesk.Feature.Match;
 /// </remarks>
 public class InterpretedMatcher : TagMatcher
 {
-    private readonly Selector first;
-    private readonly int valueNo;
 
-    private static readonly ConcurrentDictionary<string, Regex> RegexCache = new ConcurrentDictionary<string, Regex>();
+    readonly Selector _first;
+    readonly int _valueNo;
 
+    static readonly ConcurrentDictionary<string, Regex> RegexCache = new ConcurrentDictionary<string, Regex>();
+
+    /// <remarks>Port-only: builds an interpreting matcher for a query's selector chain.</remarks>
     public InterpretedMatcher(Selector first, string[] globalStrings, int valueNo)
         : base(AcceptedTypesOf(first), globalStrings, KeyMaskOf(first), KeyMinOf(first))
     {
-        this.first = first;
-        this.valueNo = valueNo;
+        _first = first;
+        _valueNo = valueNo;
     }
 
-    private static int AcceptedTypesOf(Selector first)
+    /// <remarks>Port-only: OR of the match-types across the selector chain (mirrors MatcherCoder).</remarks>
+    static int AcceptedTypesOf(Selector first)
     {
-        int t = 0;
+        var t = 0;
         for (Selector? s = first; s != null; s = s.Next()) t |= s.MatchTypes();
         return t;
     }
 
-    private static int KeyMaskOf(Selector first)
+    /// <remarks>Port-only: OR of the key-index bits across the selector chain (mirrors MatcherCoder).</remarks>
+    static int KeyMaskOf(Selector first)
     {
-        int m = 0;
+        var m = 0;
         for (Selector? s = first; s != null; s = s.Next()) m |= s.IndexBitsValue();
         return m;
     }
 
-    private static int KeyMinOf(Selector first)
+    /// <remarks>Port-only: minimum key-index value across the selector chain (mirrors MatcherCoder).</remarks>
+    static int KeyMinOf(Selector first)
     {
-        int min = int.MaxValue;
+        var min = int.MaxValue;
         for (Selector? s = first; s != null; s = s.Next())
         {
             if (s.IndexBitsValue() < min) min = s.IndexBitsValue();
@@ -68,17 +73,19 @@ public class InterpretedMatcher : TagMatcher
         return min;
     }
 
+    /// <remarks>Port-only: implements <c>Matcher.accept(ByteBuffer, int)</c> by interpreting the query.</remarks>
     public override bool Accept(NioBuffer buf, int pos)
     {
-        List<TagEntry> tags = ReadTags(buf, pos);
-        for (Selector? sel = first; sel != null; sel = sel.Next())
+        var tags = ReadTags(buf, pos);
+        for (Selector? sel = _first; sel != null; sel = sel.Next())
         {
             if (MatchSelector(sel, tags)) return true;
         }
         return false;
     }
 
-    private bool MatchSelector(Selector sel, List<TagEntry> tags)
+    /// <remarks>Port-only: a selector matches when all of its clauses match.</remarks>
+    bool MatchSelector(Selector sel, List<TagEntry> tags)
     {
         for (TagClause? clause = sel.FirstClause(); clause != null; clause = clause.Next())
         {
@@ -87,13 +94,14 @@ public class InterpretedMatcher : TagMatcher
         return true;
     }
 
-    private bool MatchClause(TagClause clause, List<TagEntry> tags)
+    /// <remarks>Port-only: evaluates a single tag clause against the feature's tags.</remarks>
+    bool MatchClause(TagClause clause, List<TagEntry> tags)
     {
-        TagEntry? t = FindTag(clause, tags);
-        bool present = t != null;
-        bool isNo = present && t!.Kind == TagValues.GLOBAL_STRING && t.ValueCode == valueNo;
+        var t = FindTag(clause, tags);
+        var present = t != null;
+        var isNo = present && t!.Kind == TagValues.GLOBAL_STRING && t.ValueCode == _valueNo;
 
-        Expression? exp = clause.Expression();
+        var exp = clause.Expression();
         if (exp == null)
         {
             if (clause.IsKeyRequired())
@@ -110,7 +118,7 @@ public class InterpretedMatcher : TagMatcher
             // [k=v], [k>v], lists, etc.
             // If the key is required *explicitly only* (e.g. [k][k!=v]), the value must
             // also not be "no", in addition to the expression holding.
-            bool requiredExplicitlyOnly =
+            var requiredExplicitlyOnly =
                 (clause.Flags() & (TagClause.KEY_REQUIRED_EXPLICITLY | TagClause.KEY_REQUIRED_IMPLICITLY))
                 == TagClause.KEY_REQUIRED_EXPLICITLY;
             if (requiredExplicitlyOnly) return present && !isNo && EvalExpr(exp, t!);
@@ -121,20 +129,21 @@ public class InterpretedMatcher : TagMatcher
         return EvalExpr(exp, t!);
     }
 
-    private TagEntry? FindTag(TagClause clause, List<TagEntry> tags)
+    /// <remarks>Port-only: locates the tag entry for a clause's key (global code or local name).</remarks>
+    TagEntry? FindTag(TagClause clause, List<TagEntry> tags)
     {
         if (clause.IsGlobalKey())
         {
-            int code = clause.KeyCode();
-            foreach (TagEntry e in tags)
+            var code = clause.KeyCode();
+            foreach (var e in tags)
             {
                 if (e.KeyCode == code) return e;
             }
         }
         else
         {
-            string name = clause.Name;
-            foreach (TagEntry e in tags)
+            var name = clause.Name;
+            foreach (var e in tags)
             {
                 if (e.KeyCode == 0 && string.Equals(e.KeyString, name, StringComparison.Ordinal)) return e;
             }
@@ -142,24 +151,25 @@ public class InterpretedMatcher : TagMatcher
         return null;
     }
 
-    private bool EvalExpr(Expression exp, TagEntry t)
+    /// <remarks>Port-only: recursively evaluates a clause expression against a tag value.</remarks>
+    bool EvalExpr(Expression exp, TagEntry t)
     {
         if (exp is UnaryExpression u)
         {
             // only NOT
             return !EvalExpr(u.Operand, t);
         }
-        BinaryExpression b = (BinaryExpression)exp;
-        Operator op = b.Operator;
+        var b = (BinaryExpression)exp;
+        var op = b.Operator;
         if (op == Operator.AND) return EvalExpr(b.Left, t) && EvalExpr(b.Right, t);
         if (op == Operator.OR) return EvalExpr(b.Left, t) || EvalExpr(b.Right, t);
 
-        object? lit = ((Literal)b.Right).Value;
+        var lit = ((Literal)b.Right).Value;
 
         if (op == Operator.LT || op == Operator.LE || op == Operator.GT || op == Operator.GE)
         {
-            double d = Convert.ToDouble(lit, CultureInfo.InvariantCulture);
-            double tv = t.Double();
+            var d = Convert.ToDouble(lit, CultureInfo.InvariantCulture);
+            var tv = t.Double();
             if (op == Operator.LT) return tv < d;
             if (op == Operator.LE) return tv <= d;
             if (op == Operator.GT) return tv > d;
@@ -174,7 +184,7 @@ public class InterpretedMatcher : TagMatcher
             }
             else
             {
-                string s = lit is GlobalString gs ? gs.StringValue : (string)lit!;
+                var s = lit is GlobalString gs ? gs.StringValue : (string)lit!;
                 eq = string.Equals(t.String(), s, StringComparison.Ordinal);
             }
             return op == Operator.EQ ? eq : !eq;
@@ -187,9 +197,10 @@ public class InterpretedMatcher : TagMatcher
         throw new QueryException("Unsupported operator in interpreted matcher: " + op);
     }
 
-    private static bool RegexMatches(string input, string pattern)
+    /// <remarks>Port-only: full-string regex match (Java's <c>Pattern.matches()</c> semantics) with a cache.</remarks>
+    static bool RegexMatches(string input, string pattern)
     {
-        Regex rx = RegexCache.GetOrAdd(pattern, p => new Regex(p));
+        var rx = RegexCache.GetOrAdd(pattern, p => new Regex(p));
         // Java's Pattern.matches() requires a full-string match.
         var m = rx.Match(input);
         return m.Success && m.Index == 0 && m.Length == input.Length;
@@ -197,28 +208,29 @@ public class InterpretedMatcher : TagMatcher
 
     // === Tag-table reading (format from STagTable / MatcherCoder) ===
 
-    private List<TagEntry> ReadTags(NioBuffer buf, int pos)
+    /// <remarks>Port-only: reads a feature's tag table into entries (the layout MatcherCoder reads).</remarks>
+    List<TagEntry> ReadTags(NioBuffer buf, int pos)
     {
         var entries = new List<TagEntry>();
-        int pPtr = pos + 8;
-        int taggedPtr = buf.GetInt(pPtr);
-        bool hasLocalKeys = (taggedPtr & 1) != 0;
-        int tagTablePtr = pPtr + (taggedPtr & ~1);
+        var pPtr = pos + 8;
+        var taggedPtr = buf.GetInt(pPtr);
+        var hasLocalKeys = (taggedPtr & 1) != 0;
+        var tagTablePtr = pPtr + (taggedPtr & ~1);
 
         // Global (common) keys: forward from the anchor
-        int p = tagTablePtr;
+        var p = tagTablePtr;
         for (; ; )
         {
             int key16 = buf.GetChar(p);
-            int keyCode = (key16 >> 2) & 0x1fff;
+            var keyCode = (key16 >> 2) & 0x1fff;
             if (keyCode == 0) break; // empty-table marker / no global keys
-            int kind = key16 & 3;
-            bool wide = (kind & 2) != 0;
+            var kind = key16 & 3;
+            var wide = (kind & 2) != 0;
             var e = new TagEntry(buf, globalStrings) { Kind = kind, KeyCode = keyCode, KeyString = globalStrings[keyCode] };
             int next;
             if (wide)
             {
-                int w = buf.GetInt(p + 2);
+                var w = buf.GetInt(p + 2);
                 if (kind == TagValues.LOCAL_STRING) e.ValueStringLoc = (p + 2) + w;
                 else e.ValueCode = w;
                 next = p + 6;
@@ -236,19 +248,19 @@ public class InterpretedMatcher : TagMatcher
         // Local (uncommon) keys: backward from the anchor
         if (hasLocalKeys)
         {
-            int origin = tagTablePtr & ~3;
+            var origin = tagTablePtr & ~3;
             p = tagTablePtr - 4;
             for (; ; )
             {
-                int keyPtr = buf.GetInt(p);
-                int kind = keyPtr & 3;
-                bool wide = (kind & 2) != 0;
-                int valueSize = wide ? 4 : 2;
-                int valuePos = p - valueSize;
+                var keyPtr = buf.GetInt(p);
+                var kind = keyPtr & 3;
+                var wide = (kind & 2) != 0;
+                var valueSize = wide ? 4 : 2;
+                var valuePos = p - valueSize;
                 var e = new TagEntry(buf, globalStrings) { Kind = kind, KeyCode = 0 };
                 if (wide)
                 {
-                    int w = buf.GetInt(valuePos);
+                    var w = buf.GetInt(valuePos);
                     if (kind == TagValues.LOCAL_STRING) e.ValueStringLoc = valuePos + w;
                     else e.ValueCode = w;
                 }
@@ -256,7 +268,7 @@ public class InterpretedMatcher : TagMatcher
                 {
                     e.ValueCode = buf.GetChar(valuePos);
                 }
-                int relPtr = (keyPtr & ~7) >> 1;
+                var relPtr = (keyPtr & ~7) >> 1;
                 e.KeyString = Bytes.ReadString(buf, origin + relPtr);
                 entries.Add(e);
                 if ((keyPtr & 4) != 0) break; // first uncommon key
@@ -267,10 +279,12 @@ public class InterpretedMatcher : TagMatcher
         return entries;
     }
 
-    private sealed class TagEntry
+    /// <remarks>Port-only: a decoded tag (key + typed value) used by the interpreter.</remarks>
+    sealed class TagEntry
     {
-        private readonly NioBuffer buf;
-        private readonly string[] globalStrings;
+
+        readonly NioBuffer _buf;
+        readonly string[] _globalStrings;
 
         public int KeyCode;
         public string KeyString = "";
@@ -278,12 +292,14 @@ public class InterpretedMatcher : TagMatcher
         public int ValueCode;     // narrow number / global string code / wide number code
         public int ValueStringLoc; // for LOCAL_STRING
 
+        /// <remarks>Port-only: captures the buffer and global-string table for lazy value decoding.</remarks>
         public TagEntry(NioBuffer buf, string[] globalStrings)
         {
-            this.buf = buf;
-            this.globalStrings = globalStrings;
+            _buf = buf;
+            _globalStrings = globalStrings;
         }
 
+        /// <remarks>Port-only: decodes the tag value as a string.</remarks>
         public string String()
         {
             switch (Kind)
@@ -291,14 +307,15 @@ public class InterpretedMatcher : TagMatcher
                 case TagValues.NARROW_NUMBER:
                     return (ValueCode + TagValues.MIN_NUMBER).ToString(CultureInfo.InvariantCulture);
                 case TagValues.GLOBAL_STRING:
-                    return globalStrings[ValueCode];
+                    return _globalStrings[ValueCode];
                 case TagValues.WIDE_NUMBER:
                     return TagValues.WideNumberToString(ValueCode)!;
                 default: // LOCAL_STRING
-                    return Bytes.ReadString(buf, ValueStringLoc);
+                    return Bytes.ReadString(_buf, ValueStringLoc);
             }
         }
 
+        /// <remarks>Port-only: decodes the tag value as a double.</remarks>
         public double Double()
         {
             switch (Kind)
@@ -306,12 +323,14 @@ public class InterpretedMatcher : TagMatcher
                 case TagValues.NARROW_NUMBER:
                     return ValueCode + TagValues.MIN_NUMBER;
                 case TagValues.GLOBAL_STRING:
-                    return MathUtils.DoubleFromString(globalStrings[ValueCode]);
+                    return MathUtils.DoubleFromString(_globalStrings[ValueCode]);
                 case TagValues.WIDE_NUMBER:
                     return TagValues.WideNumberToDouble(ValueCode);
                 default: // LOCAL_STRING
                     return MathUtils.DoubleFromString(String());
             }
         }
+
     }
+
 }

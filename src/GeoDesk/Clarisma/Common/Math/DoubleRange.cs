@@ -12,100 +12,112 @@ namespace Clarisma.Common.Math;
 /// <remarks>Ported from Java <c>com.clarisma.common.math.DoubleRange</c>.</remarks>
 public class DoubleRange : IComparable<DoubleRange>
 {
-    private readonly double start;
-    private readonly double end;
-    private readonly bool includeStart;
-    private readonly bool includeEnd;
 
+    readonly double _start;
+    readonly double _end;
+    readonly bool _includeStart;
+    readonly bool _includeEnd;
+
+    /// <remarks>Ported from Java <c>com.clarisma.common.math.DoubleRange(double, double, boolean, boolean)</c>.</remarks>
     public DoubleRange(double start, double end, bool includeStart, bool includeEnd)
     {
-        this.start = start;
-        this.end = end;
-        this.includeStart = includeStart;
-        this.includeEnd = includeEnd;
+        _start = start;
+        _end = end;
+        _includeStart = includeStart;
+        _includeEnd = includeEnd;
     }
 
-    public double Start => start;
+    /// <remarks>Ported from Java <c>com.clarisma.common.math.DoubleRange.start()</c>.</remarks>
+    public double Start => _start;
 
-    public double End => end;
+    /// <remarks>Ported from Java <c>com.clarisma.common.math.DoubleRange.end()</c>.</remarks>
+    public double End => _end;
 
-    public bool IncludeStart => includeStart;
+    /// <remarks>Ported from Java <c>com.clarisma.common.math.DoubleRange.includeStart()</c>.</remarks>
+    public bool IncludeStart => _includeStart;
 
-    public bool IncludeEnd => includeEnd;
+    /// <remarks>Ported from Java <c>com.clarisma.common.math.DoubleRange.includeEnd()</c>.</remarks>
+    public bool IncludeEnd => _includeEnd;
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.math.DoubleRange.equals(Object)</c>.</remarks>
     public override bool Equals(object? other)
     {
         if (other is not DoubleRange o) return false;
-        return start == o.start && includeStart == o.includeStart &&
-            end == o.end && includeEnd == o.includeEnd;
+        return _start == o._start && _includeStart == o._includeStart &&
+            _end == o._end && _includeEnd == o._includeEnd;
     }
 
+    /// <remarks>Port-only override paired with <c>Equals</c> (Java's DoubleRange does not override hashCode).</remarks>
     public override int GetHashCode()
     {
-        return HashCode.Combine(start, end, includeStart, includeEnd);
+        return HashCode.Combine(_start, _end, _includeStart, _includeEnd);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.math.DoubleRange.compareTo(DoubleRange)</c>.</remarks>
     public int CompareTo(DoubleRange? other)
     {
         if (other is null) return 1;
-        int comp = start.CompareTo(other.start);
+        var comp = _start.CompareTo(other._start);
         if (comp != 0) return comp;
-        if (includeStart && !other.includeStart) return -1;
-        if (!includeStart && other.includeStart) return 1;
-        comp = end.CompareTo(other.end);
+        if (_includeStart && !other._includeStart) return -1;
+        if (!_includeStart && other._includeStart) return 1;
+        comp = _end.CompareTo(other._end);
         if (comp != 0) return comp;
-        if (!includeEnd && other.includeEnd) return -1;
-        if (includeEnd && !other.includeEnd) return 1;
+        if (!_includeEnd && other._includeEnd) return -1;
+        if (_includeEnd && !other._includeEnd) return 1;
         return 0;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.math.DoubleRange.toString()</c>.</remarks>
     public override string ToString()
     {
         return string.Format(System.Globalization.CultureInfo.InvariantCulture, "{0}{1:F6},{2:F6}{3}",
-            includeStart ? '[' : '(', start,
-            end, includeEnd ? ']' : ')');
+            _includeStart ? '[' : '(', _start,
+            _end, _includeEnd ? ']' : ')');
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.math.DoubleRange.intersection(DoubleRange, DoubleRange)</c>.</remarks>
     public static DoubleRange? Intersection(DoubleRange a, DoubleRange b)
     {
-        if (b.start > a.end) return null;
-        if (b.start == a.end && !b.includeStart && !a.includeEnd) return null;
-        if (a.start > b.end) return null;
-        if (a.start == b.end && !a.includeStart && !b.includeEnd) return null;
+        if (b._start > a._end) return null;
+        if (b._start == a._end && !b._includeStart && !a._includeEnd) return null;
+        if (a._start > b._end) return null;
+        if (a._start == b._end && !a._includeStart && !b._includeEnd) return null;
         double start;
         double end;
         bool includeStart;
         bool includeEnd;
-        if (a.start > b.start)
+        if (a._start > b._start)
         {
-            start = a.start;
-            includeStart = a.includeStart;
+            start = a._start;
+            includeStart = a._includeStart;
         }
-        else if (b.start > a.start)
+        else if (b._start > a._start)
         {
-            start = b.start;
-            includeStart = b.includeStart;
-        }
-        else
-        {
-            start = a.start;
-            includeStart = a.includeStart && b.includeStart;
-        }
-        if (a.end < b.end)
-        {
-            end = a.end;
-            includeEnd = a.includeEnd;
-        }
-        else if (b.end < a.end)
-        {
-            end = b.end;
-            includeEnd = b.includeEnd;
+            start = b._start;
+            includeStart = b._includeStart;
         }
         else
         {
-            end = a.end;
-            includeEnd = a.includeEnd && b.includeEnd;
+            start = a._start;
+            includeStart = a._includeStart && b._includeStart;
+        }
+        if (a._end < b._end)
+        {
+            end = a._end;
+            includeEnd = a._includeEnd;
+        }
+        else if (b._end < a._end)
+        {
+            end = b._end;
+            includeEnd = b._includeEnd;
+        }
+        else
+        {
+            end = a._end;
+            includeEnd = a._includeEnd && b._includeEnd;
         }
         return new DoubleRange(start, end, includeStart, includeEnd);
     }
+
 }

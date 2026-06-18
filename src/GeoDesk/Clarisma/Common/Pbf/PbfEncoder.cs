@@ -6,6 +6,7 @@
  */
 
 using System.Numerics;
+
 using Java.Nio;
 
 namespace Clarisma.Common.Pbf;
@@ -13,6 +14,8 @@ namespace Clarisma.Common.Pbf;
 /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfEncoder</c>.</remarks>
 public static class PbfEncoder
 {
+
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfEncoder.writeVarint(ByteBuffer, long)</c>.</remarks>
     public static void WriteVarint(ByteBuffer buf, long val)
     {
         while (val >= 0x80 || val < 0)
@@ -23,9 +26,10 @@ public static class PbfEncoder
         buf.Put((byte)val);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfEncoder.writeVarint(byte[], int, long)</c>.</remarks>
     public static int WriteVarint(byte[] buf, int pos, long val)
     {
-        int len = 1;
+        var len = 1;
         while (val >= 0x80 || val < 0)
         {
             buf[pos] = (byte)((val & 0x7f) | 0x80);
@@ -37,9 +41,11 @@ public static class PbfEncoder
         return len;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfEncoder.varintLength(int)</c>.</remarks>
     public static int VarintLength(int val)
     {
         if (val == 0) return 1;
         return 5 - (BitOperations.LeadingZeroCount((uint)val) + 3) / 7;
     }
+
 }

@@ -12,8 +12,11 @@ namespace Clarisma.Common.Parser;
 /// <remarks>Ported from Java <c>com.clarisma.common.parser.ParserException</c>.</remarks>
 public class ParserException : Exception
 {
+
+    /// <remarks>Ported from Java <c>com.clarisma.common.parser.ParserException(String)</c>.</remarks>
     public ParserException(string msg)
         : base(msg)
     {
     }
+
 }

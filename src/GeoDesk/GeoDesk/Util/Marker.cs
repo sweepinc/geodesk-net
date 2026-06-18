@@ -12,10 +12,10 @@ using NetTopologySuite.Geometries;
 
 namespace GeoDesk.Util;
 
+// PORT: Java's Appendable sink is represented as a .NET TextWriter.
 /// <summary>
 /// A marker on a Leaflet-based interactive map.
 /// </summary>
-// PORT: Java's Appendable sink is represented as a .NET TextWriter.
 /// <remarks>Ported from Java <c>com.geodesk.util.Marker</c>.</remarks>
 public abstract class Marker
 {

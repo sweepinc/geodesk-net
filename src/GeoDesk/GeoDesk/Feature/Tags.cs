@@ -17,14 +17,32 @@ namespace GeoDesk.Feature;
 /// <remarks>Ported from Java <c>com.geodesk.feature.Tags</c>.</remarks>
 public interface Tags : IConsumable
 {
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.Tags.size()</c>.</remarks>
     int Size();
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.Tags.next()</c>.</remarks>
     bool Next();
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.Tags.key()</c>.</remarks>
     string? Key();
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.Tags.value()</c>.</remarks>
     object? Value();
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.Tags.stringValue()</c>.</remarks>
     string? StringValue();
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.Tags.intValue()</c>.</remarks>
     int IntValue() => TagValues.ToInt(StringValue()!);
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.Tags.longValue()</c>.</remarks>
     long LongValue() => TagValues.ToLong(StringValue()!);
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.Tags.doubleValue()</c>.</remarks>
     double DoubleValue() => TagValues.ToDouble(StringValue()!);
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.Tags.toMap()</c>.</remarks>
     IDictionary<string, object?> ToMap();
+
 }

@@ -18,6 +18,7 @@ namespace Clarisma.Common.Parser;
 /// <remarks>Ported from Java <c>com.clarisma.common.parser.TagsParser</c>.</remarks>
 public class TagsParser : Parser
 {
+
     public const string COMMA = ",";
     public const string EQUALS = "=";
     public const string TRUE = "true";
@@ -32,26 +33,28 @@ public class TagsParser : Parser
     public static readonly Regex KEY_PATTERN =
         new Regex(@"[a-zA-Z0-9_][a-zA-Z0-9_\-:\.]*");
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.parser.TagsParser()</c>.</remarks>
     public TagsParser()
     {
-        foreach (object tok in TOKENS)
+        foreach (var tok in TOKENS)
         {
             AddToken(tok.ToString()!, tok);
         }
         SetIdentifierPattern(KEY_PATTERN);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.parser.TagsParser.key()</c>.</remarks>
     public string? Key()
     {
         if (ReferenceEquals(tokenType, STRING))
         {
-            string key = UnquotedStringValue();
+            var key = UnquotedStringValue();
             NextToken();
             return key;
         }
         if (ReferenceEquals(tokenType, IDENTIFIER))
         {
-            string key = StringValue();
+            var key = StringValue();
             NextToken();
             return key;
         }
@@ -59,6 +62,7 @@ public class TagsParser : Parser
         return null;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.parser.TagsParser.value()</c>.</remarks>
     public object? Value()
     {
         if (ReferenceEquals(tokenType, STRING))
@@ -101,13 +105,14 @@ public class TagsParser : Parser
         return null;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.parser.TagsParser.tags()</c>.</remarks>
     public Dictionary<string, object?> Tags()
     {
-        Dictionary<string, object?> map = new Dictionary<string, object?>();
+        var map = new Dictionary<string, object?>();
 
         for (; ; )
         {
-            string? key = Key();
+            var key = Key();
             Expect(EQUALS);
             NextToken();
             map[key!] = Value();
@@ -118,9 +123,10 @@ public class TagsParser : Parser
         return map;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.parser.TagsParser.tagsAsList()</c>.</remarks>
     public List<string> TagsAsList()
     {
-        List<string> list = new List<string>();
+        var list = new List<string>();
 
         for (; ; )
         {
@@ -135,8 +141,10 @@ public class TagsParser : Parser
         return list;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.parser.TagsParser.tagsAsArray()</c>.</remarks>
     public string[] TagsAsArray()
     {
         return TagsAsList().ToArray();
     }
+
 }

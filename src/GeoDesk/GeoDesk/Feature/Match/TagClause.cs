@@ -7,6 +7,7 @@
 
 using System;
 using System.Globalization;
+
 using Clarisma.Common.Ast;
 
 namespace GeoDesk.Feature.Match;
@@ -36,8 +37,8 @@ public class TagClause : Variable, IComparable<TagClause>
     public TagClause? next;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagClause(int, String, int, int, Expression)</c>.</remarks>
-    public TagClause(int flags, string keyString, int key, int category, Expression? exp)
-        : base(keyString)
+    public TagClause(int flags, string keyString, int key, int category, Expression? exp) :
+        base(keyString)
     {
         _flags = flags;
         _key = key;
@@ -146,8 +147,10 @@ public class TagClause : Variable, IComparable<TagClause>
     {
         if (conjoin)
         {
-            if (!CheckConjoined(other)) return;
-            if (!other.CheckConjoined(this)) return;
+            if (!CheckConjoined(other))
+                return;
+            if (!other.CheckConjoined(this))
+                return;
             _flags |= other._flags;
             if (_exp == null)
             {

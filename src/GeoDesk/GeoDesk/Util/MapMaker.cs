@@ -13,10 +13,10 @@ using NetTopologySuite.Geometries;
 
 namespace GeoDesk.Util;
 
+// PORT: Java's Appendable sink is represented as a .NET TextWriter.
 /// <summary>
 /// A class for generating a Leaflet-based interactive map.
 /// </summary>
-// PORT: Java's Appendable sink is represented as a .NET TextWriter.
 /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker</c>.</remarks>
 public class MapMaker
 {
@@ -154,12 +154,14 @@ public class MapMaker
 
         readonly Geometry _geom;
 
+        /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.GeometryMarker(Geometry)</c>.</remarks>
         internal GeometryMarker(Geometry geom)
         {
             _geom = geom;
         }
 
         // TODO: winding order?
+        /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.GeometryMarker.writePolygonCoordinates(Appendable, Polygon)</c>.</remarks>
         void WritePolygonCoordinates(TextWriter outp, Polygon p)
         {
             outp.Write('[');
@@ -172,16 +174,19 @@ public class MapMaker
             outp.Write(']');
         }
 
+        /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.GeometryMarker.bounds()</c>.</remarks>
         public override Bounds Bounds()
         {
             return Box.FromEnvelope(_geom.EnvelopeInternal);
         }
 
+        /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.GeometryMarker.writeStub(Appendable)</c>.</remarks>
         protected override void WriteStub(TextWriter outp)
         {
             WriteStub(outp, _geom);
         }
 
+        /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.GeometryMarker.writeStub(Appendable, Geometry)</c>.</remarks>
         void WriteStub(TextWriter outp, Geometry g)
         {
             if (g is IPolygonal)
@@ -252,16 +257,19 @@ public class MapMaker
 
         readonly Bounds _box;
 
+        /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.BoxMarker(Bounds)</c>.</remarks>
         internal BoxMarker(Bounds box)
         {
             _box = box;
         }
 
+        /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.BoxMarker.bounds()</c>.</remarks>
         public override Bounds Bounds()
         {
             return _box;
         }
 
+        /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.BoxMarker.writeStub(Appendable)</c>.</remarks>
         protected override void WriteStub(TextWriter outp)
         {
             outp.Write("L.rectangle([");
@@ -277,21 +285,25 @@ public class MapMaker
     class EmptyMarker : Marker
     {
 
+        /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.EmptyMarker.bounds()</c>.</remarks>
         public override Bounds Bounds()
         {
             return new Box();       // TODO: cache
         }
 
+        /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.EmptyMarker.isVisible()</c>.</remarks>
         public override bool IsVisible()
         {
             return false;
         }
 
+        /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.EmptyMarker.writeStub(Appendable)</c>.</remarks>
         protected override void WriteStub(TextWriter outp)
         {
             // do nothing
         }
 
+        /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.EmptyMarker.write(Appendable)</c>.</remarks>
         public override void Write(TextWriter outp)
         {
             // do nothing

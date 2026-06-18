@@ -15,6 +15,7 @@ namespace Clarisma.Common.Text;
 /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings</c>.</remarks>
 public static class Strings
 {
+
     /// <summary>
     /// Checks if a character needs to be escaped, and if so,
     /// returns its corresponding escape character. When escaping
@@ -26,6 +27,7 @@ public static class Strings
     /// its corresponding escape character, or
     /// <c>char.MaxValue</c> if this character does not require escaping
     /// </returns>
+    /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.escape(char)</c>.</remarks>
     public static char Escape(char ch)
     {
         if (ch < 32)
@@ -59,6 +61,7 @@ public static class Strings
     /// the actual character, or <c>char.MaxValue</c>
     /// if <paramref name="ch"/> does not represent a valid escape character.
     /// </returns>
+    /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.unescape(char)</c>.</remarks>
     public static char Unescape(char ch)
     {
         switch (ch)
@@ -76,13 +79,14 @@ public static class Strings
         return char.MaxValue;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.escape(String)</c>.</remarks>
     public static string Escape(string s)
     {
-        StringBuilder buf = new StringBuilder();
-        for (int i = 0; i < s.Length; i++)
+        var buf = new StringBuilder();
+        for (var i = 0; i < s.Length; i++)
         {
-            char ch = s[i];
-            char chEscaped = Escape(ch);
+            var ch = s[i];
+            var chEscaped = Escape(ch);
             if (chEscaped != char.MaxValue)
             {
                 buf.Append('\\');
@@ -96,14 +100,15 @@ public static class Strings
         return buf.ToString();
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.unescape(String, boolean)</c>.</remarks>
     public static string Unescape(string s, bool trimQuotes)
     {
-        StringBuilder buf = new StringBuilder();
-        int len = s.Length - (trimQuotes ? 1 : 0);
-        int i = trimQuotes ? 1 : 0;
+        var buf = new StringBuilder();
+        var len = s.Length - (trimQuotes ? 1 : 0);
+        var i = trimQuotes ? 1 : 0;
         for (; i < len; i++)
         {
-            char ch = s[i];
+            var ch = s[i];
             if (ch == '\\')
             {
                 i++;
@@ -128,16 +133,17 @@ public static class Strings
     /// <c>typeof(long)</c> if integral, or <c>null</c> if it
     /// is not a valid number.
     /// </returns>
+    /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.numberType(CharSequence)</c>.</remarks>
     public static Type? NumberType(string s)
     {
         s = s.Trim();
-        bool minus = false;
-        bool decimalSeen = false;
-        bool digits = false;
-        int n = 0;
+        var minus = false;
+        var decimalSeen = false;
+        var digits = false;
+        var n = 0;
         for (; n < s.Length; n++)
         {
-            char ch = s[n];
+            var ch = s[n];
             if (ch == '-')
             {
                 if (minus || digits) return null;
@@ -161,16 +167,18 @@ public static class Strings
         return decimalSeen ? typeof(double) : typeof(long);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.isAsciiLetter(char)</c>.</remarks>
     public static bool IsAsciiLetter(char ch)
     {
         return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z');
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.isIdentifier(String)</c>.</remarks>
     public static bool IsIdentifier(string s)
     {
-        for (int i = 0; i < s.Length; i++)
+        for (var i = 0; i < s.Length; i++)
         {
-            char ch = s[i];
+            var ch = s[i];
             if (i == 0)
             {
                 if (!IsAsciiLetter(ch) && ch != '_') return false;
@@ -185,6 +193,7 @@ public static class Strings
         return true;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.equals(String, String)</c>.</remarks>
     public static bool Equals(string? a, string? b)
     {
         if (a == null || b == null) return ReferenceEquals(a, b);
@@ -195,9 +204,10 @@ public static class Strings
     /// Formats a floating-point number. Unlike Double.ToString,
     /// omits the decimal point if this number is not fractional.
     /// </summary>
+    /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.formatSimpleDouble(double)</c>.</remarks>
     public static string FormatSimpleDouble(double d)
     {
-        int i = (int)d;
+        var i = (int)d;
         return i == d
             ? i.ToString(CultureInfo.InvariantCulture)
             : d.ToString("R", CultureInfo.InvariantCulture);
@@ -210,14 +220,15 @@ public static class Strings
     ///
     /// "Kirchäckerstraße" ==&gt; "kirchaeckerstrasse"
     /// </summary>
+    /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.makeKey(String)</c>.</remarks>
     public static string MakeKey(string s)
     {
-        StringBuilder buf = new StringBuilder();
+        var buf = new StringBuilder();
         s = StripAccents(s);
-        bool needsHyphen = false;
-        for (int i = 0; i < s.Length; i++)
+        var needsHyphen = false;
+        for (var i = 0; i < s.Length; i++)
         {
-            char ch = s[i];
+            var ch = s[i];
             if (char.IsLetter(ch))
             {
                 if (needsHyphen)
@@ -244,24 +255,26 @@ public static class Strings
         return buf.ToString();
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.isAscii(String)</c>.</remarks>
     public static bool IsAscii(string s)
     {
-        for (int i = 0; i < s.Length; i++)
+        for (var i = 0; i < s.Length; i++)
         {
             if (s[i] >= 128) return false;
         }
         return true;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.stripAccents(String)</c>.</remarks>
     public static string StripAccents(string original)
     {
-        string s = original.Normalize(NormalizationForm.FormD);
+        var s = original.Normalize(NormalizationForm.FormD);
         if (IsAscii(s)) return original;
-        StringBuilder buf = new StringBuilder();
-        bool uppercase = false;
-        for (int i = 0; i < s.Length; i++)
+        var buf = new StringBuilder();
+        var uppercase = false;
+        for (var i = 0; i < s.Length; i++)
         {
-            char ch = s[i];
+            var ch = s[i];
             switch (ch)
             {
                 case '̈':
@@ -301,18 +314,19 @@ public static class Strings
         return buf.ToString();
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.longestCommonSubstring(String, String)</c>.</remarks>
     public static int LongestCommonSubstring(string a, string b)
     {
-        int m = a.Length;
-        int n = b.Length;
+        var m = a.Length;
+        var n = b.Length;
 
-        int max = 0;
+        var max = 0;
 
-        int[,] dp = new int[m, n];
+        var dp = new int[m, n];
 
-        for (int i = 0; i < m; i++)
+        for (var i = 0; i < m; i++)
         {
-            for (int j = 0; j < n; j++)
+            for (var j = 0; j < n; j++)
             {
                 if (a[i] == b[j])
                 {
@@ -332,11 +346,12 @@ public static class Strings
     }
 
     // TODO: remove
+    /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.join(String, Iterable)</c>.</remarks>
     public static string Join<T>(string delimiter, IEnumerable<T> items)
     {
-        StringBuilder joiner = new StringBuilder();
-        bool first = true;
-        foreach (T item in items)
+        var joiner = new StringBuilder();
+        var first = true;
+        foreach (var item in items)
         {
             if (!first) joiner.Append(delimiter);
             joiner.Append(item == null ? "null" : item.ToString());
@@ -346,39 +361,43 @@ public static class Strings
     }
 
     // TODO: remove
+    /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.join(String, Iterable, Function)</c>.</remarks>
     public static string Join<T>(string delimiter, IEnumerable<T> items, Func<T, object?> formatter)
     {
-        StringBuilder joiner = new StringBuilder();
-        bool first = true;
-        foreach (T item in items)
+        var joiner = new StringBuilder();
+        var first = true;
+        foreach (var item in items)
         {
             if (!first) joiner.Append(delimiter);
-            object? v = formatter(item);
+            var v = formatter(item);
             joiner.Append(v == null ? "null" : v.ToString());
             first = false;
         }
         return joiner.ToString();
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.indexOfAny(String, String)</c>.</remarks>
     public static int IndexOfAny(string s, string any)
     {
-        for (int i = 0; i < s.Length; i++)
+        for (var i = 0; i < s.Length; i++)
         {
             if (any.IndexOf(s[i]) >= 0) return i;
         }
         return -1;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.countChar(String, char)</c>.</remarks>
     public static int CountChar(string s, char ch)
     {
-        int count = 0;
-        for (int i = 0; i < s.Length; i++)
+        var count = 0;
+        for (var i = 0; i < s.Length; i++)
         {
             if (s[i] == ch) count++;
         }
         return count;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.uppercaseFirst(String)</c>.</remarks>
     public static string UppercaseFirst(string s)
     {
         if (s.Length == 0) return s;
@@ -392,13 +411,14 @@ public static class Strings
     /// <returns>
     /// The escaped string. If no escaping was needed, returns the original string.
     /// </returns>
+    /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.escapeForJson(String)</c>.</remarks>
     public static string EscapeForJson(string s)
     {
         // Check if any character needs escaping.
-        bool needsEscaping = false;
-        for (int i = 0; i < s.Length; i++)
+        var needsEscaping = false;
+        for (var i = 0; i < s.Length; i++)
         {
-            char c = s[i];
+            var c = s[i];
             if (c == '"' || c == '\\' || c < ' ')
             {
                 needsEscaping = true;
@@ -410,10 +430,10 @@ public static class Strings
         if (!needsEscaping) return s;
 
         // Escape necessary characters
-        StringBuilder escaped = new StringBuilder();
-        for (int i = 0; i < s.Length; i++)
+        var escaped = new StringBuilder();
+        for (var i = 0; i < s.Length; i++)
         {
-            char c = s[i];
+            var c = s[i];
             switch (c)
             {
                 case '"':
@@ -465,14 +485,15 @@ public static class Strings
     /// The processed string with unprintable characters replaced by spaces.
     /// If no unprintable characters were found, returns the original string.
     /// </returns>
+    /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.cleanString(String)</c>.</remarks>
     public static string CleanString(string s)
     {
-        for (int i = 0; i < s.Length; i++)
+        for (var i = 0; i < s.Length; i++)
         {
-            char c = s[i];
+            var c = s[i];
             if (c < ' ')
             {
-                StringBuilder processed = new StringBuilder(s.Length);
+                var processed = new StringBuilder(s.Length);
                 for (i = 0; i < s.Length; i++)
                 {
                     c = s[i];
@@ -483,4 +504,5 @@ public static class Strings
         }
         return s;
     }
+
 }

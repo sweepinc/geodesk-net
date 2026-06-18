@@ -15,17 +15,22 @@ namespace GeoDesk.Feature;
 /// <remarks>Ported from Java <c>com.geodesk.feature.FeatureType</c>.</remarks>
 public enum FeatureType
 {
+
     Node,
     Way,
     Relation
+
 }
 
 /// <summary>
 /// Helpers for <see cref="FeatureType"/>. (Java declares these as static methods on the
 /// enum, which C# enums cannot have.)
 /// </summary>
+/// <remarks>Port-only helper hosting the static members of the Java <c>com.geodesk.feature.FeatureType</c> enum.</remarks>
 public static class FeatureTypes
 {
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.FeatureType.from(String)</c>.</remarks>
     public static FeatureType From(string s)
     {
         switch (s)
@@ -38,6 +43,7 @@ public static class FeatureTypes
         }
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.FeatureType.toString()</c>.</remarks>
     public static string ToString(FeatureType type)
     {
         switch (type)
@@ -48,4 +54,5 @@ public static class FeatureTypes
         }
         return "";
     }
+
 }

@@ -128,8 +128,9 @@ public class StoredNode : StoredFeature, Node
     // TODO: No need to dereference the nodes in a way; we could simply check for
     //  same buffer and pointer (Nodes always live in one tile only)
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.ParentWayFilter</c>.</remarks>
-    private class ParentWayFilter : IdMatcher, Filter
+    class ParentWayFilter : IdMatcher, Filter
     {
+
         /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.ParentWayFilter(long)</c>.</remarks>
         public ParentWayFilter(long nodeId)
             : base(0, nodeId)

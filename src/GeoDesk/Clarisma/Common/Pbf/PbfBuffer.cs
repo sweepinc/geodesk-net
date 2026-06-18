@@ -19,12 +19,14 @@ namespace Clarisma.Common.Pbf;
 /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer</c>.</remarks>
 public class PbfBuffer
 {
+
     protected byte[]? buf;
     protected int pos;
     protected int endPos;
 
     public static readonly PbfBuffer Empty = new PbfBuffer();
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer()</c>.</remarks>
     public PbfBuffer()
     {
         buf = null;
@@ -32,11 +34,13 @@ public class PbfBuffer
         endPos = 0;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer(byte[])</c>.</remarks>
     public PbfBuffer(byte[] data)
     {
         Wrap(data);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer(byte[], int, int)</c>.</remarks>
     public PbfBuffer(byte[] data, int start, int len)
     {
         buf = data;
@@ -44,6 +48,7 @@ public class PbfBuffer
         endPos = start + len;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.wrap(byte[])</c>.</remarks>
     public void Wrap(byte[] data)
     {
         buf = data;
@@ -51,14 +56,19 @@ public class PbfBuffer
         endPos = data.Length;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.buf()</c>.</remarks>
     public byte[]? Buf => buf;
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.pos()</c>.</remarks>
     public int Pos => pos;
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.bytesRemaining()</c>.</remarks>
     public int BytesRemaining => endPos - pos;
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.endPos()</c>.</remarks>
     public int EndPos => endPos;
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.load(InputStream, int)</c>.</remarks>
     public bool Load(Stream @in, int len)
     {
         buf = new byte[len];
@@ -66,7 +76,7 @@ public class PbfBuffer
         endPos = len;
         try
         {
-            int bytesRead = @in.Read(buf, 0, len);
+            var bytesRead = @in.Read(buf, 0, len);
             return bytesRead == len;
         }
         catch (IOException ex)
@@ -76,6 +86,7 @@ public class PbfBuffer
     }
 
     // TODO: does not respect the original window
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.reset(byte[])</c>.</remarks>
     public void Reset(byte[] data)
     {
         buf = data;
@@ -83,6 +94,7 @@ public class PbfBuffer
         endPos = data.Length;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.readByte()</c>.</remarks>
     public byte ReadByte()
     {
         try
@@ -95,11 +107,13 @@ public class PbfBuffer
         }
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.readTag()</c>.</remarks>
     public int ReadTag()
     {
         return (int)ReadVarint();
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.readVarint()</c>.</remarks>
     public long ReadVarint()
     {
         Debug.Assert(pos < endPos);
@@ -152,15 +166,17 @@ public class PbfBuffer
     /// to reading a series of values.
     /// </summary>
     /// <returns>the number of varints</returns>
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.countVarInts()</c>.</remarks>
     public int CountVarInts()
     {
         return CountVarInts(pos);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.countVarInts(int)</c>.</remarks>
     public int CountVarInts(int start)
     {
-        int count = 0;
-        for (int i = start; i < endPos; i++)
+        var count = 0;
+        for (var i = start; i < endPos; i++)
         {
             if ((sbyte)buf![i] >= 0) count++;
         }
@@ -169,10 +185,11 @@ public class PbfBuffer
 
     // TODO: can this fail if a non-canonical encoding is used?
     //  e.g. 0x81 0x00 instead of 0x01
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.countVarIntsUntilZero(int)</c>.</remarks>
     public int CountVarIntsUntilZero(int start)
     {
-        int count = 0;
-        for (int i = start; i < endPos; i++)
+        var count = 0;
+        for (var i = start; i < endPos; i++)
         {
             if (buf![i] == 0) break;
             if ((sbyte)buf[i] >= 0) count++;
@@ -180,17 +197,19 @@ public class PbfBuffer
         return count;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.readSignedVarint()</c>.</remarks>
     public long ReadSignedVarint()
     {
-        long val = ReadVarint();
+        var val = ReadVarint();
         return (val >> 1) ^ -(val & 1);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.readFixed32()</c>.</remarks>
     public int ReadFixed32()
     {
         try
         {
-            int val = (buf![pos] & 0xff) |
+            var val = (buf![pos] & 0xff) |
                 ((buf[pos + 1] & 0xff) << 8) |
                 ((buf[pos + 2] & 0xff) << 16) |
                 ((buf[pos + 3] & 0xff) << 24);
@@ -203,20 +222,23 @@ public class PbfBuffer
         }
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.readFixed64()</c>.</remarks>
     public long ReadFixed64()
     {
         return ((long)ReadFixed32() & 0xffff_ffffL) |
             ((long)ReadFixed32() << 32);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.readFloat()</c>.</remarks>
     public float ReadFloat()
     {
         return BitConverter.Int32BitsToSingle(ReadFixed32());
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.readDouble()</c>.</remarks>
     public double ReadDouble()
     {
-        double d = BitConverter.Int64BitsToDouble(ReadFixed64());
+        var d = BitConverter.Int64BitsToDouble(ReadFixed64());
         return d;
     }
 
@@ -227,11 +249,12 @@ public class PbfBuffer
     ///
     /// TODO: move out of this class, used only by OsmReader
     /// </summary>
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.readFixedIntNBO()</c>.</remarks>
     public int ReadFixedIntNbo()
     {
         try
         {
-            int val = ((sbyte)buf![0] << 24) | ((sbyte)buf[1] << 16) | ((sbyte)buf[2] << 8) | (sbyte)buf[3];
+            var val = ((sbyte)buf![0] << 24) | ((sbyte)buf[1] << 16) | ((sbyte)buf[2] << 8) | (sbyte)buf[3];
             pos += 4;
             return val;
         }
@@ -241,12 +264,14 @@ public class PbfBuffer
         }
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.readString()</c>.</remarks>
     public string ReadString()
     {
-        int len = (int)ReadVarint();
+        var len = (int)ReadVarint();
         return ReadString(len);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.readString(int)</c>.</remarks>
     public string ReadString(int len)
     {
         string val;
@@ -262,16 +287,19 @@ public class PbfBuffer
         return val;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.hasMore()</c>.</remarks>
     public bool HasMore()
     {
         return pos < endPos;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.skip(int)</c>.</remarks>
     public void Skip(int len)
     {
         pos += len;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.skipEntity(int)</c>.</remarks>
     public void SkipEntity(int marker)
     {
         switch (marker & 7)
@@ -283,7 +311,7 @@ public class PbfBuffer
                 Skip(8);
                 break;
             case PbfType.String:
-                int len = (int)ReadVarint();
+                var len = (int)ReadVarint();
                 Skip(len);
                 break;
             case PbfType.Fixed32:
@@ -294,16 +322,18 @@ public class PbfBuffer
         }
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.end()</c>.</remarks>
     public void End()
     {
         pos = endPos;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.dump(int, int)</c>.</remarks>
     public void Dump(int from, int to)
     {
-        StringBuilder b = new StringBuilder();
-        StringBuilder bHex = new StringBuilder();
-        for (int i = from; i < buf!.Length && i < to; i++)
+        var b = new StringBuilder();
+        var bHex = new StringBuilder();
+        for (var i = from; i < buf!.Length && i < to; i++)
         {
             b.Append(" ");
             b.Append((buf[i] & 0xff).ToString());
@@ -314,27 +344,32 @@ public class PbfBuffer
         Console.WriteLine("         as hex: " + bHex.ToString());
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.readMessage()</c>.</remarks>
     public PbfBuffer ReadMessage()
     {
-        int len = (int)ReadVarint();
-        PbfBuffer msg = new PbfBuffer(buf!, pos, len);
+        var len = (int)ReadVarint();
+        var msg = new PbfBuffer(buf!, pos, len);
         pos += len;
         return msg;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.seek(int)</c>.</remarks>
     public void Seek(int newPos)
     {
         pos = newPos;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.peek()</c>.</remarks>
     public int Peek()
     {
         if (pos < endPos) return buf![pos] & 0xff;
         return 0;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.getByte(int)</c>.</remarks>
     public int GetByte(int p)
     {
         return buf![p] & 0xff;
     }
+
 }

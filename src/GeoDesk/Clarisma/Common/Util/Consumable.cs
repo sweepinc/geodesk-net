@@ -13,5 +13,8 @@ namespace Clarisma.Common.Util;
 /// <remarks>Ported from Java <c>com.clarisma.common.util.Consumable</c>.</remarks>
 public interface IConsumable
 {
+
+    /// <remarks>Ported from Java <c>com.clarisma.common.util.Consumable.isEmpty()</c>.</remarks>
     bool IsEmpty();
+
 }

@@ -22,14 +22,19 @@ public abstract class FeatureIterator : IEnumerator<Feature>
 
     Feature? _current;
 
+    /// <remarks>Mirrors Java's <c>java.util.Iterator.hasNext()</c>.</remarks>
     public abstract bool HasNext();
 
+    /// <remarks>Mirrors Java's <c>java.util.Iterator.next()</c> (yields null once exhausted).</remarks>
     public abstract Feature? Next();
 
+    /// <remarks>Port-only: <c>IEnumerator&lt;Feature&gt;.Current</c> adapter.</remarks>
     public Feature Current => _current!;
 
+    /// <remarks>Port-only: non-generic <c>IEnumerator.Current</c> adapter.</remarks>
     object IEnumerator.Current => _current!;
 
+    /// <remarks>Port-only: drives <see cref="HasNext"/>/<see cref="Next"/> to satisfy <c>IEnumerator.MoveNext()</c>.</remarks>
     public bool MoveNext()
     {
         if (!HasNext()) return false;
@@ -37,11 +42,13 @@ public abstract class FeatureIterator : IEnumerator<Feature>
         return true;
     }
 
+    /// <remarks>Port-only: unsupported, as Java iterators are not resettable.</remarks>
     public void Reset()
     {
         throw new NotSupportedException();
     }
 
+    /// <remarks>Port-only: <c>IDisposable</c> adapter (no-op by default).</remarks>
     public virtual void Dispose()
     {
     }

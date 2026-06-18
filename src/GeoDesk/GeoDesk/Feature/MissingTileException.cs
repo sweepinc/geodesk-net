@@ -13,11 +13,14 @@ namespace GeoDesk.Feature;
 /// <remarks>Ported from Java <c>com.geodesk.feature.MissingTileException</c>.</remarks>
 public class MissingTileException : Exception
 {
-    private readonly int tip;
 
+    readonly int _tip;
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.MissingTileException(int)</c>.</remarks>
     public MissingTileException(int tip)
         : base(string.Format(CultureInfo.InvariantCulture, "Missing tile: {0:X6}", tip))
     {
-        this.tip = tip;
+        _tip = tip;
     }
+
 }

@@ -12,13 +12,19 @@ namespace GeoDesk.Feature;
 /// <remarks>Ported from Java <c>com.geodesk.feature.FeatureException</c>.</remarks>
 public class FeatureException : Exception
 {
+
+    /// <remarks>Ported from Java <c>com.geodesk.feature.FeatureException(String)</c>.</remarks>
     public FeatureException(string msg)
         : base(msg)
     {
+
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.FeatureException(String, Throwable)</c>.</remarks>
     public FeatureException(string msg, Exception ex)
         : base(msg, ex)
     {
+
     }
+
 }

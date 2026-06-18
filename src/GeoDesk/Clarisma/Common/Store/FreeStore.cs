@@ -5,59 +5,66 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-using System;
 using System.Globalization;
 using System.IO;
 using System.IO.MemoryMappedFiles;
+
+using GeoDesk.Buffers;
 using GeoDesk.Extensions;
+
 using Java.Nio;
+
 using ByteOrder = Java.Nio.ByteOrder;
 using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace Clarisma.Common.Store;
 
-// A standalone, read-only store reader.
-//
-// Locking: Java acquires a *shared* byte-range lock on the active snapshot. The BCL's
-// FileStream.Lock is exclusive-only, so this uses the FileStream.TryLockRange extension, which
-// provides a real shared byte-range lock cross-platform (LockFileEx / fcntl). See Store for details.
-/// <remarks>Ported from Java <c>com.clarisma.common.store.FreeStore</c>.</remarks>
+/// <remarks>
+/// Ported from Java <c>com.clarisma.common.store.FreeStore</c>.
+///
+/// PORT NOTE (locking): Java acquires a *shared* byte-range lock on the active snapshot. The BCL's
+/// <c>FileStream.Lock</c> is exclusive-only, so this uses the <c>FileStream.TryLockRange</c> extension,
+/// which provides a real shared byte-range lock cross-platform (<c>LockFileEx</c> / <c>fcntl</c>).
+/// See <see cref="Store"/> for details.
+/// </remarks>
 public class FreeStore
 {
-    private readonly string path;
-    private FileStream? channel;
-    private MemoryMappedFile? mmf;
-    private MappedByteBuffer?[] mappings = new MappedByteBuffer?[0];
-    protected MappedByteBuffer? baseMapping;
-    private long fileSize;
-    private readonly object mappingsLock = new object();
-    private int pageSizeShift = 12; // 4KB default page
+
+    readonly string _path;
+    FileStream? _channel;
+    NioBuffer?[] _mappings = new NioBuffer?[0];
+    protected NioBuffer? baseMapping;
+    long _fileSize;
+    readonly object _mappingsLock = new object();
+    int _pageSizeShift = 12; // 4KB default page
 
     protected const int SEGMENT_SIZE = 1 << 30;
-    private const int ACTIVE_SNAPSHOT_OFS = 16;
-    private const int LOCK_OFS = 512;
+    const int ACTIVE_SNAPSHOT_OFS = 16;
+    const int LOCK_OFS = 512;
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.FreeStore(Path)</c>.</remarks>
     public FreeStore(string path)
     {
         try
         {
-            this.path = path;
-            channel = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            byte[] header = new byte[24];
-            NioBuffer buf = NioBuffer.Wrap(header).Order(ByteOrder.LittleEndian);
+            _path = path;
+            _channel = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            var header = new byte[24];
+            var buf = NioBuffer.Wrap(header).Order(ByteOrder.LittleEndian);
             for (; ; )
             {
-                int pos = 0;
+                var pos = 0;
                 while (pos < header.Length)
                 {
-                    channel.Seek(pos, SeekOrigin.Begin);
-                    int n = channel.Read(header, pos, header.Length - pos);
+                    _channel.Seek(pos, SeekOrigin.Begin);
+                    var n = _channel.Read(header, pos, header.Length - pos);
                     if (n < 0)
                     {
                         throw new StoreException("Invalid store", path);
                     }
                     pos += n;
                 }
+
                 // Java's ByteBuffer.get(int) returns a *signed* byte; cast to sbyte so the lock
                 // position matches Java exactly (the port's ByteBuffer.Get returns an unsigned byte).
                 int activeSnapshot = (sbyte)buf.Get(ACTIVE_SNAPSHOT_OFS);
@@ -68,11 +75,10 @@ public class FreeStore
                 // shared lock is essential here: the FileStream is buffered, so the small header read
                 // pulls in a block overlapping this byte — under an *exclusive* lock that read would
                 // fail. FileStream.TryLockRange supplies a real shared lock via LockFileEx / fcntl.)
-                if (!channel.TryLockRange(LOCK_OFS + activeSnapshot * 2, 1, exclusive: false))
-                {
+                if (!_channel.TryLockRange(LOCK_OFS + activeSnapshot * 2, 1, exclusive: false))
                     throw new StoreException("Store locked", path);
-                }
-                fileSize = channel.Length;
+
+                _fileSize = _channel.Length;
                 baseMapping = GetMapping(0);
 
                 break;
@@ -82,90 +88,97 @@ public class FreeStore
         {
             throw new StoreException("Failed to open store", path, ex);
         }
+
         Initialize();
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.FreeStore.close()</c>.</remarks>
     public void Close()
     {
-        if (channel == null) return;
+        if (_channel == null)
+            return;
         UnmapSegments();
         try
         {
-            channel.Dispose();
+            _channel.Dispose();
         }
         catch (IOException)
         {
             // ignore
         }
-        channel = null;
+        _channel = null;
     }
 
     // === File Mapping ===
 
-    protected MappedByteBuffer GetMapping(int n)
+    // Maps one segment (read-only) as its own MemoryMappedFile + view, wrapped in a
+    // Memory&lt;byte&gt;-backed NioBuffer via MappedFileMemoryManager. Segments are independent.
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.FreeStore.getMapping(int)</c>.</remarks>
+    protected NioBuffer GetMapping(int n)
     {
-        lock (mappingsLock)
+        lock (_mappingsLock)
         {
-            if (n < mappings.Length && mappings[n] != null) return mappings[n]!;
+            if (n < _mappings.Length && _mappings[n] != null)
+                return _mappings[n]!;
 
-            if (mmf == null)
+            if (n >= _mappings.Length)
             {
-                mmf = MemoryMappedFile.CreateFromFile(channel!, null, 0,
-                    MemoryMappedFileAccess.Read, HandleInheritability.None, leaveOpen: true);
-            }
-            if (n >= mappings.Length)
-            {
-                System.Array.Resize(ref mappings, n + 1);
+                System.Array.Resize(ref _mappings, n + 1);
             }
             try
             {
-                long mappingOfs = (long)n * SEGMENT_SIZE;
-                long mappingSize = System.Math.Min(fileSize - mappingOfs, SEGMENT_SIZE);
-                var accessor = mmf.CreateViewAccessor(mappingOfs, mappingSize, MemoryMappedFileAccess.Read);
-                var buf = new MappedByteBuffer(accessor, (int)mappingSize);
+                var mappingOfs = (long)n * SEGMENT_SIZE;
+                var mappingSize = checked((int)System.Math.Min(_fileSize - mappingOfs, SEGMENT_SIZE));
+                var mmf = MemoryMappedFile.CreateFromFile(_channel!, null, 0, MemoryMappedFileAccess.Read, HandleInheritability.None, leaveOpen: true);
+                var view = mmf.CreateViewAccessor(mappingOfs, mappingSize, MemoryMappedFileAccess.Read);
+                var manager = new MappedFileMemoryManager(mmf, view);
+                var buf = NioBuffer.Of(manager.Memory[..mappingSize], manager);
                 buf.Order(ByteOrder.LittleEndian); // TODO: check!
-                mappings[n] = buf;
+                _mappings[n] = buf;
                 return buf;
             }
             catch (IOException ex)
             {
-                throw new StoreException(
-                    string.Format(CultureInfo.InvariantCulture, "{0}: Failed to map segment at {1:X} ({2})",
-                        path, (long)n * SEGMENT_SIZE, ex.Message), ex);
+                throw new StoreException(string.Format(CultureInfo.InvariantCulture, "{0}: Failed to map segment at {1:X} ({2})", _path, (long)n * SEGMENT_SIZE, ex.Message), ex);
             }
         }
     }
 
-    private bool UnmapSegments()
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.FreeStore.unmapSegments()</c>.</remarks>
+    bool UnmapSegments()
     {
-        lock (mappingsLock)
+        lock (_mappingsLock)
         {
-            foreach (MappedByteBuffer? b in mappings) b?.Dispose();
-            mappings = new MappedByteBuffer?[0];
-            mmf?.Dispose();
-            mmf = null;
+            foreach (var b in _mappings)
+                b?.Dispose();
+            _mappings = new NioBuffer?[0];
             return true;
         }
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.FreeStore.initialize()</c>.</remarks>
     protected virtual void Initialize()
     {
         // do nothing
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.FreeStore.bufferOfPage(int)</c>.</remarks>
     public NioBuffer BufferOfPage(int page)
     {
-        return GetMapping(page >> (30 - pageSizeShift));
+        return GetMapping(page >> (30 - _pageSizeShift));
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.FreeStore.offsetOfPage(int)</c>.</remarks>
     public int OffsetOfPage(int page)
     {
-        return (page << pageSizeShift) & 0x3fff_ffff;
+        return (page << _pageSizeShift) & 0x3fff_ffff;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.FreeStore.activeSnapshot()</c>.</remarks>
     public int ActiveSnapshot()
     {
         // signed byte, matching Java's ByteBuffer.get(int) (see the constructor's lock computation)
         return (sbyte)baseMapping!.Get(ACTIVE_SNAPSHOT_OFS);
     }
+
 }

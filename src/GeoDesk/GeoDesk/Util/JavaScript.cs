@@ -12,10 +12,10 @@ using Clarisma.Common.Text;
 
 namespace GeoDesk.Util;
 
+// PORT: Java's Appendable sink is represented as a .NET TextWriter.
 /// <summary>
 /// Methods to generate JavaScript.
 /// </summary>
-// PORT: Java's Appendable sink is represented as a .NET TextWriter.
 /// <remarks>Ported from Java <c>com.geodesk.util.JavaScript</c>.</remarks>
 public class JavaScript
 {

@@ -11,7 +11,14 @@ namespace Clarisma.Common.Util;
 /// <remarks>Ported from Java <c>com.clarisma.common.util.FileLocation</c>.</remarks>
 public interface IFileLocation
 {
+
+    /// <remarks>Ported from Java <c>com.clarisma.common.util.FileLocation.getFile()</c>.</remarks>
     string GetFile();
+
+    /// <remarks>Ported from Java <c>com.clarisma.common.util.FileLocation.getLine()</c>.</remarks>
     int GetLine();
+
+    /// <remarks>Ported from Java <c>com.clarisma.common.util.FileLocation.getColumn()</c>.</remarks>
     int GetColumn() => -1;
+
 }

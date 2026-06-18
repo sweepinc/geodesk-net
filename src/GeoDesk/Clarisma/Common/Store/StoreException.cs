@@ -14,21 +14,28 @@ namespace Clarisma.Common.Store;
 /// <remarks>Ported from Java <c>com.clarisma.common.store.StoreException</c>.</remarks>
 public class StoreException : Exception
 {
-    private readonly string? path;
 
-    public StoreException(string msg, string path)
-        : this(msg, path, null)
+    readonly string? path;
+
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.StoreException(String, Path)</c>.</remarks>
+    public StoreException(string msg, string path) :
+        this(msg, path, null)
     {
+
     }
 
-    public StoreException(string msg, Exception? cause)
-        : base(msg, cause)
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.StoreException(String, Throwable)</c>.</remarks>
+    public StoreException(string msg, Exception? cause) :
+        base(msg, cause)
     {
+
     }
 
-    public StoreException(string msg, string path, Exception? cause)
-        : base(string.Format(CultureInfo.InvariantCulture, "{0}: {1}", path, msg), cause)
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.StoreException(String, Path, Throwable)</c>.</remarks>
+    public StoreException(string msg, string path, Exception? cause) :
+        base(string.Format(CultureInfo.InvariantCulture, "{0}: {1}", path, msg), cause)
     {
         this.path = path;
     }
+
 }

@@ -13,19 +13,20 @@ namespace Clarisma.Common.Util;
 /// <remarks>Ported from Java <c>com.clarisma.common.util.Bytes</c>.</remarks>
 public static class Bytes
 {
+
     // not used
     /// <summary>
-    /// Searches a byte array for the first occurrence
-    /// of a byte array pattern.
+    /// Searches a byte array for the first occurrence of a byte array pattern.
     ///
     /// Implementation of KMP from
     /// http://helpdesk.objects.com.au/java/search-a-byte-array-for-a-byte-sequence
     /// </summary>
+    /// <remarks>Ported from Java <c>com.clarisma.common.util.Bytes.indexOf(byte[], byte[])</c>.</remarks>
     public static int IndexOf(byte[] data, byte[] pattern)
     {
-        int[] failure = ComputeFailure(pattern);
-        int j = 0;
-        for (int i = 0; i < data.Length; i++)
+        var failure = ComputeFailure(pattern);
+        var j = 0;
+        for (var i = 0; i < data.Length; i++)
         {
             while (j > 0 && pattern[j] != data[i])
             {
@@ -45,14 +46,15 @@ public static class Bytes
 
     // not used
     /// <summary>
-    /// Computes the failure function using a boot-strapping process,
-    /// where the pattern is matched against itself.
+    /// Computes the failure function using a boot-strapping process, where the pattern is matched
+    /// against itself.
     /// </summary>
-    private static int[] ComputeFailure(byte[] pattern)
+    /// <remarks>Ported from Java <c>com.clarisma.common.util.Bytes.computeFailure(byte[])</c>.</remarks>
+    static int[] ComputeFailure(byte[] pattern)
     {
-        int[] failure = new int[pattern.Length];
-        int j = 0;
-        for (int i = 1; i < pattern.Length; i++)
+        var failure = new int[pattern.Length];
+        var j = 0;
+        for (var i = 1; i < pattern.Length; i++)
         {
             while (j > 0 && pattern[j] != pattern[i])
             {
@@ -67,6 +69,7 @@ public static class Bytes
         return failure;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.util.Bytes.getInt(byte[], int)</c>.</remarks>
     public static int GetInt(byte[] ba, int pos)
     {
         return
@@ -76,6 +79,7 @@ public static class Bytes
                 ((ba[pos + 3] & 0xff) << 24);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.util.Bytes.putInt(byte[], int, int)</c>.</remarks>
     public static void PutInt(byte[] ba, int pos, int v)
     {
         ba[pos] = (byte)v;
@@ -84,17 +88,20 @@ public static class Bytes
         ba[pos + 3] = (byte)(v >> 24);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.util.Bytes.putShort(byte[], int, int)</c>.</remarks>
     public static void PutShort(byte[] ba, int pos, int v)
     {
         ba[pos] = (byte)v;
         ba[pos + 1] = (byte)(v >> 8);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.util.Bytes.getLong(byte[], int)</c>.</remarks>
     public static long GetLong(byte[] ba, int pos)
     {
         return ((long)GetInt(ba, pos) & 0xffff_ffffL) | ((long)GetInt(ba, pos + 4) << 32);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.util.Bytes.putLong(byte[], int, long)</c>.</remarks>
     public static void PutLong(byte[] ba, int pos, long v)
     {
         PutInt(ba, pos, (int)v);
@@ -102,12 +109,11 @@ public static class Bytes
     }
 
     /// <summary>
-    /// Reads a string from a buffer. A String must be in the following format:
-    /// one or two bytes (using multi-byte encoding) that indicate the length,
-    /// followed by the UTF-8 encoded content of the string.
-    ///
-    /// Note that only string lengths up to 32K are supported.
+    /// Reads a string from a buffer. A String must be in the following format: one or two bytes (using
+    /// multi-byte encoding) that indicate the length, followed by the UTF-8 encoded content of the
+    /// string. Note that only string lengths up to 32K are supported.
     /// </summary>
+    /// <remarks>Ported from Java <c>com.clarisma.common.util.Bytes.readString(ByteBuffer, int)</c>.</remarks>
     public static string ReadString(ByteBuffer buf, int p)
     {
         // TODO: This may overrun if string is zero-length
@@ -123,14 +129,13 @@ public static class Bytes
             p++;
         }
 
-        byte[] chars = new byte[len];
+        var chars = new byte[len];
         buf.Get(p, chars);
         return Encoding.UTF8.GetString(chars);
     }
 
-    /// <summary>
-    /// Compares an ASCII string stored in a buffer to a match string.
-    /// </summary>
+    /// <summary>Compares an ASCII string stored in a buffer to a match string.</summary>
+    /// <remarks>Ported from Java <c>com.clarisma.common.util.Bytes.stringEqualsAscii(ByteBuffer, int, String)</c>.</remarks>
     public static bool StringEqualsAscii(ByteBuffer buf, int p, string s)
     {
         int len = buf.GetChar(p);
@@ -145,15 +150,17 @@ public static class Bytes
             p++;
         }
         if (len != s.Length) return false;
-        for (int i = 0; i < len; i++)
+        for (var i = 0; i < len; i++)
         {
             if (s[i] != (char)buf.Get(p++)) return false;
         }
         return true;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.util.Bytes.stringEquals(ByteBuffer, int, String)</c>.</remarks>
     public static bool StringEquals(ByteBuffer buf, int p, string s)
     {
         return ReadString(buf, p).Equals(s);
     }
+
 }

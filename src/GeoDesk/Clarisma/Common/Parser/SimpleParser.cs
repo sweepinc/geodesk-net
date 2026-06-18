@@ -15,53 +15,63 @@ namespace Clarisma.Common.Parser;
 /// <remarks>Ported from Java <c>com.clarisma.common.parser.SimpleParser</c>.</remarks>
 public class SimpleParser
 {
-    private readonly string buf;
-    private int pos;
-    private char nextChar;
 
+    readonly string _buf;
+    int _pos;
+    char _nextChar;
+
+    /// <remarks>Ported from Java <c>com.clarisma.common.parser.SimpleParser.Schema</c>.</remarks>
     public record Schema(long FirstLower, long FirstUpper, long SubsequentLower, long SubsequentUpper);
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.parser.SimpleParser(String)</c>.</remarks>
     public SimpleParser(string s)
     {
-        buf = s;
+        _buf = s;
         SkipWhitespace();
     }
 
-    private void SkipWhitespace()
+    /// <remarks>Ported from Java <c>com.clarisma.common.parser.SimpleParser.skipWhitespace()</c>.</remarks>
+    void SkipWhitespace()
     {
-        SkipWhitespace(pos >= buf.Length ? (char)0xFFFF : buf[pos]);
+        SkipWhitespace(_pos >= _buf.Length ? (char)0xFFFF : _buf[_pos]);
     }
 
-    private void SkipWhitespace(char ch)
+    /// <remarks>Ported from Java <c>com.clarisma.common.parser.SimpleParser.skipWhitespace(char)</c>.</remarks>
+    void SkipWhitespace(char ch)
     {
         while (ch <= ' ')
         {
             ch = Advance();
         }
-        nextChar = ch;
+        _nextChar = ch;
     }
 
-    private char Advance()
+    /// <remarks>Ported from Java <c>com.clarisma.common.parser.SimpleParser.advance()</c>.</remarks>
+    char Advance()
     {
-        pos++;
-        return pos < buf.Length ? buf[pos] : (char)0xFFFF;
+        _pos++;
+        return _pos < _buf.Length ? _buf[_pos] : (char)0xFFFF;
     }
 
-    public char NextChar => nextChar;
+    /// <remarks>Ported from Java <c>com.clarisma.common.parser.SimpleParser.nextChar()</c>.</remarks>
+    public char NextChar => _nextChar;
 
     /// <summary>
-    /// Attempts to match an identifier that conforms to the given schema.
+    /// Attempts to match an identifier that conforms to the given schema
+    /// (The schema describes which characters that are valid for the first
+    /// and subsequent identifier characters).
     /// </summary>
     /// <param name="schema">the identifier schema</param>
-    /// <returns>the identifier, or null if the current token does not conform</returns>
+    /// <returns>the identifier, or null if the current token does not conform to the given schema</returns>
+    /// <remarks>Ported from Java <c>com.clarisma.common.parser.SimpleParser.identifier(Schema)</c>.</remarks>
     public string? Identifier(Schema schema)
     {
-        char ch = nextChar;
-        long lowerBits = schema.FirstLower;
-        long upperBits = schema.FirstUpper;
+        var ch = _nextChar;
+        var lowerBits = schema.FirstLower;
+        var upperBits = schema.FirstUpper;
         if (ch < 128)
         {
-            long bits = ch < 64 ? lowerBits : upperBits;
+            var bits = ch < 64 ? lowerBits : upperBits;
             if ((bits & (1L << ch)) == 0) return null;
             // Important to use long constant, so the lower 6 bits of ch
             // will be used for shift
@@ -73,14 +83,14 @@ public class SimpleParser
         }
         lowerBits = schema.SubsequentLower;
         upperBits = schema.SubsequentUpper;
-        int start = pos;
+        var start = _pos;
 
         for (; ; )
         {
             ch = Advance();
             if (ch < 128)
             {
-                long bits = ch < 64 ? lowerBits : upperBits;
+                var bits = ch < 64 ? lowerBits : upperBits;
                 if ((bits & (1L << ch)) == 0) break;
             }
             else
@@ -89,23 +99,25 @@ public class SimpleParser
                 if (!char.IsLetter(ch)) break;
             }
         }
-        string s = buf.Substring(start, pos - start);
+        var s = _buf.Substring(start, _pos - start);
         SkipWhitespace(ch);
         return s;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.parser.SimpleParser.error(String)</c>.</remarks>
     protected void Error(string msg)
     {
         throw new ParserException(LineColString() + msg);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.parser.SimpleParser.lineCol()</c>.</remarks>
     protected long LineCol()
     {
-        int line = 1;
-        int col = 1;
-        for (int n = 0; n < pos; n++)
+        var line = 1;
+        var col = 1;
+        for (var n = 0; n < _pos; n++)
         {
-            switch (buf[n])
+            switch (_buf[n])
             {
                 case '\n':
                     col = 1;
@@ -121,63 +133,71 @@ public class SimpleParser
         return (long)line | (((long)col) << 32);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.parser.SimpleParser.lineColString()</c>.</remarks>
     protected string LineColString()
     {
-        long lineCol = LineCol();
+        var lineCol = LineCol();
         return string.Format(CultureInfo.InvariantCulture, "[{0}:{1}] ", (int)lineCol, (int)((ulong)lineCol >> 32));
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.parser.SimpleParser.matchQuoted()</c>.</remarks>
     protected long MatchQuoted()
     {
-        char quoteChar = nextChar;
+        var quoteChar = _nextChar;
         if (quoteChar != '\'' && quoteChar != '\"') return 0;
-        pos++;
-        int start = pos;
+        _pos++;
+        var start = _pos;
         for (; ; )
         {
-            if (pos >= buf.Length)
+            if (_pos >= _buf.Length)
             {
                 Error("Unterminated string literal");
                 return -1;
             }
-            char ch = buf[pos];
+            var ch = _buf[_pos];
             if (ch == quoteChar)
             {
-                nextChar = ch;
+                _nextChar = ch;
                 break;
             }
-            if (ch == '\\') pos++;
-            pos++;
+            if (ch == '\\') _pos++;
+            _pos++;
         }
-        long range = (((long)pos) << 32) | (uint)start;
+        var range = (((long)_pos) << 32) | (uint)start;
         SkipWhitespace();
         return range;
     }
 
     /// <summary>
     /// Attempts to match a string value (in single or double quotes).
+    /// If successful, advances to the next token, If the string is unclosed,
+    /// generates an error.
     /// </summary>
     /// <returns>
     /// the raw, unescaped string value (without the enclosing quotes),
     /// or null if the current token is not a quote-enclosed string
     /// </returns>
+    /// <remarks>Ported from Java <c>com.clarisma.common.parser.SimpleParser.rawString()</c>.</remarks>
     public string? RawString()
     {
-        long range = MatchQuoted();
+        var range = MatchQuoted();
         if (range <= 0) return null;
-        int start = (int)range;
-        int end = (int)((ulong)range >> 32);
-        return buf.Substring(start, end - start);
+        var start = (int)range;
+        var end = (int)((ulong)range >> 32);
+        return _buf.Substring(start, end - start);
     }
 
     /// <summary>
     /// Attempts to match the given character. If match is successful, advances
     /// to the next token.
     /// </summary>
+    /// <param name="ch">the character to match</param>
+    /// <returns>true if matched</returns>
+    /// <remarks>Ported from Java <c>com.clarisma.common.parser.SimpleParser.literal(char)</c>.</remarks>
     public bool Literal(char ch)
     {
-        if (nextChar != ch) return false;
-        nextChar = Advance();
+        if (_nextChar != ch) return false;
+        _nextChar = Advance();
         SkipWhitespace();
         return true;
     }
@@ -186,13 +206,16 @@ public class SimpleParser
     /// Attempts to match the given string. If match is successful, advances
     /// to the next token.
     /// </summary>
+    /// <param name="s">the string to match</param>
+    /// <returns>true if matched</returns>
+    /// <remarks>Ported from Java <c>com.clarisma.common.parser.SimpleParser.literal(String)</c>.</remarks>
     public bool Literal(string s)
     {
-        int len = s.Length;
-        if (pos + len >= buf.Length) return false;
-        if (string.CompareOrdinal(buf, pos, s, 0, len) == 0)
+        var len = s.Length;
+        if (_pos + len >= _buf.Length) return false;
+        if (string.CompareOrdinal(_buf, _pos, s, 0, len) == 0)
         {
-            pos += len;
+            _pos += len;
             SkipWhitespace();
             return true;
         }
@@ -203,24 +226,25 @@ public class SimpleParser
     /// Attempts to match a number. If successful, advances to next token.
     /// </summary>
     /// <returns>the number value, or NaN if the current token is not a number</returns>
+    /// <remarks>Ported from Java <c>com.clarisma.common.parser.SimpleParser.number()</c>.</remarks>
     public double Number()
     {
         // first char must be - or . or 0-9
-        char first = (char)(nextChar - 43);
+        var first = (char)(_nextChar - 43);
         if (first > 14) return double.NaN;
         if ((0b111111111101100 & (1 << first)) == 0) return double.NaN;
-        char ch = nextChar;
+        var ch = _nextChar;
         double value = 0;
-        bool negative = false;
-        int decimalPos = -1;
-        bool seenDigit = false;
-        int n = pos;
+        var negative = false;
+        var decimalPos = -1;
+        var seenDigit = false;
+        var n = _pos;
         if (ch == '-')
         {
             negative = true;
             n++;
-            if (n >= buf.Length) return double.NaN;
-            ch = buf[n];
+            if (n >= _buf.Length) return double.NaN;
+            ch = _buf[n];
         }
         for (; ; )
         {
@@ -235,8 +259,8 @@ public class SimpleParser
                 seenDigit = true;
             }
             n++;
-            ch = (n < buf.Length) ? buf[n] : (char)0xFFFF;
-            char next = (char)(ch - 43);
+            ch = (n < _buf.Length) ? _buf[n] : (char)0xFFFF;
+            var next = (char)(ch - 43);
             if (next > 14) break;
             if ((0b111111111101000 & (1 << next)) == 0) break;
 
@@ -245,8 +269,9 @@ public class SimpleParser
         if (!seenDigit) return double.NaN;
         if (negative) value = -value;
         if (decimalPos >= 0) value /= MathUtils.Pow10(n - decimalPos - 1);
-        pos = n;
+        _pos = n;
         SkipWhitespace(ch);
         return value;
     }
+
 }

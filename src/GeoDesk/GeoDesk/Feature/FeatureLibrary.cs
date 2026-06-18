@@ -52,7 +52,7 @@ public class FeatureLibrary : WorldView, IDisposable
         store.Close();
     }
 
-    // PORT: IDisposable maps to Java's AutoCloseable.close().
+    /// <remarks>Port-only adapter: IDisposable maps to Java's <c>AutoCloseable.close()</c>; delegates to <see cref="Close"/>.</remarks>
     public void Dispose()
     {
         Close();

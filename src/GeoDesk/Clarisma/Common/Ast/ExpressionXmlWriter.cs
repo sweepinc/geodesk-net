@@ -6,6 +6,7 @@
  */
 
 using System.IO;
+
 using Clarisma.Common.Xml;
 
 namespace Clarisma.Common.Ast;
@@ -16,9 +17,10 @@ public class ExpressionXmlWriter : XmlWriter, IAstVisitor<object?>
 {
 
     /// <remarks>Ported from Java <c>com.clarisma.common.ast.ExpressionXmlWriter(OutputStream)</c>.</remarks>
-    public ExpressionXmlWriter(Stream @out)
-        : base(@out)
+    public ExpressionXmlWriter(Stream @out) :
+        base(@out)
     {
+
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.ast.ExpressionXmlWriter.visitBinary(BinaryExpression)</c>.</remarks>

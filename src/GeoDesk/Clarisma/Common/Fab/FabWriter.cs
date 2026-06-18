@@ -14,20 +14,24 @@ namespace Clarisma.Common.Fab;
 /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabWriter</c>.</remarks>
 public class FabWriter
 {
-    private readonly TextWriter @out;
-    private readonly int tabSize = 4;
-    private Item current;
-    private readonly Stack<Item> stack;
+
+    readonly TextWriter @out;
+    readonly int tabSize = 4;
+    Item current;
+    readonly Stack<Item> stack;
 
     // Public because the public KeyValue methods return it (in Java this is a private
     // nested class, but Java permits public methods to return package-private types).
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabWriter.Item</c>.</remarks>
     public sealed class Item
     {
+
         public string? key;
         public string? value;
         public string? comment;
         public List<Item>? children;
 
+        /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabWriter.Item(String, String, String)</c>.</remarks>
         public Item(string? k, string? v, string? c)
         {
             key = k;
@@ -35,13 +39,16 @@ public class FabWriter
             comment = c;
         }
 
+        /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabWriter.Item.add(Item)</c>.</remarks>
         public void Add(Item item)
         {
             if (children == null) children = new List<Item>();
             children.Add(item);
         }
+
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabWriter(Appendable)</c>.</remarks>
     public FabWriter(TextWriter @out)
     {
         this.@out = @out;
@@ -49,62 +56,69 @@ public class FabWriter
         stack = new Stack<Item>();
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabWriter.beginKey(String)</c>.</remarks>
     public void BeginKey(string key)
     {
         BeginKey(key, null, null);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabWriter.beginKey(String, String, String)</c>.</remarks>
     public void BeginKey(string key, string? value, string? comment)
     {
-        Item item = KeyValue(key, value, comment);
+        var item = KeyValue(key, value, comment);
         stack.Push(current);
         current = item;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabWriter.keyValue(String, String)</c>.</remarks>
     public Item KeyValue(string key, string? value)
     {
         return KeyValue(key, value, null);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabWriter.keyValue(String, String, String)</c>.</remarks>
     public Item KeyValue(string key, string? value, string? comment)
     {
-        Item item = new Item(key, value, comment);
+        var item = new Item(key, value, comment);
         current.Add(item);
         return item;
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabWriter.endKey()</c>.</remarks>
     public void EndKey()
     {
         current = stack.Pop();
     }
 
-    private void Indent(int count)
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabWriter.indent(int)</c>.</remarks>
+    void Indent(int count)
     {
-        for (int i = 0; i < count; i++) @out.Write('\t');
+        for (var i = 0; i < count; i++) @out.Write('\t');
     }
 
-    private void WriteItems(int level, List<Item> items)
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabWriter.writeItems(int, List)</c>.</remarks>
+    void WriteItems(int level, List<Item> items)
     {
-        int keyWidth = 0;
-        int valWidth = 0;
-        for (int i = 0; i < items.Count; i++)
+        var keyWidth = 0;
+        var valWidth = 0;
+        for (var i = 0; i < items.Count; i++)
         {
-            Item item = items[i];
-            int keyLen = item.key!.Length;
-            int valLen = item.value == null ? 0 : item.value.Length;
+            var item = items[i];
+            var keyLen = item.key!.Length;
+            var valLen = item.value == null ? 0 : item.value.Length;
             if (keyLen > keyWidth) keyWidth = keyLen;
             if (valLen > valWidth) valWidth = valLen;
         }
         keyWidth += 2; // for the ':' and space
         valWidth += 2; // for two spaces
-        int padding = keyWidth % tabSize;
+        var padding = keyWidth % tabSize;
         if (padding > 0) keyWidth += tabSize - padding;
         padding = valWidth % tabSize;
         if (padding > 0) valWidth += tabSize - padding;
-        for (int i = 0; i < items.Count; i++)
+        for (var i = 0; i < items.Count; i++)
         {
-            Item item = items[i];
-            string? value = item.value;
+            var item = items[i];
+            var value = item.value;
             Indent(level);
             @out.Write(item.key);
             @out.Write(':');
@@ -132,10 +146,12 @@ public class FabWriter
         }
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabWriter.endDocument()</c>.</remarks>
     public void EndDocument()
     {
         Debug.Assert(stack.Count == 0);
         if (current.children != null) WriteItems(0, current.children);
         current.children = null;
     }
+
 }

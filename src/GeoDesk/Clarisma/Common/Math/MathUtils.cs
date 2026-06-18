@@ -12,25 +12,28 @@ namespace Clarisma.Common.Math;
 /// <remarks>Ported from Java <c>com.clarisma.common.math.MathUtils</c>.</remarks>
 public static class MathUtils
 {
-    private static readonly double[] Pow10Table =
+
+    static readonly double[] Pow10Table =
     {
         1, 10, 100, 1000, 10_000, 100_000, 1_000_000, 10_000_000, 100_000_000, 1_000_000_000
     };
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.math.MathUtils.pow10(int)</c>.</remarks>
     public static double Pow10(int exp)
     {
         return exp >= 0 && exp < Pow10Table.Length ? Pow10Table[exp] : System.Math.Pow(10, exp);
     }
 
+    /// <remarks>Ported from Java <c>com.clarisma.common.math.MathUtils.doubleFromString(String)</c>.</remarks>
     public static double DoubleFromString(string s)
     {
-        int len = s.Length;
-        int i = 0;
+        var len = s.Length;
+        var i = 0;
         for (; i < len; i++) if (s[i] > 32) break;
         if (i >= len) return double.NaN;
-        bool negative = false;
-        bool seenDigit = false;
-        int decimalPos = -1;
+        var negative = false;
+        var seenDigit = false;
+        var decimalPos = -1;
         double value = 0;
         if (s[i] == '-')
         {
@@ -39,7 +42,7 @@ public static class MathUtils
         }
         for (; i < len; i++)
         {
-            char ch = s[i];
+            var ch = s[i];
             if (ch >= '0' && ch <= '9')
             {
                 value = value * 10 + (ch - '0');
@@ -70,17 +73,18 @@ public static class MathUtils
     /// </summary>
     /// <param name="s">the string to examine</param>
     /// <returns>the first position that contains a character that is not part of a number</returns>
+    /// <remarks>Ported from Java <c>com.clarisma.common.math.MathUtils.countNumberChars(String)</c>.</remarks>
     public static int CountNumberChars(string s)
     {
-        int n = 0;
-        int len = s.Length;
+        var n = 0;
+        var len = s.Length;
         for (; n < len; n++) if (s[n] > 32) break;
         if (n >= len) return 0;
         if (s[n] == '-') n++;
-        bool seenDecimalPoint = false;
+        var seenDecimalPoint = false;
         for (; n < len; n++)
         {
-            char ch = s[n];
+            var ch = s[n];
             if (ch >= '0' && ch <= '9') continue;
             if (ch == '.')
             {
@@ -92,4 +96,5 @@ public static class MathUtils
         }
         return n;
     }
+
 }

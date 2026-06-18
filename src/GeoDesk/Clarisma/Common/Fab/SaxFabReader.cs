@@ -18,9 +18,13 @@ namespace Clarisma.Common.Fab;
 /// <remarks>Ported from Java <c>com.clarisma.common.fab.SaxFabReader</c>.</remarks>
 public class SaxFabReader : FabReader
 {
+
+    /// <remarks>Ported from Java <c>com.clarisma.common.fab.SaxFabReader.read(BufferedReader, String, ContentHandler)</c>.</remarks>
     public void Read(TextReader @in, string baseElement, object handler)
     {
-        throw new NotImplementedException(
-            "PORT-BLOCKED: SaxFabReader requires an org.xml.sax ContentHandler equivalent.");
+
+        throw new NotImplementedException("PORT-BLOCKED: SaxFabReader requires an org.xml.sax ContentHandler equivalent.");
+
     }
+
 }
