@@ -10,6 +10,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.gitmodules = .gitmodules
 		Directory.Build.props = Directory.Build.props
 		Directory.Build.targets = Directory.Build.targets
+		GeoDesk.dist.msbuildproj = GeoDesk.dist.msbuildproj
 		.github\workflows\GeoDesk.yml = .github\workflows\GeoDesk.yml
 		GitVersion.yml = GitVersion.yml
 		global.json = global.json
