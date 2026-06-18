@@ -10,12 +10,13 @@ namespace Clarisma.Common.Soar;
 
 public class Archive
 {
-    private Struct? header;
-    private Struct? last;
-    private int pos;
-    private int pageSpaceRemaining;
-    private readonly int pageSize = 4096;
-    private readonly int pageSizeMask = (int)((uint)0xffff_ffff >> (32 - 12));
+
+    Struct? header;
+    Struct? last;
+    int pos;
+    int pageSpaceRemaining;
+    readonly int pageSize = 4096;
+    readonly int pageSizeMask = (int)((uint)0xffff_ffff >> (32 - 12));
 
     public int Size()
     {

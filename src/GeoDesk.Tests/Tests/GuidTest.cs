@@ -28,7 +28,8 @@ public class GuidTest
         var version = Convert.ToInt32(guid.ToString("N")[12].ToString(), 16);
         Log.Debug("version = %d", version);
         Log.Debug("guid = %s", guid.ToString());
-        for (var i = 0; i < 20; i++) Log.Debug("%s", Guid.NewGuid().ToString());
+        for (var i = 0; i < 20; i++)
+            Log.Debug("%s", Guid.NewGuid().ToString());
     }
 
 }

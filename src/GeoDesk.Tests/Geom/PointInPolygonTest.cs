@@ -15,8 +15,9 @@ namespace GeoDesk.Tests.Geom;
 
 public class PointInPolygonTest
 {
-    private static readonly int[] P =
-    {
+
+    static readonly int[] P =
+   {
         -400, 200,
         -200, 500,
         100, 500,

@@ -20,8 +20,9 @@ namespace GeoDesk.Gol.Compiler;
 
 public class STagTable : SharedStruct
 {
-    private int uncommonKeyCount;
-    private readonly Entry[] entries;
+
+    int uncommonKeyCount;
+    readonly Entry[] entries;
 
     internal enum ValueType
     {

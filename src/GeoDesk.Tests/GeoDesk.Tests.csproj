@@ -52,10 +52,6 @@
     </GolFixture>
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="NewFolder\GeoDesk\" />
-  </ItemGroup>
-
   <!--
       Resolves GolFixtureDir (the intermediate/obj dir for generated fixtures). Done in a target,
       not a body PropertyGroup, because IntermediateOutputPath isn't set until the SDK targets run.

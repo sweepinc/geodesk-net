@@ -13,6 +13,7 @@ namespace GeoDesk.Tests.Geom;
 
 public class TileTest
 {
+
     [Fact]
     public void TestFromString()
     {
@@ -26,12 +27,9 @@ public class TileTest
     [Fact]
     public void TestFromXYZ()
     {
-        Assert.Equal(Tile.FromString("12/0/0"), Tile.FromXYZ(
-            int.MinValue, int.MaxValue, 12));
-        Assert.Equal(Tile.FromString("0/0/0"), Tile.FromXYZ(
-            int.MinValue, int.MaxValue, 0));
-        Assert.Equal(Tile.FromString("0/0/0"), Tile.FromXYZ(
-            int.MaxValue, int.MinValue, 0));
+        Assert.Equal(Tile.FromString("12/0/0"), Tile.FromXYZ(int.MinValue, int.MaxValue, 12));
+        Assert.Equal(Tile.FromString("0/0/0"), Tile.FromXYZ(int.MinValue, int.MaxValue, 0));
+        Assert.Equal(Tile.FromString("0/0/0"), Tile.FromXYZ(int.MaxValue, int.MinValue, 0));
         Assert.Equal(Tile.FromString("0/0/0"), Tile.FromXYZ(0, 0, 0));
     }
 
@@ -57,10 +55,8 @@ public class TileTest
         Assert.Equal(-1879048193, Tile.TopY(Tile.FromString("4/3/15")));
         Assert.Equal(-805306369, Tile.TopY(Tile.FromString("6/2/44")));
 
-        Assert.Equal("12/1297/1162", Tile.ToString(Tile.FromXYZ(
-            -787480576, 929038335, 12)));
-        Assert.Equal(Tile.FromString("4/3/15"), Tile.FromXYZ(
-            -1342177280, -1879048193, 4));
+        Assert.Equal("12/1297/1162", Tile.ToString(Tile.FromXYZ(-787480576, 929038335, 12)));
+        Assert.Equal(Tile.FromString("4/3/15"), Tile.FromXYZ(-1342177280, -1879048193, 4));
 
         Assert.Equal(-2147483648, Tile.BottomY(Tile.FromString("0/0/0")));
         Assert.Equal(-2147483648, Tile.BottomY(Tile.FromString("1/0/1")));
@@ -117,4 +113,5 @@ public class TileTest
         Assert.Equal(int.MaxValue, Tile.TopY(0));
         Assert.Equal(int.MinValue, Tile.BottomY(0));
     }
+
 }

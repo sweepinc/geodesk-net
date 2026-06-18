@@ -8,10 +8,11 @@ namespace Clarisma.Common.Soar;
 
 public abstract class Struct
 {
-    private int location;
-    private int size;
-    private int anchorAndAlignment;
-    private Struct? next;
+
+    int location;
+    int size;
+    int anchorAndAlignment;
+    Struct? next;
 
     public int Location()
     {
@@ -82,4 +83,5 @@ public abstract class Struct
     {
         return base.ToString() ?? "";
     }
+
 }

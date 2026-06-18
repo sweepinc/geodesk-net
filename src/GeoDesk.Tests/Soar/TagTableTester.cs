@@ -32,7 +32,7 @@ public class TagTableTester
         new CaseReader(this).ReadFile(ResourcePath("tags.fab"));
     }
 
-    private static string ResourcePath(string name)
+    static string ResourcePath(string name)
     {
         return Path.Combine(AppContext.BaseDirectory, "TestResources", "feature", name);
     }
@@ -48,6 +48,7 @@ public class TagTableTester
 
     sealed class CaseReader : FabReader
     {
+
         readonly TagTableTester owner;
         readonly TagsParser parser = new TagsParser();
 
@@ -61,6 +62,7 @@ public class TagTableTester
             parser.Parse(value);
             owner.cases[key] = parser.Tags();
         }
+
     }
 
     public Dictionary<string, object?>? GetTags(string name)
@@ -68,26 +70,24 @@ public class TagTableTester
         return cases.TryGetValue(name, out var t) ? t : null;
     }
 
-    static string ValueToString(object? v)
+    static string ValueToString(object? v) => v switch
     {
-        return v switch
-        {
-            null => "",
-            double d => d.ToString("R", CultureInfo.InvariantCulture),
-            bool b => b ? "true" : "false",
-            _ => Convert.ToString(v, CultureInfo.InvariantCulture) ?? ""
-        };
-    }
+        null => "",
+        double d => d.ToString("R", CultureInfo.InvariantCulture),
+        bool b => b ? "true" : "false",
+        _ => Convert.ToString(v, CultureInfo.InvariantCulture) ?? ""
+    };
 
     public static string[] TagsAsStringArray(Dictionary<string, object?> map)
     {
-        string[] tags = new string[map.Count * 2];
+        var tags = new string[map.Count * 2];
         int i = 0;
         foreach (KeyValuePair<string, object?> e in map)
         {
             tags[i++] = e.Key;
             tags[i++] = ValueToString(e.Value);
         }
+
         return tags;
     }
 
@@ -96,23 +96,23 @@ public class TagTableTester
         Dictionary<string, object?>? tags = GetTags(name);
         if (tags == null)
             throw new InvalidOperationException($"TagTable case \"{name}\" not found");
+
         var archive = new TagTestArchive(TagsAsStringArray(tags), stringTable);
         return archive.Create(name);
     }
 
     sealed class TagTestArchive : Archive
     {
+
         public TagTestArchive(string[] tags, Dictionary<string, int> stringTable)
         {
             var localStrings = new Dictionary<string, SString>();
-            STagTable tagTable = new STagTable(tags, stringTable, localStrings);
-            STestFeature feature = new STestFeature(tagTable);
+            var tagTable = new STagTable(tags, stringTable, localStrings);
+            var feature = new STestFeature(tagTable);
             SetHeader(feature);
             Place(tagTable);
             foreach (SString str in localStrings.Values)
-            {
                 Place(str);
-            }
         }
 
         public NioBuffer Create(string name)
@@ -124,11 +124,13 @@ public class TagTableTester
             buf.Order(NioOrder.LittleEndian);
             return buf;
         }
+
     }
 
     sealed class STestFeature : Struct
     {
-        private readonly STagTable tagTable;
+
+        readonly STagTable tagTable;
 
         public STestFeature(STagTable tagTable)
         {

@@ -20,6 +20,7 @@ namespace GeoDesk.Tests.Geom;
 
 public class MercatorTest
 {
+
     // Java Math.round(double) == floor(a + 0.5); replicate to match test expectations.
     private static long JRound(double a) => (long)System.Math.Floor(a + 0.5);
 

@@ -12,8 +12,9 @@ namespace Clarisma.Common.Soar;
 // In Java this extends OutputStream; here it wraps a Stream.
 public class StructOutputStream
 {
-    private readonly Stream @out;
-    private int pos;
+
+    readonly Stream @out;
+    int pos;
 
     public StructOutputStream(Stream @out)
     {
@@ -27,6 +28,7 @@ public class StructOutputStream
             Write((int)(val & 0x7f) | 0x80);
             val = (long)((ulong)val >> 7);
         }
+
         Write((int)val);
     }
 
@@ -82,6 +84,7 @@ public class StructOutputStream
             WriteInt(0);
             return;
         }
+
         WriteInt(target.AnchorLocation() - pos);
     }
 
@@ -102,7 +105,8 @@ public class StructOutputStream
     public void WriteStruct(Struct s)
     {
         Debug.Assert(pos <= s.Location());
-        while (pos < s.Location()) Write(0);
+        while (pos < s.Location())
+            Write(0);
         int oldPos = pos;
         s.WriteTo(this);
         Debug.Assert(pos == oldPos + s.Size());
@@ -110,7 +114,8 @@ public class StructOutputStream
 
     public void WriteBlank(int len)
     {
-        for (int i = 0; i < len; i++) Write(0);
+        for (int i = 0; i < len; i++)
+            Write(0);
     }
 
     public void WriteChain(Struct? s)
@@ -121,4 +126,5 @@ public class StructOutputStream
             s = s.Next();
         }
     }
+
 }

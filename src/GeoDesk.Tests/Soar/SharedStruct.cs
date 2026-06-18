@@ -8,8 +8,9 @@ namespace Clarisma.Common.Soar;
 
 public abstract class SharedStruct : Struct
 {
-    private int userCount;
-    private float usage;
+
+    int userCount;
+    float usage;
 
     public float Usage()
     {

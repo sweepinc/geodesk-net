@@ -13,8 +13,9 @@ namespace Clarisma.Common.Soar;
 
 public class SString : SharedStruct, IComparable<SString>
 {
-    private readonly string str;
-    private readonly byte[] bytes;
+
+    readonly string str;
+    readonly byte[] bytes;
 
     public SString(string s)
     {
