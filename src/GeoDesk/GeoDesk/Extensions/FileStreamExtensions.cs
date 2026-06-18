@@ -16,13 +16,15 @@ namespace GeoDesk.Extensions;
 
 /// <summary>
 /// <see cref="FileStream"/> extensions providing cross-platform advisory byte-range locking, with
-/// both <em>shared</em> (reader) and <em>exclusive</em> (writer) locks. This is the .NET stand-in
-/// for Java's <c>FileChannel.lock(position, size, shared)</c>: the BCL's <see cref="FileStream.Lock"/>
-/// can only take exclusive locks, but the underlying OS primitives support shared byte-range locks.
+/// both <em>shared</em> (reader) and <em>exclusive</em> (writer) locks, in blocking and non-blocking
+/// forms. This is the .NET stand-in for Java's <c>FileChannel.lock</c> / <c>tryLock(position, size,
+/// shared)</c>: the BCL's <see cref="FileStream.Lock"/> can only take exclusive locks, but the
+/// underlying OS primitives support shared byte-range locks.
 /// </summary>
 /// <remarks>
 /// Backends: <c>LockFileEx</c>/<c>UnlockFileEx</c> on Windows; <c>fcntl</c> with <c>struct flock</c>
-/// on POSIX.
+/// on POSIX (<c>F_SETLK</c>/<c>F_OFD_SETLK</c> for try-lock, <c>F_SETLKW</c>/<c>F_OFD_SETLKW</c> for
+/// the blocking form).
 ///
 /// <para><b>Lock ownership.</b> Windows <c>LockFileEx</c> locks belong to the file <i>handle</i>:
 /// separate opens conflict even within one process, and a lock is released when its handle closes.
@@ -37,14 +39,30 @@ public static class FileStreamExtensions
 {
 
     /// <summary>
-    /// Attempts to acquire a byte-range lock on the stream's file without blocking. Returns
-    /// <c>true</c> if granted, <c>false</c> if the range conflicts with a lock held elsewhere.
+    /// Attempts to acquire a byte-range lock on the stream's file without blocking — the analog of
+    /// Java's <c>FileChannel.tryLock</c>. Returns <c>true</c> if granted, <c>false</c> if the range
+    /// conflicts with a lock held elsewhere.
     /// </summary>
     public static bool TryLockRange(this FileStream stream, long position, long length, bool exclusive)
     {
         var handle = stream.SafeFileHandle;
-        if (OperatingSystem.IsWindows()) return WindowsLock(handle, position, length, exclusive);
-        return UnixSetLock(handle, position, length, exclusive ? LockOp.Exclusive : LockOp.Shared);
+        if (OperatingSystem.IsWindows()) return WindowsLock(handle, position, length, exclusive, wait: false);
+        return UnixSetLock(handle, position, length, exclusive ? LockOp.Exclusive : LockOp.Shared, wait: false);
+    }
+
+    /// <summary>
+    /// Acquires a byte-range lock on the stream's file, <b>blocking</b> until it can be granted — the
+    /// analog of Java's <c>FileChannel.lock</c>. (Throws on a genuine I/O error, not on contention.)
+    /// </summary>
+    public static void LockRange(this FileStream stream, long position, long length, bool exclusive)
+    {
+        var handle = stream.SafeFileHandle;
+        if (OperatingSystem.IsWindows())
+        {
+            WindowsLock(handle, position, length, exclusive, wait: true);
+            return;
+        }
+        UnixSetLock(handle, position, length, exclusive ? LockOp.Exclusive : LockOp.Shared, wait: true);
     }
 
     /// <summary>Releases a previously acquired lock on the given range (best-effort).</summary>
@@ -56,7 +74,7 @@ public static class FileStreamExtensions
             WindowsUnlock(handle, position, length);
             return;
         }
-        UnixSetLock(handle, position, length, LockOp.Unlock);
+        UnixSetLock(handle, position, length, LockOp.Unlock, wait: false);
     }
 
     private enum LockOp { Shared, Exclusive, Unlock }
@@ -68,13 +86,14 @@ public static class FileStreamExtensions
     private const int ERROR_LOCK_VIOLATION = 33;
 
     [SupportedOSPlatform("windows")]
-    private static bool WindowsLock(SafeFileHandle handle, long position, long length, bool exclusive)
+    private static bool WindowsLock(SafeFileHandle handle, long position, long length, bool exclusive, bool wait)
     {
         var overlapped = MakeOverlapped(position);
-        uint flags = LOCKFILE_FAIL_IMMEDIATELY | (exclusive ? LOCKFILE_EXCLUSIVE_LOCK : 0u);
+        // Omitting LOCKFILE_FAIL_IMMEDIATELY makes LockFileEx block until the lock can be acquired.
+        uint flags = (exclusive ? LOCKFILE_EXCLUSIVE_LOCK : 0u) | (wait ? 0u : LOCKFILE_FAIL_IMMEDIATELY);
         if (LockFileEx(handle, flags, 0, Low(length), High(length), ref overlapped)) return true;
         int err = Marshal.GetLastPInvokeError();
-        if (err == ERROR_LOCK_VIOLATION) return false;
+        if (!wait && err == ERROR_LOCK_VIOLATION) return false; // conflict (only in the fail-immediately form)
         throw new IOException($"LockFileEx failed (error {err})");
     }
 
@@ -110,23 +129,28 @@ public static class FileStreamExtensions
     private const int EACCES = 13;
     private const int EAGAIN_LINUX = 11;
     private const int EAGAIN_MACOS = 35;
+    private const int EINTR = 4; // interrupted system call — retry the blocking fcntl
 
     private const int SEEK_SET = 0;
 
-    private static bool UnixSetLock(SafeFileHandle handle, long position, long length, LockOp op)
+    private static bool UnixSetLock(SafeFileHandle handle, long position, long length, LockOp op, bool wait)
     {
         bool refAdded = false;
         try
         {
             handle.DangerousAddRef(ref refAdded);
             int fd = (int)handle.DangerousGetHandle();
-            int rc = OperatingSystem.IsMacOS()
-                ? MacSetLock(fd, position, length, op)
-                : LinuxSetLock(fd, position, length, op);
-            if (rc == 0) return true; // granted (or released)
-            int errno = Marshal.GetLastPInvokeError();
-            if (errno == EACCES || errno == EAGAIN_LINUX || errno == EAGAIN_MACOS) return false; // conflict
-            throw new IOException($"fcntl failed (errno {errno})");
+            for (; ; )
+            {
+                int rc = OperatingSystem.IsMacOS()
+                    ? MacSetLock(fd, position, length, op, wait)
+                    : LinuxSetLock(fd, position, length, op, wait);
+                if (rc == 0) return true; // granted (or released)
+                int errno = Marshal.GetLastPInvokeError();
+                if (errno == EINTR) continue; // blocking call interrupted by a signal — retry
+                if (!wait && (errno == EACCES || errno == EAGAIN_LINUX || errno == EAGAIN_MACOS)) return false;
+                throw new IOException($"fcntl failed (errno {errno})");
+            }
         }
         finally
         {
@@ -135,10 +159,12 @@ public static class FileStreamExtensions
     }
 
     // --- Linux: struct flock = { short l_type; short l_whence; off_t l_start; off_t l_len; pid_t l_pid; }
-    //     Uses OFD locks (F_OFD_SETLK) so locks are owned by the descriptor, not the process.
+    //     Uses OFD locks (F_OFD_SETLK/W) so locks are owned by the descriptor, not the process.
 
     private const int F_SETLK_LINUX = 6;
+    private const int F_SETLKW_LINUX = 7;
     private const int F_OFD_SETLK_LINUX = 37;
+    private const int F_OFD_SETLKW_LINUX = 38;
     private const short F_RDLCK_LINUX = 0;
     private const short F_WRLCK_LINUX = 1;
     private const short F_UNLCK_LINUX = 2;
@@ -153,7 +179,7 @@ public static class FileStreamExtensions
         public int l_pid; // must be 0 for OFD locks
     }
 
-    private static int LinuxSetLock(int fd, long position, long length, LockOp op)
+    private static int LinuxSetLock(int fd, long position, long length, LockOp op, bool wait)
     {
         var fl = new FlockLinux
         {
@@ -168,7 +194,9 @@ public static class FileStreamExtensions
             l_len = length,
         };
         // OFD locks (per descriptor) on Linux; classic per-process F_SETLK on other SysV-like Unix.
-        int cmd = OperatingSystem.IsLinux() ? F_OFD_SETLK_LINUX : F_SETLK_LINUX;
+        int cmd = OperatingSystem.IsLinux()
+            ? (wait ? F_OFD_SETLKW_LINUX : F_OFD_SETLK_LINUX)
+            : (wait ? F_SETLKW_LINUX : F_SETLK_LINUX);
         return FcntlLinux(fd, cmd, ref fl);
     }
 
@@ -176,9 +204,10 @@ public static class FileStreamExtensions
     private static extern int FcntlLinux(int fd, int cmd, ref FlockLinux lockArg);
 
     // --- macOS: struct flock = { off_t l_start; off_t l_len; pid_t l_pid; short l_type; short l_whence; }
-    //     No OFD locks available; classic per-process F_SETLK.
+    //     No OFD locks available; classic per-process F_SETLK/W.
 
     private const int F_SETLK_MACOS = 8;
+    private const int F_SETLKW_MACOS = 9;
     private const short F_RDLCK_MACOS = 1;
     private const short F_UNLCK_MACOS = 2;
     private const short F_WRLCK_MACOS = 3;
@@ -193,7 +222,7 @@ public static class FileStreamExtensions
         public short l_whence;
     }
 
-    private static int MacSetLock(int fd, long position, long length, LockOp op)
+    private static int MacSetLock(int fd, long position, long length, LockOp op, bool wait)
     {
         var fl = new FlockMacOs
         {
@@ -207,7 +236,7 @@ public static class FileStreamExtensions
             },
             l_whence = SEEK_SET,
         };
-        return FcntlMacOs(fd, F_SETLK_MACOS, ref fl);
+        return FcntlMacOs(fd, wait ? F_SETLKW_MACOS : F_SETLK_MACOS, ref fl);
     }
 
     [DllImport("libc", SetLastError = true, EntryPoint = "fcntl")]

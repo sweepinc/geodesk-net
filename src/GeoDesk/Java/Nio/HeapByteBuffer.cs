@@ -12,6 +12,7 @@ namespace Java.Nio;
 /// <summary>
 /// A <see cref="ByteBuffer"/> backed by a managed <c>byte[]</c>.
 /// </summary>
+/// <remarks>.NET stand-in for <c>java.nio.HeapByteBuffer</c> (no <c>com.*</c> Java source; mirrors the JDK type).</remarks>
 public sealed class HeapByteBuffer : ByteBuffer
 {
     private readonly byte[] hb;

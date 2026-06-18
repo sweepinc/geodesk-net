@@ -44,18 +44,21 @@ namespace GeoDesk.Geom;
 /// <remarks>Ported from Java <c>com.geodesk.geom.OverlapMinimizingTree</c>.</remarks>
 public class OverlapMinimizingTree : RTree
 {
-    private static readonly IComparer<Bounds> CompareMinX = new MinXComparer();
-    private static readonly IComparer<Bounds> CompareMinY = new MinYComparer();
 
+    static readonly IComparer<Bounds> CompareMinX = new MinXComparer();
+    static readonly IComparer<Bounds> CompareMinY = new MinYComparer();
+
+    /// <remarks>Ported from Java <c>com.geodesk.geom.OverlapMinimizingTree(List, int)</c>.</remarks>
     public OverlapMinimizingTree(List<Bounds> items, int maxEntries)
     {
         root = Build(items, 0, items.Count - 1, 0, maxEntries);
     }
 
-    private Node Build(List<Bounds> items, int left, int right, int height, int maxEntries)
+    /// <remarks>Ported from Java <c>com.geodesk.geom.OverlapMinimizingTree.build(List, int, int, int, int)</c>.</remarks>
+    Node Build(List<Bounds> items, int left, int right, int height, int maxEntries)
     {
-        int n = right - left + 1;
-        int m = maxEntries;
+        var n = right - left + 1;
+        var m = maxEntries;
 
         if (n <= maxEntries)
         {
@@ -72,23 +75,23 @@ public class OverlapMinimizingTree : RTree
             m = (int)Ceiling((double)n / Pow(m, height - 1));
         }
 
-        Node node = new Node(null, false);
+        var node = new Node(null, false);
 
         // split the items into M mostly square tiles
 
-        int n2 = (int)Ceiling((double)n / m);
-        int n1 = n2 * (int)Ceiling(Sqrt(m));
+        var n2 = (int)Ceiling((double)n / m);
+        var n1 = n2 * (int)Ceiling(Sqrt(m));
 
         QuickSelect.MultiSelect(items, left, right, n1, CompareMinX);
 
-        for (int i = left; i <= right; i += n1)
+        for (var i = left; i <= right; i += n1)
         {
-            int right2 = Min(i + n1 - 1, right);
+            var right2 = Min(i + n1 - 1, right);
             QuickSelect.MultiSelect(items, i, right2, n2, CompareMinY);
 
-            for (int j = i; j <= right2; j += n2)
+            for (var j = i; j <= right2; j += n2)
             {
-                int right3 = Min(j + n2 - 1, right2);
+                var right3 = Min(j + n2 - 1, right2);
 
                 // pack each entry recursively
                 node.Add(Build(items, j, right3, height - 1, maxEntries));
@@ -97,13 +100,18 @@ public class OverlapMinimizingTree : RTree
         return node;
     }
 
-    private sealed class MinXComparer : IComparer<Bounds>
+    // Port of Java's method reference OverlapMinimizingTree::compareMinX.
+    /// <remarks>Ported from Java <c>com.geodesk.geom.OverlapMinimizingTree.compareMinX(Bounds, Bounds)</c>.</remarks>
+    sealed class MinXComparer : IComparer<Bounds>
     {
         public int Compare(Bounds? a, Bounds? b) => a!.MinX - b!.MinX;
     }
 
-    private sealed class MinYComparer : IComparer<Bounds>
+    // Port of Java's method reference OverlapMinimizingTree::compareMinY.
+    /// <remarks>Ported from Java <c>com.geodesk.geom.OverlapMinimizingTree.compareMinY(Bounds, Bounds)</c>.</remarks>
+    sealed class MinYComparer : IComparer<Bounds>
     {
         public int Compare(Bounds? a, Bounds? b) => a!.MinY - b!.MinY;
     }
+
 }

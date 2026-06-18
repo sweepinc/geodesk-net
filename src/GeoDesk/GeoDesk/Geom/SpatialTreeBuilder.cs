@@ -14,5 +14,8 @@ namespace GeoDesk.Geom;
 /// <remarks>Ported from Java <c>com.geodesk.geom.SpatialTreeBuilder</c>.</remarks>
 public interface ISpatialTreeBuilder<B> where B : Bounds
 {
+
+    /// <remarks>Ported from Java <c>com.geodesk.geom.SpatialTreeBuilder.build(ArrayList)</c>.</remarks>
     B Build(IList<Bounds> items);
+
 }

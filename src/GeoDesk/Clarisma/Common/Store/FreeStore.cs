@@ -18,8 +18,9 @@ namespace Clarisma.Common.Store;
 
 // A standalone, read-only store reader.
 //
-// PORT-LIMITATION (locking): Java acquires a *shared* byte-range lock. .NET has no shared
-// byte-range locks, so locking here is a best-effort no-op (see Store for details).
+// Locking: Java acquires a *shared* byte-range lock on the active snapshot. The BCL's
+// FileStream.Lock is exclusive-only, so this uses the FileStream.TryLockRange extension, which
+// provides a real shared byte-range lock cross-platform (LockFileEx / fcntl). See Store for details.
 /// <remarks>Ported from Java <c>com.clarisma.common.store.FreeStore</c>.</remarks>
 public class FreeStore
 {
@@ -57,9 +58,20 @@ public class FreeStore
                     }
                     pos += n;
                 }
-                int activeSnapshot = buf.Get(ACTIVE_SNAPSHOT_OFS);
-                // PORT-LIMITATION: shared lock not available; best-effort.
-                TrySharedLock(LOCK_OFS + activeSnapshot * 2);
+                // Java's ByteBuffer.get(int) returns a *signed* byte; cast to sbyte so the lock
+                // position matches Java exactly (the port's ByteBuffer.Get returns an unsigned byte).
+                int activeSnapshot = (sbyte)buf.Get(ACTIVE_SNAPSHOT_OFS);
+                // Shared (reader) byte-range lock on the active snapshot, mirroring Java's
+                // channel.tryLock(LOCK_OFS + activeSnapshot * 2, 1, true). A shared lock is compatible
+                // with other readers but excludes a writer/compactor recycling the snapshot; if it
+                // cannot be acquired, a writer holds it exclusively, so the store is locked. (A true
+                // shared lock is essential here: the FileStream is buffered, so the small header read
+                // pulls in a block overlapping this byte — under an *exclusive* lock that read would
+                // fail. FileStream.TryLockRange supplies a real shared lock via LockFileEx / fcntl.)
+                if (!channel.TryLockRange(LOCK_OFS + activeSnapshot * 2, 1, exclusive: false))
+                {
+                    throw new StoreException("Store locked", path);
+                }
                 fileSize = channel.Length;
                 baseMapping = GetMapping(0);
 
@@ -71,24 +83,6 @@ public class FreeStore
             throw new StoreException("Failed to open store", path, ex);
         }
         Initialize();
-    }
-
-    private void TrySharedLock(long position)
-    {
-        // Java takes a *shared* byte-range lock here: compatible with other readers, but excluding a
-        // concurrent writer/compactor that might recycle the active snapshot. Emulating it with an
-        // *exclusive* lock is wrong — because the FileStream is buffered, even the small header read
-        // pulls in a block that overlaps this byte, and a mandatory exclusive lock there makes
-        // concurrent read-opens of the same store collide. FileStream.TryLockRange provides a true
-        // shared byte-range lock cross-platform (LockFileEx / fcntl). Best-effort: a failure (e.g. a
-        // writer holds the range) is ignored, as in the Java original. See PORT.md.
-        try
-        {
-            channel!.TryLockRange(position, 1, exclusive: false);
-        }
-        catch (IOException)
-        {
-        }
     }
 
     public void Close()
@@ -171,6 +165,7 @@ public class FreeStore
 
     public int ActiveSnapshot()
     {
-        return baseMapping!.Get(ACTIVE_SNAPSHOT_OFS);
+        // signed byte, matching Java's ByteBuffer.get(int) (see the constructor's lock computation)
+        return (sbyte)baseMapping!.Get(ACTIVE_SNAPSHOT_OFS);
     }
 }

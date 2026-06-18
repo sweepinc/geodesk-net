@@ -28,10 +28,13 @@ namespace Clarisma.Common.Store;
 /// PORT NOTES vs. the Java original:
 /// - <c>FileChannel</c> + <c>MappedByteBuffer[]</c> → a <see cref="FileStream"/> plus a
 ///   <see cref="MemoryMappedFile"/> from which one view accessor per 1 GB segment is taken.
-/// - PORT-LIMITATION (locking): Java uses *shared* byte-range file locks (multiple readers).
-///   .NET's <c>FileStream.Lock</c> is exclusive-only and non-blocking, so shared (read) locks
-///   are treated as best-effort no-ops here. This is sufficient for single-process access but
-///   does not enforce the full multi-process locking protocol.
+/// - Locking: Java uses byte-range file locks (shared for readers, exclusive for writers/append).
+///   The BCL's <c>FileStream.Lock</c> is exclusive-only, so locking goes through the
+///   <c>FileStream.LockRange</c>/<c>TryLockRange</c>/<c>UnlockRange</c> extensions, which provide
+///   shared and exclusive byte-range locks cross-platform (<c>LockFileEx</c> on Windows; <c>fcntl</c>
+///   — OFD locks on Linux — on POSIX). <c>Lock()</c> uses the <b>blocking</b> form (like Java's
+///   <c>channel.lock</c>); <c>TryExclusiveLock()</c> uses the non-blocking form (like
+///   <c>channel.tryLock</c>). See PORT.md for the per-platform details.
 /// - PORT-LIMITATION (sparse files): on Windows the backing file is marked sparse via P/Invoke
 ///   so that mapping a 1 GB segment does not allocate 1 GB physically; on Unix files are sparse
 ///   by default. If marking fails, the store still works but may consume more disk.
@@ -197,53 +200,31 @@ public abstract class Store
         {
             if (lockLevel == LOCK_EXCLUSIVE || newLevel == LOCK_NONE)
             {
-                ReleaseRange(ref lockReadHeld, 0, 4);
+                // Java: lockRead.release(); lockRead = null;
+                if (lockReadHeld) { channel!.UnlockRange(0, 4); lockReadHeld = false; }
                 lockLevel = LOCK_NONE;
             }
             if (lockLevel == LOCK_NONE && newLevel != LOCK_NONE)
             {
-                // shared lock (newLevel != EXCLUSIVE) is a best-effort no-op; only the
-                // exclusive read lock is enforced via an OS byte-range lock.
-                if (newLevel == LOCK_EXCLUSIVE) AcquireRange(ref lockReadHeld, 0, 4);
+                // Java: lockRead = channel.lock(0, 4, newLevel != LOCK_EXCLUSIVE) — a *blocking* lock,
+                // shared for READ/APPEND, exclusive for EXCLUSIVE.
+                channel!.LockRange(0, 4, exclusive: newLevel == LOCK_EXCLUSIVE);
+                lockReadHeld = true;
             }
             if (oldLevel == LOCK_APPEND)
             {
-                ReleaseRange(ref lockWriteHeld, 4, 4);
+                // Java: lockWrite.release(); lockWrite = null;
+                if (lockWriteHeld) { channel!.UnlockRange(4, 4); lockWriteHeld = false; }
             }
             if (newLevel == LOCK_APPEND)
             {
-                AcquireRange(ref lockWriteHeld, 4, 4);
+                // Java: lockWrite = channel.lock(4, 4, false) — a blocking exclusive write lock on [4, 8).
+                channel!.LockRange(4, 4, exclusive: true);
+                lockWriteHeld = true;
             }
             lockLevel = newLevel;
         }
         return oldLevel;
-    }
-
-    private void AcquireRange(ref bool held, long position, long length)
-    {
-        if (held) return;
-        try
-        {
-            // Exclusive byte-range lock (cross-platform: LockFileEx / fcntl). A conflict returns
-            // false; matches a failed blocking lock only loosely (see class remarks).
-            held = channel!.TryLockRange(position, length, exclusive: true);
-        }
-        catch (IOException)
-        {
-        }
-    }
-
-    private void ReleaseRange(ref bool held, long position, long length)
-    {
-        if (!held) return;
-        try
-        {
-            channel!.UnlockRange(position, length);
-        }
-        catch (IOException)
-        {
-        }
-        held = false;
     }
 
     protected bool TryExclusiveLock()

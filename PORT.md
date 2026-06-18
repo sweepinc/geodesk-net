@@ -201,14 +201,19 @@ Faithful in structure, but the following adaptations were unavoidable or idiomat
 - **File locking:** the JVM uses *shared* byte-range locks to let readers coexist while excluding a
   concurrent writer/compactor. The BCL's high-level `FileStream.Lock` is **exclusive-only**, but the
   underlying OS primitives support shared byte-range locks, so the port adds cross-platform
-  `FileStream` extension methods — `TryLockRange(pos, len, exclusive)` / `UnlockRange(pos, len)` in
-  [`GeoDesk.Extensions`](src/GeoDesk/GeoDesk/Extensions/FileStreamExtensions.cs) — backed by
-  **`LockFileEx`/`UnlockFileEx`** on Windows and **`fcntl`** on POSIX (Linux and macOS have different
-  `struct flock` layouts and `F_*` constants). `FreeStore` takes a real **shared** lock so concurrent
-  readers coexist; `Store` takes **exclusive** locks for its snapshot/append ranges. Emulating the
-  shared lock with an *exclusive* one (the original approach) was actively wrong: because the
-  `FileStream` is buffered, even the header read pulls in a block that overlaps the locked byte, and
-  a mandatory exclusive lock there made concurrent read-opens of the same store fail.
+  `FileStream` extension methods in
+  [`GeoDesk.Extensions`](src/GeoDesk/GeoDesk/Extensions/FileStreamExtensions.cs) — a non-blocking
+  `TryLockRange(pos, len, exclusive)` (≈ Java `tryLock`), a **blocking** `LockRange(pos, len,
+  exclusive)` (≈ Java `lock`), and `UnlockRange(pos, len)` — backed by **`LockFileEx`/`UnlockFileEx`**
+  on Windows and **`fcntl`** on POSIX (`F_SETLK`/`F_SETLKW`, or the OFD variants on Linux; Linux and
+  macOS have different `struct flock` layouts and `F_*` constants). `FreeStore` takes a real
+  **shared** lock so concurrent readers coexist, throwing `StoreException("Store locked")` if a writer
+  holds it (faithful to Java's `tryLock`+null-check); `Store.lock` uses the **blocking** form (shared
+  for read/append, exclusive for the snapshot/append ranges) like Java's `channel.lock`, while
+  `Store.tryExclusiveLock` uses the non-blocking form. Emulating the shared lock with an *exclusive*
+  one (the original approach) was actively wrong: because the `FileStream` is buffered, even the
+  header read pulls in a block that overlaps the locked byte, and a mandatory exclusive lock there
+  made concurrent read-opens of the same store fail.
   - **Lock ownership across platforms.** Windows `LockFileEx` locks belong to the *handle*: separate
     opens conflict even within one process, released on handle close. Classic POSIX `fcntl(F_SETLK)`
     locks belong to the *(process, inode)* pair — same-process opens never conflict, and closing

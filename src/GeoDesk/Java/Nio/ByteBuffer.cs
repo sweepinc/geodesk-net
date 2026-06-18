@@ -21,6 +21,7 @@ namespace Java.Nio;
 /// Only the operations used by the GeoDesk port are implemented; this is not a complete
 /// reimplementation of java.nio.
 /// </summary>
+/// <remarks>.NET stand-in for <c>java.nio.ByteBuffer</c> (no <c>com.*</c> Java source; mirrors the JDK type).</remarks>
 public abstract class ByteBuffer
 {
     protected int position;

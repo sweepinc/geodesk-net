@@ -37,52 +37,58 @@ namespace GeoDesk.Geom;
 /// <remarks>Ported from Java <c>com.geodesk.geom.HilbertTileTree</c>.</remarks>
 public class HilbertTileTree : RTree
 {
-    private sealed class Pair : IComparable<Pair>
-    {
-        public int hilbertValue;
-        public Bounds item = null!;
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.HilbertTileTree.Pair</c>.</remarks>
+    sealed class Pair : IComparable<Pair>
+    {
+
+        public int _hilbertValue;
+        public Bounds _item = null!;
+
+        /// <remarks>Ported from Java <c>com.geodesk.geom.HilbertTileTree.Pair.compareTo(Pair)</c>.</remarks>
         public int CompareTo(Pair? o)
         {
-            return hilbertValue.CompareTo(o!.hilbertValue);
+            return _hilbertValue.CompareTo(o!._hilbertValue);
         }
+
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.HilbertTileTree(List, int, int)</c>.</remarks>
     public HilbertTileTree(List<Bounds> items, int zoom, int maxEntries)
     {
-        Pair[] pairs = new Pair[items.Count];
-        for (int i = 0; i < pairs.Length; i++)
+        var pairs = new Pair[items.Count];
+        for (var i = 0; i < pairs.Length; i++)
         {
-            Bounds b = items[i];
-            int x = (int)((uint)b.CenterX >> (32 - zoom - 15)) & 0x7fff;
-            int y = (int)((uint)b.CenterY >> (32 - zoom - 15)) & 0x7fff;
-            Pair p = new Pair();
-            p.hilbertValue = Hilbert.FromXY(x, y);
-            p.item = b;
+            var b = items[i];
+            var x = (int)((uint)b.CenterX >> (32 - zoom - 15)) & 0x7fff;
+            var y = (int)((uint)b.CenterY >> (32 - zoom - 15)) & 0x7fff;
+            var p = new Pair();
+            p._hilbertValue = Hilbert.FromXY(x, y);
+            p._item = b;
             pairs[i] = p;
         }
         Array.Sort(pairs);
 
-        List<Node> children = new List<Node>();
-        int start = 0;
+        var children = new List<Node>();
+        var start = 0;
         while (start < pairs.Length)
         {
-            int end = System.Math.Min(start + maxEntries, pairs.Length);
-            Node child = new Node(new List<Bounds>(end - start), true);
-            for (int i = start; i < end; i++) child.Add(pairs[i].item);
+            var end = System.Math.Min(start + maxEntries, pairs.Length);
+            var child = new Node(new List<Bounds>(end - start), true);
+            for (var i = start; i < end; i++) child.Add(pairs[i]._item);
             children.Add(child);
             start = end;
         }
 
-        List<Node> parents = new List<Node>();
-        for (;;)
+        var parents = new List<Node>();
+        for (; ; )
         {
             start = 0;
             while (start < children.Count)
             {
-                int end = System.Math.Min(start + maxEntries, children.Count);
-                Node child = new Node(new List<Bounds>(end - start), false);
-                for (int i = start; i < end; i++) child.Add(children[i]);
+                var end = System.Math.Min(start + maxEntries, children.Count);
+                var child = new Node(new List<Bounds>(end - start), false);
+                for (var i = start; i < end; i++) child.Add(children[i]);
                 parents.Add(child);
                 start = end;
             }
@@ -91,10 +97,11 @@ public class HilbertTileTree : RTree
                 root = parents[0];
                 return;
             }
-            List<Node> temp = children;
+            var temp = children;
             children = parents;
             parents = temp;
             parents.Clear();
         }
     }
+
 }

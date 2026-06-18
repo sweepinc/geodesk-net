@@ -15,12 +15,21 @@ namespace GeoDesk.Geom;
 /// <remarks>Ported from Java <c>com.geodesk.geom.Bounds</c>.</remarks>
 public interface Bounds
 {
+
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Bounds.minX()</c>.</remarks>
     int MinX { get; }
+
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Bounds.minY()</c>.</remarks>
     int MinY { get; }
+
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Bounds.maxX()</c>.</remarks>
     int MaxX { get; }
+
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Bounds.maxY()</c>.</remarks>
     int MaxY { get; }
 
     // TODO: doesn't work if both cross the 180
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Bounds.intersects(Bounds)</c>.</remarks>
     bool Intersects(Bounds other)
     {
         return !(other.MinX > MaxX ||
@@ -29,15 +38,17 @@ public interface Bounds
             other.MaxY < MinY);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Bounds.contains(int, int)</c>.</remarks>
     bool Contains(int x, int y)
     {
-        int minX = MinX;
-        int maxX = MaxX;
+        var minX = MinX;
+        var maxX = MaxX;
         if (maxX < minX) return (x >= minX || x <= maxX) && y >= MinY && y <= MaxY;
         return x >= minX && x <= maxX && y >= MinY && y <= MaxY;
     }
 
     // TODO: assumes Bounds are non-null!
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Bounds.contains(Bounds)</c>.</remarks>
     bool Contains(Bounds other)
     {
         return other.MinX >= MinX && other.MaxX <= MaxX &&
@@ -46,14 +57,20 @@ public interface Bounds
 
     // TODO: check these, calculations are not consistent
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Bounds.width()</c>.</remarks>
     long Width => (MaxY < MinY) ? 0 : ((((long)MaxX - MinX) & 0xffff_ffffL) + 1);
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Bounds.height()</c>.</remarks>
     long Height => MaxY < MinY ? 0 : ((long)MaxY - MinY + 1);
 
     // TODO: may overflow
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Bounds.area()</c>.</remarks>
     long Area => Width * Height;
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Bounds.centerX()</c>.</remarks>
     int CenterX => MinX + (MaxX - MinX) / 2;
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Bounds.centerY()</c>.</remarks>
     int CenterY => MinY + (MaxY - MinY) / 2;
+
 }

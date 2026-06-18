@@ -40,30 +40,33 @@ namespace GeoDesk.Geom;
 /// <remarks>Ported from Java <c>com.geodesk.geom.Hilbert</c>.</remarks>
 public static class Hilbert
 {
+
     /// <summary>
     /// Calculates the distance of a coordinate along the Hilbert Curve.
     ///
-    /// The coordinate space is technically 0 &lt;= x/y &lt; 2^16, but this would require
-    /// treating the signed result as an unsigned value. The maximum coordinate value
-    /// should be 2^15-1.
+    /// The coordinate space is technically 0 &lt;= x/y &lt; 2^16, but this would require treating the
+    /// signed result as an unsigned value. Since this is unintuitive and leads to needless
+    /// frustrations, the maximum coordinate value should be 2^15-1. Technically, this means we use a
+    /// single quadrant of a 16th-order Hilbert curve (i.e. a 15th-order Hilbert curve).
     /// </summary>
     /// <param name="x">must be 0 &lt;= x &lt; 2^15</param>
     /// <param name="y">must be 0 &lt;= y &lt; 2^15</param>
     /// <returns>the Hilbert Curve distance; (0 &lt;= distance &lt; 2^30)</returns>
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Hilbert.fromXY(int, int)</c>.</remarks>
     public static int FromXY(int x, int y)
     {
         Debug.Assert(x >= 0 && x < (1 << 15), string.Format(CultureInfo.InvariantCulture, "{0} is out of range", x));
         Debug.Assert(y >= 0 && y < (1 << 15), string.Format(CultureInfo.InvariantCulture, "{0} is out of range", y));
 
-        int a = x ^ y;
-        int b = 0xFFFF ^ a;
-        int c = 0xFFFF ^ (x | y);
-        int d = x & (y ^ 0xFFFF);
+        var a = x ^ y;
+        var b = 0xFFFF ^ a;
+        var c = 0xFFFF ^ (x | y);
+        var d = x & (y ^ 0xFFFF);
 
-        int A = a | (b >> 1);
-        int B = (a >> 1) ^ a;
-        int C = ((c >> 1) ^ (b & (d >> 1))) ^ c;
-        int D = ((a & (c >> 1)) ^ (d >> 1)) ^ d;
+        var A = a | (b >> 1);
+        var B = (a >> 1) ^ a;
+        var C = ((c >> 1) ^ (b & (d >> 1))) ^ c;
+        var D = ((a & (c >> 1)) ^ (d >> 1)) ^ d;
 
         a = A; b = B; c = C; d = D;
         A = ((a & (a >> 2)) ^ (b & (b >> 2)));
@@ -84,8 +87,8 @@ public static class Hilbert
         a = C ^ (C >> 1);
         b = D ^ (D >> 1);
 
-        int i0 = x ^ y;
-        int i1 = b | (0xFFFF ^ (i0 | a));
+        var i0 = x ^ y;
+        var i1 = b | (0xFFFF ^ (i0 | a));
 
         i0 = (i0 | (i0 << 8)) & 0x00FF00FF;
         i0 = (i0 | (i0 << 4)) & 0x0F0F0F0F;
@@ -99,4 +102,5 @@ public static class Hilbert
 
         return (i1 << 1) | i0;
     }
+
 }

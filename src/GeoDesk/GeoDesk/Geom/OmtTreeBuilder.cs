@@ -44,27 +44,30 @@ namespace GeoDesk.Geom;
 /// <remarks>Ported from Java <c>com.geodesk.geom.OmtTreeBuilder</c>.</remarks>
 public class OmtTreeBuilder<B> : ISpatialTreeBuilder<B> where B : Bounds
 {
-    private static readonly IComparer<Bounds> CompareMinX = new MinXComparer();
-    private static readonly IComparer<Bounds> CompareMinY = new MinYComparer();
 
-    private readonly int maxEntries;
-    private readonly ISpatialTreeFactory<B> factory;
+    static readonly IComparer<Bounds> CompareMinX = new MinXComparer();
+    static readonly IComparer<Bounds> CompareMinY = new MinYComparer();
 
+    readonly int _maxEntries;
+    readonly ISpatialTreeFactory<B> _factory;
+
+    /// <remarks>Ported from Java <c>com.geodesk.geom.OmtTreeBuilder(SpatialTreeFactory, int)</c>.</remarks>
     public OmtTreeBuilder(ISpatialTreeFactory<B> factory, int maxEntries)
     {
-        this.factory = factory;
-        this.maxEntries = maxEntries;
+        _factory = factory;
+        _maxEntries = maxEntries;
     }
 
-    private B Build(IList<Bounds> items, int left, int right, int height, int maxEntries)
+    /// <remarks>Ported from Java <c>com.geodesk.geom.OmtTreeBuilder.build(ArrayList, int, int, int, int)</c>.</remarks>
+    B Build(IList<Bounds> items, int left, int right, int height, int maxEntries)
     {
-        int n = right - left + 1;
-        int m = maxEntries;
+        var n = right - left + 1;
+        var m = maxEntries;
 
         if (n <= maxEntries)
         {
             // reached leaf level; return leaf
-            return factory.CreateLeaf(items, left, right + 1);
+            return _factory.CreateLeaf(items, left, right + 1);
         }
 
         if (height == 0)
@@ -76,43 +79,49 @@ public class OmtTreeBuilder<B> : ISpatialTreeBuilder<B> where B : Bounds
             m = (int)Ceiling((double)n / Pow(m, height - 1));
         }
 
-        List<B> children = new List<B>();
+        var children = new List<B>();
 
         // split the items into M mostly square tiles
 
-        int n2 = (int)Ceiling((double)n / m);
-        int n1 = n2 * (int)Ceiling(Sqrt(m));
+        var n2 = (int)Ceiling((double)n / m);
+        var n1 = n2 * (int)Ceiling(Sqrt(m));
 
         QuickSelect.MultiSelect(items, left, right, n1, CompareMinX);
 
-        for (int i = left; i <= right; i += n1)
+        for (var i = left; i <= right; i += n1)
         {
-            int right2 = Min(i + n1 - 1, right);
+            var right2 = Min(i + n1 - 1, right);
             QuickSelect.MultiSelect(items, i, right2, n2, CompareMinY);
 
-            for (int j = i; j <= right2; j += n2)
+            for (var j = i; j <= right2; j += n2)
             {
-                int right3 = Min(j + n2 - 1, right2);
+                var right3 = Min(j + n2 - 1, right2);
 
                 // pack each entry recursively
                 children.Add(Build(items, j, right3, height - 1, maxEntries));
             }
         }
-        return factory.CreateBranch(children, 0, children.Count);
+        return _factory.CreateBranch(children, 0, children.Count);
     }
 
-    private sealed class MinXComparer : IComparer<Bounds>
+    // Port of Java's method reference OmtTreeBuilder::compareMinX.
+    /// <remarks>Ported from Java <c>com.geodesk.geom.OmtTreeBuilder.compareMinX(Bounds, Bounds)</c>.</remarks>
+    sealed class MinXComparer : IComparer<Bounds>
     {
         public int Compare(Bounds? a, Bounds? b) => a!.MinX - b!.MinX;
     }
 
-    private sealed class MinYComparer : IComparer<Bounds>
+    // Port of Java's method reference OmtTreeBuilder::compareMinY.
+    /// <remarks>Ported from Java <c>com.geodesk.geom.OmtTreeBuilder.compareMinY(Bounds, Bounds)</c>.</remarks>
+    sealed class MinYComparer : IComparer<Bounds>
     {
         public int Compare(Bounds? a, Bounds? b) => a!.MinY - b!.MinY;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.OmtTreeBuilder.build(ArrayList)</c>.</remarks>
     public B Build(IList<Bounds> items)
     {
-        return Build(items, 0, items.Count - 1, 0, maxEntries);
+        return Build(items, 0, items.Count - 1, 0, _maxEntries);
     }
+
 }

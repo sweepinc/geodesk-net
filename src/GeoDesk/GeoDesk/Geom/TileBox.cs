@@ -14,40 +14,52 @@ namespace GeoDesk.Geom;
 /// <remarks>Ported from Java <c>com.geodesk.geom.TileBox</c>.</remarks>
 public class TileBox
 {
+
     protected int topLeft;
     protected int bottomRight;
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.TileBox()</c>.</remarks>
     public TileBox()
     {
         topLeft = -1;
         bottomRight = -1;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.TileBox.width()</c>.</remarks>
     public int Width => Tile.Column(bottomRight) - Tile.Column(topLeft) + 1;
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.TileBox.height()</c>.</remarks>
     public int Height => Tile.Row(bottomRight) - Tile.Row(topLeft) + 1;
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.TileBox.left()</c>.</remarks>
     public int Left => Tile.Column(topLeft);
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.TileBox.top()</c>.</remarks>
     public int Top => Tile.Row(topLeft);
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.TileBox.right()</c>.</remarks>
     public int Right => Tile.Column(bottomRight);
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.TileBox.bottom()</c>.</remarks>
     public int Bottom => Tile.Row(bottomRight);
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.TileBox.size()</c>.</remarks>
     public int Size => Width * Height;
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.TileBox.zoom()</c>.</remarks>
     public int Zoom => Tile.Zoom(topLeft);
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.TileBox.zoomOut(int)</c>.</remarks>
     public void ZoomOut(int newZoom)
     {
-        int currentZoom = Zoom;
+        var currentZoom = Zoom;
         Debug.Assert(newZoom <= currentZoom);
         if (topLeft == -1 || newZoom == currentZoom) return;
         topLeft = Tile.ZoomedOut(topLeft, newZoom);
         bottomRight = Tile.ZoomedOut(bottomRight, newZoom);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.TileBox.expandToInclude(int)</c>.</remarks>
     public void ExpandToInclude(int tile)
     {
         if (topLeft == -1)
@@ -56,8 +68,8 @@ public class TileBox
             bottomRight = tile;
             return;
         }
-        int zoom = Tile.Zoom(tile);
-        int currentZoom = Zoom;
+        var zoom = Tile.Zoom(tile);
+        var currentZoom = Zoom;
         if (zoom != currentZoom)
         {
             if (zoom < currentZoom)
@@ -69,36 +81,39 @@ public class TileBox
                 tile = Tile.ZoomedOut(tile, currentZoom);
             }
         }
-        int col = Tile.Column(tile);
-        int row = Tile.Row(tile);
-        int left = Tile.Column(topLeft);
-        int top = Tile.Row(topLeft);
-        int right = Tile.Column(bottomRight);
-        int bottom = Tile.Row(bottomRight);
+        var col = Tile.Column(tile);
+        var row = Tile.Row(tile);
+        var left = Tile.Column(topLeft);
+        var top = Tile.Row(topLeft);
+        var right = Tile.Column(bottomRight);
+        var bottom = Tile.Row(bottomRight);
         topLeft = Tile.FromColumnRowZoom(System.Math.Min(col, left), System.Math.Min(row, top), zoom);
         bottomRight = Tile.FromColumnRowZoom(System.Math.Max(col, right), System.Math.Max(row, bottom), zoom);
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.TileBox.clear()</c>.</remarks>
     public void Clear()
     {
         topLeft = -1;
         bottomRight = -1;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.geom.TileBox.forEach(IntConsumer)</c>.</remarks>
     public void ForEach(Action<int> func)
     {
-        int zoom = Tile.Zoom(topLeft);
-        int top = Top;
-        int left = Left;
-        int right = Right;
-        int bottom = Bottom;
+        var zoom = Tile.Zoom(topLeft);
+        var top = Top;
+        var left = Left;
+        var right = Right;
+        var bottom = Bottom;
 
-        for (int row = top; row <= bottom; row++)
+        for (var row = top; row <= bottom; row++)
         {
-            for (int col = left; col <= right; col++)
+            for (var col = left; col <= right; col++)
             {
                 func(Tile.FromColumnRowZoom(col, row, zoom));
             }
         }
     }
+
 }

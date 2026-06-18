@@ -14,6 +14,11 @@ namespace GeoDesk.Geom;
 /// <remarks>Ported from Java <c>com.geodesk.geom.SpatialTreeFactory</c>.</remarks>
 public interface ISpatialTreeFactory<B> where B : Bounds
 {
+
+    /// <remarks>Ported from Java <c>com.geodesk.geom.SpatialTreeFactory.createLeaf(List, int, int)</c>.</remarks>
     B CreateLeaf(IList<Bounds> children, int start, int end);
+
+    /// <remarks>Ported from Java <c>com.geodesk.geom.SpatialTreeFactory.createBranch(List, int, int)</c>.</remarks>
     B CreateBranch(IList<B> children, int start, int end);
+
 }
