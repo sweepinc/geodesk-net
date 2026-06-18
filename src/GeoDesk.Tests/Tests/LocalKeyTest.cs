@@ -28,7 +28,7 @@ public class LocalKeyTest
         {
             if (n.BooleanValue("harbour"))
             {
-                Log.Debug("%s: %s", n, n.Tags());
+                Log.Debug("%s: %s", n, n.Tags);
                 count++;
             }
         }
@@ -44,8 +44,8 @@ public class LocalKeyTest
         var world = new FeatureLibrary(TestSettings.Resolve("s7.gol"));
         foreach (var n in world.Nodes())
         {
-            if (n.Id() == 1485039266L || n.Id() == 1910059730L ||
-                n.Id() == 1281920924L || n.Id() == 824086048)
+            if (n.Id == 1485039266L || n.Id == 1910059730L ||
+                n.Id == 1281920924L || n.Id == 824086048)
             {
                 var h = n.StringValue("harbour");
                 Log.Debug("%s: %s", n, h);
@@ -115,7 +115,7 @@ public class LocalKeyTest
         Log.Debug("Tags of manually-matched features:");
         foreach (var f in manuallyMatched)
         {
-            Log.Debug("%s %s: %s", queryMatched.Contains(f) ? "[harbour] -->" : "", f, f.Tags());
+            Log.Debug("%s %s: %s", queryMatched.Contains(f) ? "[harbour] -->" : "", f, f.Tags);
         }
 
         world.Close();

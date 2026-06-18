@@ -43,7 +43,7 @@ var ways = world.Ways();
     {
 foreach (var f in world)
         {
-            var id = f.Id();
+            var id = f.Id;
             Assert.True(id > 0);
             Assert.True(id <= MaxRealisticId);
         }

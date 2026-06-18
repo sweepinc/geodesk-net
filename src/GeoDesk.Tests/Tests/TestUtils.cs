@@ -107,7 +107,7 @@ public static class TestUtils
         var list = new List<long>();
         foreach (var f in features)
         {
-            list.Add(FeatureId.Of(f.Type(), f.Id()));
+            list.Add(FeatureId.Of(f.Type, f.Id));
         }
         list.Sort();
         return list;
@@ -129,7 +129,7 @@ public static class TestUtils
     /// <remarks>Ported from Java <c>com.geodesk.tests.TestUtils.primaryTag(Feature)</c>.</remarks>
     public static string PrimaryTag(IFeature f)
     {
-        var tags = f.Tags();
+        var tags = f.Tags;
         while (tags.Next())
         {
             var key = tags.Key();

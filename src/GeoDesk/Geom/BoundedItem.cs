@@ -14,7 +14,7 @@ internal class BoundedItem<T> : Box
     readonly T _item;
 
     /// <remarks>Ported from Java <c>com.geodesk.geom.BoundedItem(Bounds, T)</c>.</remarks>
-    public BoundedItem(Bounds b, T item)
+    public BoundedItem(IBounds b, T item)
         : base(b)
     {
         _item = item;

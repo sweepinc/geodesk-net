@@ -99,7 +99,7 @@ public class ReferentialIntegrityTest : IDisposable
     void CountAreas(string title, IEnumerable<IFeature> set)
     {
         long count = 0;
-        foreach (var f in set) if (f.IsArea()) count++;
+        foreach (var f in set) if (f.IsArea) count++;
         Log.Debug("%s contains %d areas", title, count);
     }
 
@@ -120,14 +120,14 @@ public class ReferentialIntegrityTest : IDisposable
                 memberCount++;
 
                 // Check referential integrity relation <---> member
-                Assert.True(member.BelongsToRelation());
+                Assert.True(member.BelongsToRelation);
                 if (!member.BelongsTo(rel))
                 {
                     Assert.Fail(string.Format(CultureInfo.InvariantCulture,
                         "Feature.belongsTo() false, but {0} belongs to {1}", member, rel));
                 }
                 Assert.True(member.Parents().Relations().Contains(rel));
-                uniqueRoles.Add(member.Role());
+                uniqueRoles.Add(member.Role);
             }
         }
         Log.Debug("Checked %d relations with %d members in %d ms.", relCount, memberCount,
@@ -182,10 +182,10 @@ public class ReferentialIntegrityTest : IDisposable
             if (f is INode) nodes++;
             if (f is IWay) allWays++;
             if (f is IRelation) allRelations++;
-            if (f.IsArea()) areas++;
+            if (f.IsArea) areas++;
             var isHighway = f.HasTag("highway") && f.StringValue("highway") != "no";
             var isRailway = f.HasTag("railway") && f.StringValue("railway") != "no";
-            var isLineal = f is IWay && !f.IsArea();
+            var isLineal = f is IWay && !f.IsArea;
 
             if (isHighway) allHighways++;
             if (isHighway && isLineal) linealHighways++;
@@ -317,7 +317,7 @@ public class ReferentialIntegrityTest : IDisposable
         long totalEntranceNodeCount = 0;
         foreach (var way in features.Ways())
         {
-            Box wayBox = way.Bounds();
+            Box wayBox = way.Bounds;
             var calculatedBox = new Box();
 
             IFeature? firstNode = null;
@@ -332,9 +332,9 @@ public class ReferentialIntegrityTest : IDisposable
             {
                 if (firstNode == null) firstNode = node;
                 lastNode = node;
-                calculatedBox.ExpandToInclude(node.X(), node.Y());
-                Assert.Equal(xy[nodeCount * 2], node.X());
-                Assert.Equal(xy[nodeCount * 2 + 1], node.Y());
+                calculatedBox.ExpandToInclude(node.X, node.Y);
+                Assert.Equal(xy[nodeCount * 2], node.X);
+                Assert.Equal(xy[nodeCount * 2 + 1], node.Y);
                 nodeCount++;
                 var v = node.StringValue("highway");
                 if (v.Length != 0 && v != "no") highwayNodeCount++;
@@ -347,7 +347,7 @@ public class ReferentialIntegrityTest : IDisposable
             Assert.Equal(calculatedBox, wayBox);
 
             var geom = way.ToGeometry();
-            if (way.IsArea())
+            if (way.IsArea)
             {
                 Assert.Equal(firstNode, lastNode);
                 Assert.True(nodeCount >= 4);
@@ -361,7 +361,7 @@ public class ReferentialIntegrityTest : IDisposable
 
             foreach (var node in way.Nodes("*"))
             {
-                Assert.True(node.Id() > 0);
+                Assert.True(node.Id > 0);
                 totalFeatureNodeCount++;
             }
 
@@ -399,7 +399,7 @@ public class ReferentialIntegrityTest : IDisposable
                     Log.Debug("%s should have %s as a parent, but doesn't. It has %d parents.",
                         node.ToString(), way.ToString(), parentWays.Count());
                     Log.Debug("%s flags = %d, tags = %s", node.ToString(),
-                        ((StoredNode)node).Flags(), node.Tags().ToString());
+                        ((StoredNode)node).Flags(), node.Tags.ToString());
                     var parentWays2 = node.Parents().Ways();
                     foreach (var p in parentWays2)
                     {
@@ -412,7 +412,7 @@ public class ReferentialIntegrityTest : IDisposable
                     Assert.True(parentWay.Nodes().Contains(node));
                     parentWayCount++;
                 }
-                waysAtNodes += features.Ways().In(node.Bounds()).Count();
+                waysAtNodes += features.Ways().In(node.Bounds).Count();
                 nodeCount++;
             }
         }
@@ -425,7 +425,7 @@ public class ReferentialIntegrityTest : IDisposable
     {
         var v = f.StringValue(k);
         Assert.True(v.Length == 0 || v == "no");
-        var tags = f.Tags();
+        var tags = f.Tags;
         while (tags.Next())
         {
             if (tags.Key() == k)
@@ -448,7 +448,7 @@ public class ReferentialIntegrityTest : IDisposable
         var totalTagCount = 0;
         foreach (var f in features)
         {
-            var tags = f.Tags();
+            var tags = f.Tags;
             var tagCount = 0;
 
             var tagMap = tags.ToMap();
@@ -554,14 +554,14 @@ public class ReferentialIntegrityTest : IDisposable
 
             foreach (var f in rel)
             {
-                switch (f.Type())
+                switch (f.Type)
                 {
                     case FeatureType.Node:
                         memberNodesManual++;
                         break;
                     case FeatureType.Way:
                         memberWaysManual++;
-                        if (f.IsArea())
+                        if (f.IsArea)
                         {
                             memberWayAreasManual++;
                             memberAreasManual++;
@@ -569,7 +569,7 @@ public class ReferentialIntegrityTest : IDisposable
                         break;
                     case FeatureType.Relation:
                         memberRelationsManual++;
-                        if (f.IsArea())
+                        if (f.IsArea)
                         {
                             memberRelationAreasManual++;
                             memberAreasManual++;
@@ -615,7 +615,7 @@ public class ReferentialIntegrityTest : IDisposable
 
                 foreach (var node in rel.Members().Nodes())
                 {
-                    if (node.Role() == "admin_centre") memberCountSlow++;
+                    if (node.Role == "admin_centre") memberCountSlow++;
                 }
             }
             Log.Debug("%d nodes in %d relations (%d ms)", memberCount, relCount,
@@ -632,7 +632,7 @@ public class ReferentialIntegrityTest : IDisposable
 
         foreach (var f in features)
         {
-            var tags = f.Tags();
+            var tags = f.Tags;
             while (tags.Next())
             {
                 strings.Add(f + ": " + tags.StringValue());

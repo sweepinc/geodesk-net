@@ -18,7 +18,7 @@ namespace GeoDesk.Geom;
 /// also be empty (in which case <c>minY</c> is *larger* than <c>maxY</c>)
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.geom.Box</c>.</remarks>
-public class Box : Bounds
+public class Box : IBounds
 {
 
     int _minX;
@@ -43,7 +43,7 @@ public class Box : Bounds
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.geom.Box(Bounds)</c>.</remarks>
-    public Box(Bounds b)
+    public Box(IBounds b)
     {
         _minX = b.MinX;
         _minY = b.MinY;
@@ -81,7 +81,7 @@ public class Box : Bounds
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.geom.Box.isNull(Bounds)</c>.</remarks>
-    public static bool IsNullBounds(Bounds b)
+    public static bool IsNullBounds(IBounds b)
     {
         return b.MaxY < b.MinY;
     }
@@ -104,7 +104,7 @@ public class Box : Bounds
     // methods implement the interface members, that would re-dispatch back here and recurse infinitely.
 
     /// <remarks>Ported from Java <c>com.geodesk.geom.Bounds.intersects(Bounds)</c>.</remarks>
-    public bool Intersects(Bounds other)
+    public bool Intersects(IBounds other)
     {
         return !(other.MinX > _maxX ||
             other.MaxX < _minX ||
@@ -120,7 +120,7 @@ public class Box : Bounds
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.geom.Bounds.contains(Bounds)</c>.</remarks>
-    public bool Contains(Bounds other)
+    public bool Contains(IBounds other)
     {
         return other.MinX >= _minX && other.MaxX <= _maxX &&
             other.MinY >= _minY && other.MaxY <= _maxY;
@@ -154,7 +154,7 @@ public class Box : Bounds
 
     /// <summary>Checks if this bounding box includes another bounding box, and expands it if necessary.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Box.expandToInclude(Bounds)</c>.</remarks>
-    public void ExpandToInclude(Bounds b)
+    public void ExpandToInclude(IBounds b)
     {
         var otherMinX = b.MinX;
         var otherMinY = b.MinY;
@@ -192,7 +192,7 @@ public class Box : Bounds
     /// <remarks>Ported from Java <c>com.geodesk.geom.Box.equals(Object)</c>.</remarks>
     public override bool Equals(object? other)
     {
-        if (other is not Bounds o) return false;
+        if (other is not IBounds o) return false;
         return _minX == o.MinX && _maxX == o.MaxX && _minY == o.MinY && _maxY == o.MaxY;
     }
 
@@ -208,7 +208,7 @@ public class Box : Bounds
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Box.intersection(Bounds)</c>.</remarks>
     // TODO: fix: what happens if boxes are empty?
-    public Box Intersection(Bounds o)
+    public Box Intersection(IBounds o)
     {
         var x1 = _minX > o.MinX ? _minX : o.MinX;
         var y1 = _minY > o.MinY ? _minY : o.MinY;
@@ -219,7 +219,7 @@ public class Box : Bounds
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.geom.Box.intersection(Bounds, Bounds)</c>.</remarks>
-    public static Box Intersection(Bounds a, Bounds b)
+    public static Box Intersection(IBounds a, IBounds b)
     {
         var x1 = System.Math.Max(a.MinX, b.MinX);
         var y1 = System.Math.Max(a.MinY, b.MinY);
@@ -230,7 +230,7 @@ public class Box : Bounds
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.geom.Box.smaller(Bounds, Bounds)</c>.</remarks>
-    public static Bounds Smaller(Bounds a, Bounds b)
+    public static IBounds Smaller(IBounds a, IBounds b)
     {
         var areaA = (double)a.Width * a.Height;
         var areaB = (double)b.Width * b.Height;
@@ -387,7 +387,7 @@ public class Box : Bounds
     /// bounding box.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Box.metersAround(double, Bounds)</c>.</remarks>
-    public static Box MetersAround(double meters, Bounds other)
+    public static Box MetersAround(double meters, IBounds other)
     {
         var b = (int)Mercator.DeltaFromMeters(meters, other.CenterY);
         return new Box(other.MinX - b, TrimmedSubtract(other.MinY, b),

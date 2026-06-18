@@ -35,7 +35,7 @@ internal class AndFilter : IFilter
         var acceptedTypes = left.AcceptedTypes() & right.AcceptedTypes();
         if (acceptedTypes == 0) return FalseFilter.Instance;
 
-        Bounds bounds;
+        IBounds bounds;
         if ((combinedStrategy & FilterStrategy.UsesBbox) != 0)
         {
             // TODO: check for null bbox or enforce filter.bounds() returning World bbox if bbox
@@ -64,10 +64,10 @@ internal class AndFilter : IFilter
     readonly IFilter _right;
     readonly int _strategy;
     readonly int _acceptedTypes;
-    readonly Bounds _bounds;
+    readonly IBounds _bounds;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.AndFilter(Filter, Filter, int, Bounds, int)</c>.</remarks>
-    public AndFilter(IFilter left, IFilter right, int strategy, Bounds bounds, int acceptedTypes)
+    public AndFilter(IFilter left, IFilter right, int strategy, IBounds bounds, int acceptedTypes)
     {
         _left = left;
         _right = right;
@@ -102,7 +102,7 @@ internal class AndFilter : IFilter
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.AndFilter.bounds()</c>.</remarks>
-    public Bounds Bounds()
+    public IBounds Bounds()
     {
         return _bounds;
     }

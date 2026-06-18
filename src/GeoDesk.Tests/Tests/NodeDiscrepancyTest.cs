@@ -37,12 +37,12 @@ public class NodeDiscrepancyTest
         var de5 = new FeatureLibrary(TestSettings.Resolve("de5.gol"));
         foreach (var rel in de5.Relations())
         {
-            if (rel.Id() == 1958364)
+            if (rel.Id == 1958364)
             {
                 Log.Debug(rel);
                 foreach (var f in rel.Members())
                 {
-                    Log.Debug("- %s: %s", f, f.Role());
+                    Log.Debug("- %s: %s", f, f.Role);
                 }
             }
         }
@@ -55,13 +55,13 @@ public class NodeDiscrepancyTest
         var de5 = new FeatureLibrary(TestSettings.Resolve("de5.gol"));
         foreach (var n in de5.Nodes())
         {
-            if (n.Id() == 98677236)
+            if (n.Id == 98677236)
             {
-                Log.Debug("%s: %s", n, n.Tags());
+                Log.Debug("%s: %s", n, n.Tags);
                 Log.Debug("All nodes at this location:");
-                foreach (var n2 in de5.Nodes().In(Box.AtXY(n.X(), n.Y())))
+                foreach (var n2 in de5.Nodes().In(Box.AtXY(n.X, n.Y)))
                 {
-                    Log.Debug("- %s: %s", n2, n2.Tags());
+                    Log.Debug("- %s: %s", n2, n2.Tags);
                 }
             }
         }

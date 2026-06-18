@@ -52,13 +52,10 @@ internal abstract class StoredFeature : IFeature
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.id()</c>.</remarks>
-    public long Id()
-    {
-        return Id(buf, ptr);
-    }
+    public long Id => IdAt(buf, ptr);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.id(ByteBuffer, int)</c>.</remarks>
-    public static long Id(NioBuffer buf, int ptr)
+    public static long IdAt(NioBuffer buf, int ptr)
     {
         return (long)((ulong)buf.GetLong(ptr) >> 12);
     }
@@ -76,32 +73,26 @@ internal abstract class StoredFeature : IFeature
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.type()</c>.</remarks>
-    public abstract FeatureType Type();
+    public abstract FeatureType Type { get; }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.x()</c>.</remarks>
-    public virtual int X()
-    {
-        return (buf.GetInt(ptr - 16) + buf.GetInt(ptr - 8)) / 2;
-    }
+    public virtual int X => (buf.GetInt(ptr - 16) + buf.GetInt(ptr - 8)) / 2;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.y()</c>.</remarks>
-    public virtual int Y()
-    {
-        return (buf.GetInt(ptr - 12) + buf.GetInt(ptr - 4)) / 2;
-    }
+    public virtual int Y => (buf.GetInt(ptr - 12) + buf.GetInt(ptr - 4)) / 2;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.equals(Object)</c>.</remarks>
     public override bool Equals(object? other)
     {
         if (other is not IFeature o)
             return false;
-        return Type() == o.Type() && Id() == o.Id();
+        return Type == o.Type && Id == o.Id;
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.hashCode()</c>.</remarks>
     public override int GetHashCode()
     {
-        return Id().GetHashCode();
+        return Id.GetHashCode();
     }
 
     // value encoding: bit0 type(0=number,1=string), bit1 size(0=narrow,1=wide),
@@ -342,24 +333,15 @@ internal abstract class StoredFeature : IFeature
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.isArea()</c>.</remarks>
-    public bool IsArea()
-    {
-        return (buf.GetInt(ptr) & IFeatureFlags.AREA_FLAG) != 0;
-    }
+    public bool IsArea => (buf.GetInt(ptr) & IFeatureFlags.AREA_FLAG) != 0;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.bounds()</c>.</remarks>
-    public virtual Box Bounds()
-    {
-        return new Box(
-            buf.GetInt(ptr - 16), buf.GetInt(ptr - 12),
-            buf.GetInt(ptr - 8), buf.GetInt(ptr - 4));
-    }
+    public virtual Box Bounds => new Box(
+        buf.GetInt(ptr - 16), buf.GetInt(ptr - 12),
+        buf.GetInt(ptr - 8), buf.GetInt(ptr - 4));
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.role()</c>.</remarks>
-    public string? Role()
-    {
-        return role;
-    }
+    public string? Role => role;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.setRole(String)</c>.</remarks>
     public void SetRole(string? role)
@@ -370,24 +352,27 @@ internal abstract class StoredFeature : IFeature
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.belongsTo(Feature)</c>.</remarks>
     public bool BelongsTo(IFeature parent)
     {
-        if (parent.IsRelation())
+        if (parent.IsRelation)
             return Parents().Relations().Contains(parent);
 
-        if (parent.IsWay())
+        if (parent.IsWay)
             return Parents().Ways().Contains(parent);
 
         return false;
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.area()</c>.</remarks>
-    public virtual double Area()
+    public virtual double Area
     {
-        if (!IsArea())
-            return 0;
+        get
+        {
+            if (!IsArea)
+                return 0;
 
-        var avgY = (buf.GetInt(ptr - 12) + buf.GetInt(ptr - 4)) / 2;
-        var scale = Mercator.MetersAtY(avgY);
-        return ToGeometry().Area * scale * scale;
+            var avgY = (buf.GetInt(ptr - 12) + buf.GetInt(ptr - 4)) / 2;
+            var scale = Mercator.MetersAtY(avgY);
+            return ToGeometry().Area * scale * scale;
+        }
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.toXY()</c>.</remarks>
@@ -397,10 +382,7 @@ internal abstract class StoredFeature : IFeature
     public abstract Geometry ToGeometry();
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.tags()</c>.</remarks>
-    public ITags Tags()
-    {
-        return new TagIterator(this, ptr + 8);
-    }
+    public ITags Tags => new TagIterator(this, ptr + 8);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.TagIterator</c>.</remarks>
     sealed class TagIterator : ITags
@@ -545,22 +527,19 @@ internal abstract class StoredFeature : IFeature
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.belongsToRelation()</c>.</remarks>
-    public bool BelongsToRelation()
-    {
-        return (buf.GetInt(ptr) & IFeatureFlags.RELATION_MEMBER_FLAG) != 0;
-    }
+    public bool BelongsToRelation => (buf.GetInt(ptr) & IFeatureFlags.RELATION_MEMBER_FLAG) != 0;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.parents()</c>.</remarks>
     public virtual IFeatures Parents()
     {
-        return BelongsToRelation() ?
+        return BelongsToRelation ?
             new Query.ParentRelationView(store, buf, GetRelationTablePtr()) : Query.EmptyView.Any;
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.parents(String)</c>.</remarks>
     public virtual IFeatures Parents(string query)
     {
-        if (BelongsToRelation())
+        if (BelongsToRelation)
         {
             var matcher = store.GetMatcher(query);
             if ((matcher.AcceptedTypes() & Match.TypeBits.RELATIONS) != 0)

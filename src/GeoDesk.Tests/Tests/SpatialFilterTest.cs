@@ -148,7 +148,7 @@ public class SpatialFilterTest
         {
             var startQuery = Stopwatch.GetTimestamp();
             var places = world.Select("a[building]");
-            var count = places.In(bavaria!.Bounds()).Count();
+            var count = places.In(bavaria!.Bounds).Count();
 
             Console.Write("Found {0} features in {1} ms (Total runtime {2} ms)\n", count, Millis(startQuery), Millis(start));
         }
@@ -336,7 +336,7 @@ public class SpatialFilterTest
                 cityCount++;
                 var cityChurchCount = world
                     .Select("na[amenity=place_of_worship][religion=christian]")
-                    .In(city.Bounds()).Count();
+                    .In(city.Bounds).Count();
                 if (cityChurchCount > mostChurches)
                 {
                     mostChurches = cityChurchCount;

@@ -62,7 +62,7 @@ internal class EmptyView : View
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.EmptyView.in(Bounds)</c>.</remarks>
-    public override IFeatures In(Bounds bbox)
+    public override IFeatures In(IBounds bbox)
     {
         return this;
     }

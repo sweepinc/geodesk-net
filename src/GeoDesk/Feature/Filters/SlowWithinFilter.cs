@@ -36,7 +36,7 @@ internal class SlowWithinFilter : SlowSpatialFilter
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.SlowWithinFilter.bounds()</c>.</remarks>
-    public Bounds Bounds()
+    public IBounds Bounds()
     {
         // TODO: if using Feature, get the bbox of feature, but Envelope will be calculated anyway,
         //  so only minor savings

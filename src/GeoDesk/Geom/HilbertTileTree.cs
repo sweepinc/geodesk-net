@@ -43,7 +43,7 @@ internal class HilbertTileTree : RTree
     {
 
         public int _hilbertValue;
-        public Bounds _item = null!;
+        public IBounds _item = null!;
 
         /// <remarks>Ported from Java <c>com.geodesk.geom.HilbertTileTree.Pair.compareTo(Pair)</c>.</remarks>
         public int CompareTo(Pair? o)
@@ -54,7 +54,7 @@ internal class HilbertTileTree : RTree
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.geom.HilbertTileTree(List, int, int)</c>.</remarks>
-    public HilbertTileTree(List<Bounds> items, int zoom, int maxEntries)
+    public HilbertTileTree(List<IBounds> items, int zoom, int maxEntries)
     {
         var pairs = new Pair[items.Count];
         for (var i = 0; i < pairs.Length; i++)
@@ -75,7 +75,7 @@ internal class HilbertTileTree : RTree
         while (start < pairs.Length)
         {
             var end = System.Math.Min(start + maxEntries, pairs.Length);
-            var child = new Node(new List<Bounds>(end - start), true);
+            var child = new Node(new List<IBounds>(end - start), true);
             for (var i = start; i < end; i++) child.Add(pairs[i]._item);
             children.Add(child);
             start = end;
@@ -88,7 +88,7 @@ internal class HilbertTileTree : RTree
             while (start < children.Count)
             {
                 var end = System.Math.Min(start + maxEntries, children.Count);
-                var child = new Node(new List<Bounds>(end - start), false);
+                var child = new Node(new List<IBounds>(end - start), false);
                 for (var i = start; i < end; i++) child.Add(children[i]);
                 parents.Add(child);
                 start = end;

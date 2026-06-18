@@ -20,14 +20,14 @@ internal class ConnectedFilter : IFilter
 
     IFeature? _self;
     readonly HashSet<long> _points = new HashSet<long>();
-    Bounds _bounds;
+    IBounds _bounds;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ConnectedFilter(Feature)</c>.</remarks>
     public ConnectedFilter(IFeature f)
     {
         _self = f;
         CollectPoints(f);
-        _bounds = f.Bounds();
+        _bounds = f.Bounds;
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ConnectedFilter(Geometry)</c>.</remarks>
@@ -39,7 +39,7 @@ internal class ConnectedFilter : IFilter
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ConnectedFilter.bounds()</c>.</remarks>
-    public Bounds Bounds()
+    public IBounds Bounds()
     {
         return _bounds;
     }
@@ -63,7 +63,7 @@ internal class ConnectedFilter : IFilter
         }
         else
         {
-            _points.Add(XY.Of(f.X(), f.Y()));
+            _points.Add(XY.Of(f.X, f.Y));
         }
     }
 
@@ -90,7 +90,7 @@ internal class ConnectedFilter : IFilter
             }
             return false;
         }
-        return _points.Contains(XY.Of(feature.X(), feature.Y()));
+        return _points.Contains(XY.Of(feature.X, feature.Y));
     }
 
     // PORT: Java uses an anonymous CoordinateSequenceFilter; in .NET this is a named nested class

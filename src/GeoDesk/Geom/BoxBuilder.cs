@@ -8,7 +8,7 @@
 namespace GeoDesk.Geom;
 
 /// <remarks>Ported from Java <c>com.geodesk.geom.BoxBuilder</c>.</remarks>
-internal class BoxBuilder : Bounds
+internal class BoxBuilder : IBounds
 {
 
     int _minX;
@@ -66,7 +66,7 @@ internal class BoxBuilder : Bounds
     /// </summary>
     /// <param name="b">the bounding box to include into this</param>
     /// <remarks>Ported from Java <c>com.geodesk.geom.BoxBuilder.expandToInclude(Bounds)</c>.</remarks>
-    public void ExpandToInclude(Bounds b)
+    public void ExpandToInclude(IBounds b)
     {
         var otherMinX = b.MinX;
         var otherMinY = b.MinY;

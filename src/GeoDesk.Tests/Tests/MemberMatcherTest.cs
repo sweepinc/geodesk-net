@@ -25,7 +25,7 @@ var rivers = world.Relations("r[waterway=river]");
         {
             foreach (var m in river.Members())
             {
-                Log.Debug("- %s (name: %s, role: %s)", m, m.StringValue("name"), m.Role());
+                Log.Debug("- %s (name: %s, role: %s)", m, m.StringValue("name"), m.Role);
             }
         }
     }
@@ -39,7 +39,7 @@ var rivers = world.Relations("r[waterway=river]");
         {
             foreach (var m in river.Members("n[!natural], w"))
             {
-                Log.Debug("- %s (name: %s, role: %s)", m, m.StringValue("name"), m.Role());
+                Log.Debug("- %s (name: %s, role: %s)", m, m.StringValue("name"), m.Role);
             }
         }
     }

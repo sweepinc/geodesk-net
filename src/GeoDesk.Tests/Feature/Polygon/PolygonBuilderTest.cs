@@ -54,11 +54,11 @@ public class PolygonBuilderTest
             {
                 var g = r.ToGeometry();
                 Assert.NotNull(g);
-                if (r.IsArea())
+                if (r.IsArea)
                 {
                     areaRelations++;
                     // Area relations must build to a (Multi)Polygon.
-                    Assert.True(g is NetTopologySuite.Geometries.Polygon || g is MultiPolygon, $"relation/{r.Id()} expected polygonal, got {g.GeometryType}");
+                    Assert.True(g is NetTopologySuite.Geometries.Polygon || g is MultiPolygon, $"relation/{r.Id} expected polygonal, got {g.GeometryType}");
                     if (!g.IsEmpty && g.IsValid)
                         validPolygons++;
                 }

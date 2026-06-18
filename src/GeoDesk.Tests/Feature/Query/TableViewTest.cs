@@ -80,8 +80,8 @@ public class TableViewTest
 
             if (wayWithNodes != null)
             {
-                output.WriteLine($"way {wayWithNodes.Id()} has feature node {aNode!.Id()}");
-                Assert.True(aNode.IsNode());
+                output.WriteLine($"way {wayWithNodes.Id} has feature node {aNode!.Id}");
+                Assert.True(aNode.IsNode);
                 // The node's parent ways must include this way.
                 Assert.Contains(wayWithNodes, world.Ways().ParentsOf(aNode).ToList());
             }

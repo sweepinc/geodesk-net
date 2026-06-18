@@ -45,17 +45,17 @@ namespace GeoDesk.Geom;
 internal class OverlapMinimizingTree : RTree
 {
 
-    static readonly IComparer<Bounds> CompareMinX = new MinXComparer();
-    static readonly IComparer<Bounds> CompareMinY = new MinYComparer();
+    static readonly IComparer<IBounds> CompareMinX = new MinXComparer();
+    static readonly IComparer<IBounds> CompareMinY = new MinYComparer();
 
     /// <remarks>Ported from Java <c>com.geodesk.geom.OverlapMinimizingTree(List, int)</c>.</remarks>
-    public OverlapMinimizingTree(List<Bounds> items, int maxEntries)
+    public OverlapMinimizingTree(List<IBounds> items, int maxEntries)
     {
         root = Build(items, 0, items.Count - 1, 0, maxEntries);
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.geom.OverlapMinimizingTree.build(List, int, int, int, int)</c>.</remarks>
-    Node Build(List<Bounds> items, int left, int right, int height, int maxEntries)
+    Node Build(List<IBounds> items, int left, int right, int height, int maxEntries)
     {
         var n = right - left + 1;
         var m = maxEntries;
@@ -102,16 +102,16 @@ internal class OverlapMinimizingTree : RTree
 
     // Port of Java's method reference OverlapMinimizingTree::compareMinX.
     /// <remarks>Ported from Java <c>com.geodesk.geom.OverlapMinimizingTree.compareMinX(Bounds, Bounds)</c>.</remarks>
-    sealed class MinXComparer : IComparer<Bounds>
+    sealed class MinXComparer : IComparer<IBounds>
     {
-        public int Compare(Bounds? a, Bounds? b) => a!.MinX - b!.MinX;
+        public int Compare(IBounds? a, IBounds? b) => a!.MinX - b!.MinX;
     }
 
     // Port of Java's method reference OverlapMinimizingTree::compareMinY.
     /// <remarks>Ported from Java <c>com.geodesk.geom.OverlapMinimizingTree.compareMinY(Bounds, Bounds)</c>.</remarks>
-    sealed class MinYComparer : IComparer<Bounds>
+    sealed class MinYComparer : IComparer<IBounds>
     {
-        public int Compare(Bounds? a, Bounds? b) => a!.MinY - b!.MinY;
+        public int Compare(IBounds? a, IBounds? b) => a!.MinY - b!.MinY;
     }
 
 }

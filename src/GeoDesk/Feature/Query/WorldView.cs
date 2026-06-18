@@ -23,7 +23,7 @@ public class WorldView : View
 
     protected static readonly Box World = Box.OfWorld();
 
-    protected internal readonly Bounds bounds;
+    protected internal readonly IBounds bounds;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.WorldView(FeatureStore)</c>.</remarks>
     internal WorldView(FeatureStore store) :
@@ -33,14 +33,14 @@ public class WorldView : View
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.WorldView(FeatureStore, int, Bounds, Matcher, Filter)</c>.</remarks>
-    internal WorldView(FeatureStore store, int types, Bounds bounds, Matcher matcher, IFilter? filter) :
+    internal WorldView(FeatureStore store, int types, IBounds bounds, Matcher matcher, IFilter? filter) :
         base(store, types, matcher, filter)
     {
         this.bounds = bounds;
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.WorldView(WorldView, Bounds)</c>.</remarks>
-    WorldView(WorldView other, Bounds bounds) :
+    WorldView(WorldView other, IBounds bounds) :
         base(other.store, other.types, other.matcher, other.filter)
     {
         this.bounds = bounds; // TODO: intersect bbox
@@ -53,7 +53,7 @@ public class WorldView : View
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.WorldView.in(Bounds)</c>.</remarks>
-    public override IFeatures In(Bounds bbox)
+    public override IFeatures In(IBounds bbox)
     {
         return new WorldView(this, bbox);
     }
@@ -74,7 +74,7 @@ public class WorldView : View
 
             // Feature must intersect the view's bbox
             //  TODO: improve bounds(), should return immutable
-            if (!feature.Bounds().Intersects(bounds))
+            if (!feature.Bounds.Intersects(bounds))
                 return false;
 
             // Feature must be accepted by matcher

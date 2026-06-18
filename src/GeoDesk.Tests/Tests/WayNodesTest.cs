@@ -53,7 +53,7 @@ public class WayNodesTest : AbstractFeatureTest
             {
                 Assert.True(node.Parents().Relations().Count() > 0);
                 Assert.True(node.Parents().Relations().Contains(rel));
-                Assert.True(node.BelongsToRelation());
+                Assert.True(node.BelongsToRelation);
                 Assert.True(node.BelongsTo(rel));
             }
         }

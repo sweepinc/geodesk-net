@@ -172,9 +172,9 @@ internal class PolygonBuilder
             {
                 if (member is IWay way)
                 {
-                    if (way.Role() == "outer")
+                    if (way.Role == "outer")
                         outerSegments = new Segment(++outerSegmentCount, way, outerSegments);
-                    else if (way.Role() == "inner")
+                    else if (way.Role == "inner")
                         innerSegments = new Segment(++innerSegmentCount, way, innerSegments);
                 }
             }

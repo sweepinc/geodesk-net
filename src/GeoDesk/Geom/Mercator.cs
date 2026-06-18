@@ -6,8 +6,10 @@
  */
 
 using System;
+
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Operation.Distance;
+
 using static System.Math;
 
 namespace GeoDesk.Geom;
@@ -28,7 +30,7 @@ internal static class Mercator
 
     // the width and height of the coordinate space (1 << 32)
     const double EarthCircumference = 40_075_016.68558;
-        // in meters, at the equator
+    // in meters, at the equator
 
     public const double MinLat = -85.05112878;
     public const double MaxLat = 85.051128776;
@@ -44,9 +46,8 @@ internal static class Mercator
     public static int XFromLon(double lon)
     {
         if (lon < -180 || lon > 180)
-        {
             throw new ArgumentException("Longitude must be in range -180 to 180");
-        }
+
         return (int)JavaRound(MapWidth * lon / 360);
     }
 
@@ -68,19 +69,19 @@ internal static class Mercator
         if (lat < MinLat)
         {
             if (lat < -90)
-            {
                 throw new ArgumentException("Latitude must be in range -90 to 90");
-            }
+
             lat = MinLat;
         }
+
         if (lat > MaxLat)
         {
             if (lat > 90)
-            {
                 throw new ArgumentException("Latitude must be in range -90 to 90");
-            }
+
             lat = MaxLat;
         }
+
         return (int)JavaRound(Log(Tan((lat + 90) * PI / 360)) *
             (MapWidth / 2 / PI));
     }
@@ -115,8 +116,7 @@ internal static class Mercator
     /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.lonPrecision7fromX(double)</c>.</remarks>
     public static double LonPrecision7FromX(double x)
     {
-        var lon = LonFromX(x);
-        return (double)JavaRound(lon * 10000000) / 10000000;
+        return (double)JavaRound(LonFromX(x) * 10000000) / 10000000;
     }
 
     /// <summary>Converts a projected latitude to WGS84.</summary>
@@ -125,8 +125,7 @@ internal static class Mercator
     /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.latFromY(double)</c>.</remarks>
     public static double LatFromY(double y)
     {
-        return Atan(Exp(y * PI * 2 / MapWidth))
-            * 360 / PI - 90;
+        return Atan(Exp(y * PI * 2 / MapWidth)) * 360 / PI - 90;
     }
 
     /// <summary>Converts a projected latitude to WGS84, rounded to 7 decimal points.</summary>
@@ -135,8 +134,7 @@ internal static class Mercator
     /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.latPrecision7fromY(double)</c>.</remarks>
     public static double LatPrecision7FromY(double y)
     {
-        var lat = LatFromY(y);
-        return (double)JavaRound(lat * 10000000) / 10000000;
+        return (double)JavaRound(LatFromY(y) * 10000000) / 10000000;
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.metersAtY(int)</c>.</remarks>
@@ -156,8 +154,7 @@ internal static class Mercator
         var xDelta = Abs(x1 - x2);
         var yDelta = Abs(y1 - y2);
         var d = Sqrt(xDelta * xDelta + yDelta * yDelta);
-        return d * EarthCircumference / MapWidth / Scale(
-            (y1 + y2) / 2);
+        return d * EarthCircumference / MapWidth / Scale((y1 + y2) / 2);
     }
 
     /// <summary>
@@ -193,8 +190,7 @@ internal static class Mercator
     /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.deltaFromMeters(double, double)</c>.</remarks>
     public static double DeltaFromMeters(double meters, double atY)
     {
-        return meters * MapWidth / EarthCircumference *
-            Scale(atY);
+        return meters * MapWidth / EarthCircumference * Scale(atY);
     }
 
     /// <summary>
@@ -209,25 +205,26 @@ internal static class Mercator
     {
         var area = geom.Area;
         System.Diagnostics.Debug.Assert(area >= 0, "Negative area for " + geom);
-        if (area == 0) return 0;
-        var scale = EarthCircumference / MapWidth / Scale(
-            geom.Centroid.Y);
+
+        if (area == 0)
+            return 0;
+
+        var scale = EarthCircumference / MapWidth / Scale(geom.Centroid.Y);
         return area * scale * scale;
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.expandEnvelope(Envelope, double)</c>.</remarks>
     public static Envelope ExpandEnvelope(Envelope env, double meters)
     {
-        env.ExpandBy(DeltaFromMeters(meters,
-            (env.MaxY + env.MinY) / 2));
+        env.ExpandBy(DeltaFromMeters(meters, (env.MaxY + env.MinY) / 2));
+
         return env;
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.envelope(double, double, double, double)</c>.</remarks>
     public static Envelope Envelope(double lon1, double lat1, double lon2, double lat2)
     {
-        return new Envelope(XFromLon(lon1), XFromLon(lon2),
-            YFromLat(lat1), YFromLat(lat2));
+        return new Envelope(XFromLon(lon1), XFromLon(lon2), YFromLat(lat1), YFromLat(lat2));
     }
 
     /// <summary>

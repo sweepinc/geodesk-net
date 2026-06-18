@@ -35,7 +35,7 @@ internal class Ring
         var b = new Box();
         for (var segment = firstSegment; segment != null; segment = segment.next)
         {
-            b.ExpandToInclude(segment.way.Bounds()); // TODO: use way itself as Bounds
+            b.ExpandToInclude(segment.way.Bounds); // TODO: use way itself as Bounds
         }
         bbox = b;
     }
@@ -49,7 +49,7 @@ internal class Ring
     {
         for (var segment = firstSegment; segment != null; segment = segment.next)
         {
-            Bounds b = segment.way.Bounds();
+            IBounds b = segment.way.Bounds;
             if (!b.Contains(x, y)) continue;
             // We could skip one of the ending coordinates of each segment, but since the segment
             // may be backwards, we'll just check all for the sake of simplicity
@@ -67,7 +67,7 @@ internal class Ring
         var odd = 0;
         for (var segment = firstSegment; segment != null; segment = segment.next)
         {
-            Bounds b = segment.way.Bounds();
+            IBounds b = segment.way.Bounds;
             if (y >= b.MinY && y <= b.MaxY) odd ^= XY.CastRay(segment.coords, x, y);
         }
         return odd != 0;

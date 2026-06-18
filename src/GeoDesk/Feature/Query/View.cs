@@ -136,7 +136,7 @@ public abstract class View : IFeatures
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.parentsOf(Feature)</c>.</remarks>
     public virtual IFeatures ParentsOf(IFeature child)
     {
-        if (child.IsNode())
+        if (child.IsNode)
         {
             // An anonymous node *always* has at least one parent way, and *never* has parent relations
             if (child is AnonymousWayNode wayNode)
@@ -151,7 +151,7 @@ public abstract class View : IFeatures
                 return EmptyView.Any;
 
             var f = (StoredFeature)child;
-            if (!f.BelongsToRelation())
+            if (!f.BelongsToRelation)
                 return EmptyView.Any;
 
             return new ParentRelationView(store, f.Buffer(), f.GetRelationTablePtr(), types, matcher, filter);
@@ -161,7 +161,7 @@ public abstract class View : IFeatures
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.membersOf(Feature)</c>.</remarks>
     public virtual IFeatures MembersOf(IFeature parent)
     {
-        if (parent.IsRelation())
+        if (parent.IsRelation)
             return ((StoredRelation)parent).Members(types, matcher, filter);
 
         // TODO: membersOf() for ways
@@ -174,7 +174,7 @@ public abstract class View : IFeatures
         if ((types & TypeBits.NODES) == 0)
             return EmptyView.Any;
 
-        if (parent.IsWay())
+        if (parent.IsWay)
         {
             var way = (StoredWay)parent;
             if (matcher != Matcher.ALL && (way.Flags() & IFeatureFlags.WAYNODE_FLAG) == 0)
@@ -195,7 +195,7 @@ public abstract class View : IFeatures
     // PORT: Java's View does not declare in(); it is abstract here so View can satisfy the
     // Features.in(Bounds) contract, with each concrete view providing the body.
     /// <remarks>Implements Java <c>com.geodesk.feature.Features.in(Bounds)</c> (abstract in this base).</remarks>
-    public abstract IFeatures In(Bounds bbox);
+    public abstract IFeatures In(IBounds bbox);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.select(Features)</c>.</remarks>
     public IFeatures Select(IFeatures otherFeatures)

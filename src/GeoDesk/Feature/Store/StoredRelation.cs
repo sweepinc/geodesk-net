@@ -23,13 +23,13 @@ internal class StoredRelation : StoredFeature, IRelation
     {
     }
 
-    public override FeatureType Type() => FeatureType.Relation;
+    public override FeatureType Type => FeatureType.Relation;
 
-    public bool IsRelation() => true;
+    public bool IsRelation => true;
 
     public override string ToString()
     {
-        return "relation/" + Id();
+        return "relation/" + Id;
     }
 
     public static int BodyPointer(NioBuffer buf, int ptr)
@@ -71,7 +71,7 @@ internal class StoredRelation : StoredFeature, IRelation
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredRelation.toGeometry()</c>.</remarks>
     public override Geometry ToGeometry()
     {
-        if (IsArea()) return PolygonBuilder.Build(store.GeometryFactory(), this);
+        if (IsArea) return PolygonBuilder.Build(store.GeometryFactory(), this);
         return ToGeometryCollection();
     }
 
@@ -86,14 +86,14 @@ internal class StoredRelation : StoredFeature, IRelation
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredRelation.gatherGeometries(List, MutableLongSet, Class)</c>.</remarks>
     Type? GatherGeometries(List<Geometry> geoms, HashSet<long> processedRelations, Type? commonType)
     {
-        processedRelations.Add(Id());
+        processedRelations.Add(Id);
 
         foreach (var member in this)
         {
-            if (member is StoredRelation memberRel && !memberRel.IsArea())
+            if (member is StoredRelation memberRel && !memberRel.IsArea)
             {
                 // Gather geometries from sub-relations that aren't areas
-                if (!processedRelations.Contains(memberRel.Id()))
+                if (!processedRelations.Contains(memberRel.Id))
                 {
                     // avoid endless recursion in case relations are in a reference cycle
                     commonType = memberRel.GatherGeometries(geoms, processedRelations, commonType);

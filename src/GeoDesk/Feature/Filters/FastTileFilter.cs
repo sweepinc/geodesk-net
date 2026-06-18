@@ -50,7 +50,7 @@ internal class FastTileFilter : IFilter
         var sf = (StoredFeature)feature;
         if ((sf.Flags() & IFeatureFlags.MULTITILE_FLAGS) == 0)
         {
-            var b = sf.Bounds();
+            var b = sf.Bounds;
             if (b.MinY >= _tileMinY && b.MaxX <= _tileMaxX) return _fastAccept;
         }
         if (geom == null) geom = feature.ToGeometry();

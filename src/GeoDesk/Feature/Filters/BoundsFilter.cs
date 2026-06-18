@@ -17,10 +17,10 @@ namespace GeoDesk.Feature.Filters;
 internal class BoundsFilter : IFilter
 {
 
-    readonly Bounds _bounds;
+    readonly IBounds _bounds;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.BoundsFilter(Bounds)</c>.</remarks>
-    public BoundsFilter(Bounds bounds)
+    public BoundsFilter(IBounds bounds)
     {
         _bounds = bounds;
     }
@@ -28,7 +28,7 @@ internal class BoundsFilter : IFilter
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.BoundsFilter.accept(Feature)</c>.</remarks>
     public bool Accept(IFeature feature)
     {
-        return _bounds.Intersects(feature.Bounds());
+        return _bounds.Intersects(feature.Bounds);
     }
 
     // TODO: Geometry?

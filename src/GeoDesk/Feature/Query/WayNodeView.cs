@@ -90,7 +90,7 @@ internal class WayNodeView : TableView
             var y = XY.Y(xy);
             if (_nextFeatureNode != null)
             {
-                if (_nextFeatureNode.X() == x && _nextFeatureNode.Y() == y)
+                if (_nextFeatureNode.X == x && _nextFeatureNode.Y == y)
                 {
                     var node = _nextFeatureNode;
                     _nextFeatureNode = _featureNodeIter!.HasNext() ? _featureNodeIter.Next() : null;

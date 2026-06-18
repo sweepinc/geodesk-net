@@ -42,11 +42,11 @@ namespace GeoDesk.Geom;
 // careful when translating code from JavaScript:
 // must cast ints explicitly into doubles
 /// <remarks>Ported from Java <c>com.geodesk.geom.OmtTreeBuilder</c>.</remarks>
-internal class OmtTreeBuilder<B> : ISpatialTreeBuilder<B> where B : Bounds
+internal class OmtTreeBuilder<B> : ISpatialTreeBuilder<B> where B : IBounds
 {
 
-    static readonly IComparer<Bounds> CompareMinX = new MinXComparer();
-    static readonly IComparer<Bounds> CompareMinY = new MinYComparer();
+    static readonly IComparer<IBounds> CompareMinX = new MinXComparer();
+    static readonly IComparer<IBounds> CompareMinY = new MinYComparer();
 
     readonly int _maxEntries;
     readonly ISpatialTreeFactory<B> _factory;
@@ -59,7 +59,7 @@ internal class OmtTreeBuilder<B> : ISpatialTreeBuilder<B> where B : Bounds
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.geom.OmtTreeBuilder.build(ArrayList, int, int, int, int)</c>.</remarks>
-    B Build(IList<Bounds> items, int left, int right, int height, int maxEntries)
+    B Build(IList<IBounds> items, int left, int right, int height, int maxEntries)
     {
         var n = right - left + 1;
         var m = maxEntries;
@@ -106,20 +106,20 @@ internal class OmtTreeBuilder<B> : ISpatialTreeBuilder<B> where B : Bounds
 
     // Port of Java's method reference OmtTreeBuilder::compareMinX.
     /// <remarks>Ported from Java <c>com.geodesk.geom.OmtTreeBuilder.compareMinX(Bounds, Bounds)</c>.</remarks>
-    sealed class MinXComparer : IComparer<Bounds>
+    sealed class MinXComparer : IComparer<IBounds>
     {
-        public int Compare(Bounds? a, Bounds? b) => a!.MinX - b!.MinX;
+        public int Compare(IBounds? a, IBounds? b) => a!.MinX - b!.MinX;
     }
 
     // Port of Java's method reference OmtTreeBuilder::compareMinY.
     /// <remarks>Ported from Java <c>com.geodesk.geom.OmtTreeBuilder.compareMinY(Bounds, Bounds)</c>.</remarks>
-    sealed class MinYComparer : IComparer<Bounds>
+    sealed class MinYComparer : IComparer<IBounds>
     {
-        public int Compare(Bounds? a, Bounds? b) => a!.MinY - b!.MinY;
+        public int Compare(IBounds? a, IBounds? b) => a!.MinY - b!.MinY;
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.geom.OmtTreeBuilder.build(ArrayList)</c>.</remarks>
-    public B Build(IList<Bounds> items)
+    public B Build(IList<IBounds> items)
     {
         return Build(items, 0, items.Count - 1, 0, _maxEntries);
     }

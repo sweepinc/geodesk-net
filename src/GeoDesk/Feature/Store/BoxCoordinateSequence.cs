@@ -35,7 +35,7 @@ internal class BoxCoordinateSequence : CoordinateSequence
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.BoxCoordinateSequence(Bounds)</c>.</remarks>
-    public BoxCoordinateSequence(Bounds b)
+    public BoxCoordinateSequence(IBounds b)
         : this(b.MinX, b.MinY, b.MaxX, b.MaxY)
     {
     }

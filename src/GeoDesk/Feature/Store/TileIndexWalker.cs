@@ -23,7 +23,7 @@ namespace GeoDesk.Feature.Store;
 internal class TileIndexWalker
 {
 
-    Bounds? _bounds;
+    IBounds? _bounds;
     readonly NioBuffer _buf;
     readonly Level _root;
     Level _current;
@@ -67,13 +67,13 @@ internal class TileIndexWalker
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker.start(Bounds)</c>.</remarks>
-    public void Start(Bounds bounds)
+    public void Start(IBounds bounds)
     {
         Start(bounds, null);
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker.start(Bounds, Filter)</c>.</remarks>
-    public void Start(Bounds bounds, IFilter? filter)
+    public void Start(IBounds bounds, IFilter? filter)
     {
         _bounds = bounds;
         _filter = filter;
@@ -260,7 +260,7 @@ internal class TileIndexWalker
         internal IFilter? filter;
 
         /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker.Level.init(ByteBuffer, int, int, Bounds, Filter)</c>.</remarks>
-        internal void Init(NioBuffer buf, int pEntry, int parentTile, Bounds bounds, IFilter? filter)
+        internal void Init(NioBuffer buf, int pEntry, int parentTile, IBounds bounds, IFilter? filter)
         {
             this.filter = filter;
             var zoom = Tile.Zoom(topLeftChildTile);

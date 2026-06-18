@@ -21,7 +21,7 @@ namespace GeoDesk.Feature.Filters;
 internal class PointDistanceFilter : IFilter
 {
 
-    readonly Bounds _bounds;
+    readonly IBounds _bounds;
     readonly int _px;
     readonly int _py;
     readonly double _distanceSquared;
@@ -37,7 +37,7 @@ internal class PointDistanceFilter : IFilter
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.PointDistanceFilter.bounds()</c>.</remarks>
-    public Bounds Bounds()
+    public IBounds Bounds()
     {
         return _bounds;
     }
@@ -64,7 +64,7 @@ internal class PointDistanceFilter : IFilter
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.PointDistanceFilter.isWithinDistance(StoredWay)</c>.</remarks>
     bool IsWithinDistance(StoredWay way)
     {
-        if (way.IsArea())
+        if (way.IsArea)
         {
             if (SegmentsWithinDistance(way, IFeatureFlags.AREA_FLAG)) return true;
             // The distance of a point that lies within a polygon is zero; we need to perform p-in-p
@@ -84,17 +84,17 @@ internal class PointDistanceFilter : IFilter
         }
         if (feature is INode)
         {
-            return DistanceSq(feature.X(), feature.Y(), _px, _py) < _distanceSquared;
+            return DistanceSq(feature.X, feature.Y, _px, _py) < _distanceSquared;
         }
         var rel = (IRelation)feature;
-        if (rel.IsArea())
+        if (rel.IsArea)
         {
             // measure distance to the ways that define shell and holes, and also perform point in
             // polygon test
             var odd = 0;
             foreach (var member in rel.Members().Ways())   // TODO: use role filter
             {
-                var role = member.Role();
+                var role = member.Role;
                 if (role == "outer" || role == "inner")
                 {
                     var way = (StoredWay)member;

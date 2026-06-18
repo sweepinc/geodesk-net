@@ -168,7 +168,7 @@ public class ConcurTest : IDisposable
         long len = 0;
         foreach (var parent in world.Relations())
         {
-            foreach (var child in parent.Members()) len += child.Role()!.Length;
+            foreach (var child in parent.Members()) len += child.Role!.Length;
         }
         return len;
     }
@@ -209,7 +209,7 @@ public class ConcurTest : IDisposable
     long tags_count()
     {
         long count = 0;
-        foreach (var f in world) count += f.Tags().Size();
+        foreach (var f in world) count += f.Tags.Size();
         return count;
     }
 
@@ -218,7 +218,7 @@ public class ConcurTest : IDisposable
         long count = 0;
         foreach (var f in world)
         {
-            var tags = f.Tags();
+            var tags = f.Tags;
             while (tags.Next()) count++;
         }
         return count;
@@ -229,7 +229,7 @@ public class ConcurTest : IDisposable
         long totalLen = 0;
         foreach (var f in world)
         {
-            var tags = f.Tags();
+            var tags = f.Tags;
             while (tags.Next()) totalLen += tags.Key()!.Length;
         }
         return totalLen;
@@ -240,7 +240,7 @@ public class ConcurTest : IDisposable
         long totalLen = 0;
         foreach (var f in world)
         {
-            var tags = f.Tags();
+            var tags = f.Tags;
             while (tags.Next()) totalLen += tags.StringValue()!.Length;
         }
         return totalLen;
@@ -251,7 +251,7 @@ public class ConcurTest : IDisposable
         long sum = 0;
         foreach (var f in world)
         {
-            var tags = f.Tags();
+            var tags = f.Tags;
             while (tags.Next()) sum += tags.LongValue();
         }
         return sum;
@@ -262,8 +262,8 @@ public class ConcurTest : IDisposable
         long hash = 0;
         foreach (var f in world)
         {
-            hash ^= f.X();
-            hash ^= f.Y();
+            hash ^= f.X;
+            hash ^= f.Y;
         }
         return hash;
     }
@@ -273,8 +273,8 @@ public class ConcurTest : IDisposable
         long hash = 0;
         foreach (var f in world)
         {
-            hash ^= (long)(Mercator.LonPrecision7FromX(f.X()) * 10000000);
-            hash ^= (long)(Mercator.LatPrecision7FromY(f.Y()) * 10000000);
+            hash ^= (long)(Mercator.LonPrecision7FromX(f.X) * 10000000);
+            hash ^= (long)(Mercator.LatPrecision7FromY(f.Y) * 10000000);
         }
         return hash;
     }
@@ -286,8 +286,8 @@ public class ConcurTest : IDisposable
         {
             foreach (var node in way.Nodes())
             {
-                hash ^= (long)(Mercator.LonPrecision7FromX(node.X()) * 10000000);
-                hash ^= (long)(Mercator.LatPrecision7FromY(node.Y()) * 10000000);
+                hash ^= (long)(Mercator.LonPrecision7FromX(node.X) * 10000000);
+                hash ^= (long)(Mercator.LatPrecision7FromY(node.Y) * 10000000);
             }
         }
         return hash;
@@ -296,7 +296,7 @@ public class ConcurTest : IDisposable
     long id_hash()
     {
         long hash = 0;
-        foreach (var f in world) hash ^= f.Id();
+        foreach (var f in world) hash ^= f.Id;
         return hash;
     }
 

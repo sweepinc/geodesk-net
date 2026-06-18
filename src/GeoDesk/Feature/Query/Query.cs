@@ -29,7 +29,7 @@ namespace GeoDesk.Feature.Query;
 // NodeParentView) call Query.Next() directly and rely on it returning null once the query is
 // exhausted.
 /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query</c>.</remarks>
-internal class Query : IEnumerator<IFeature>, Bounds
+internal class Query : IEnumerator<IFeature>, IBounds
 {
 
     readonly FeatureStore _store;

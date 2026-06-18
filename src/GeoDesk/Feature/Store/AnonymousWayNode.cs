@@ -50,55 +50,34 @@ internal class AnonymousWayNode : INode
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.AnonymousWayNode.id()</c>.</remarks>
-    public long Id()
-    {
-        return 0;
-    }
+    public long Id => 0;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.AnonymousWayNode.type()</c>.</remarks>
-    public FeatureType Type()
-    {
-        return FeatureType.Node;
-    }
+    public FeatureType Type => FeatureType.Node;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.AnonymousWayNode.isNode()</c>.</remarks>
-    public bool IsNode()
-    {
-        return true;
-    }
+    public bool IsNode => true;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.AnonymousWayNode.x()</c>.</remarks>
-    public int X()
-    {
-        return _x;
-    }
+    public int X => _x;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.AnonymousWayNode.y()</c>.</remarks>
-    public int Y()
-    {
-        return _y;
-    }
+    public int Y => _y;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.AnonymousWayNode.toXY()</c>.</remarks>
     public int[] ToXY()
     {
         var coords = new int[2];
-        coords[0] = X();
-        coords[1] = Y();
+        coords[0] = X;
+        coords[1] = Y;
         return coords;
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.AnonymousWayNode.bounds()</c>.</remarks>
-    public Box Bounds()
-    {
-        return new Box(_x, _y);
-    }
+    public Box Bounds => new Box(_x, _y);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.AnonymousWayNode.tags()</c>.</remarks>
-    public ITags Tags()
-    {
-        return EmptyTags.SINGLETON;
-    }
+    public ITags Tags => EmptyTags.SINGLETON;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.AnonymousWayNode.tag(String)</c>.</remarks>
     public string Tag(string k)
@@ -135,10 +114,7 @@ internal class AnonymousWayNode : INode
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.AnonymousWayNode.role()</c>.</remarks>
-    public string? Role()
-    {
-        return null;
-    }
+    public string? Role => null;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.AnonymousWayNode.stringValue(String)</c>.</remarks>
     public string StringValue(string key)
@@ -175,21 +151,15 @@ internal class AnonymousWayNode : INode
     /// relation.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.AnonymousWayNode.belongsToRelation()</c>.</remarks>
-    public bool BelongsToRelation()
-    {
-        return false;
-    }
+    public bool BelongsToRelation => false;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.AnonymousWayNode.isArea()</c>.</remarks>
-    public bool IsArea()
-    {
-        return false;
-    }
+    public bool IsArea => false;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.AnonymousWayNode.toGeometry()</c>.</remarks>
     public Geometry ToGeometry()
     {
-        return _store.GeometryFactory().CreatePoint(new Coordinate(X(), Y()));
+        return _store.GeometryFactory().CreatePoint(new Coordinate(X, Y));
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.AnonymousWayNode.equals(Object)</c>.</remarks>
@@ -197,7 +167,7 @@ internal class AnonymousWayNode : INode
     {
         if (!(other is INode otherNode))
             return false;
-        return otherNode.Id() == 0 && otherNode.X() == _x && otherNode.Y() == _y;
+        return otherNode.Id == 0 && otherNode.X == _x && otherNode.Y == _y;
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.AnonymousWayNode.hashCode()</c>.</remarks>
@@ -220,13 +190,13 @@ internal class AnonymousWayNode : INode
         IFilter newFilter = new ParentWayFilter(_x, _y);
         if (filter != null)
             newFilter = AndFilter.Create(newFilter, filter);
-        return new WorldView(_store, types, Bounds(), matcher, newFilter);
+        return new WorldView(_store, types, Bounds, matcher, newFilter);
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.AnonymousWayNode.parents()</c>.</remarks>
     public IFeatures Parents()
     {
-        return new WorldView(_store, TypeBits.WAYS, Bounds(), Matcher.ALL, new ParentWayFilter(_x, _y));
+        return new WorldView(_store, TypeBits.WAYS, Bounds, Matcher.ALL, new ParentWayFilter(_x, _y));
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.AnonymousWayNode.parents(String)</c>.</remarks>
@@ -235,7 +205,7 @@ internal class AnonymousWayNode : INode
         var matcher = _store.GetMatcher(query);
         if ((matcher.AcceptedTypes() & TypeBits.WAYS) == 0)
             return EmptyView.Any;
-        return new WorldView(_store, matcher.AcceptedTypes(), Bounds(), matcher, new ParentWayFilter(_x, _y));
+        return new WorldView(_store, matcher.AcceptedTypes(), Bounds, matcher, new ParentWayFilter(_x, _y));
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.AnonymousWayNode.ParentWayFilter</c>.</remarks>

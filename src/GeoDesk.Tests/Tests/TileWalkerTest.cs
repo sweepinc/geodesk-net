@@ -55,7 +55,7 @@ public class TileWalkerTest : IDisposable
         for (var run = 0; run < runs; run++)
         {
             var walker = new TileIndexWalker(world.Store());
-            Bounds targetBounds = bavaria.Bounds();
+            IBounds targetBounds = bavaria.Bounds;
             walker.Start(targetBounds);
             while (walker.Next())
             {

@@ -191,7 +191,7 @@ internal static class Tile
     /// <summary>
     /// Returns the top-left tile occupied by a bounding box.
     /// </summary>
-    public static int TopLeft(Bounds bbox, int zoom)
+    public static int TopLeft(IBounds bbox, int zoom)
     {
         return FromXYZ(bbox.MinX, bbox.MaxY, zoom);
     }
@@ -199,7 +199,7 @@ internal static class Tile
     /// <summary>
     /// Returns the bottom-right tile occupied by a bounding box.
     /// </summary>
-    public static int BottomRight(Bounds bbox, int zoom)
+    public static int BottomRight(IBounds bbox, int zoom)
     {
         return FromXYZ(bbox.MaxX, bbox.MinY, zoom);
     }
@@ -279,7 +279,7 @@ internal static class Tile
     /// Calculates a new BoundingBox that represents the area of overlap
     /// between the given bounds and the bounding box of a tile
     /// </summary>
-    public static Box Intersection(int tile, Bounds bounds)
+    public static Box Intersection(int tile, IBounds bounds)
     {
         int extent = 1 << (32 - Zoom(tile));
         int tileMinX = LeftX(tile);
@@ -297,7 +297,7 @@ internal static class Tile
     /// Returns the tile occupied by the given bounding box, or -1 if its extends
     /// across multiple tiles.
     /// </summary>
-    public static int FromBounds(Bounds bbox, int zoom)
+    public static int FromBounds(IBounds bbox, int zoom)
     {
         int topLeft = TopLeft(bbox, zoom);
         int bottomRight = BottomRight(bbox, zoom);

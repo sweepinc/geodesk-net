@@ -25,7 +25,7 @@ public class IntersectsTest : AbstractFeatureTest
         var list = new List<long>();
         foreach (var f in features)
         {
-            list.Add(FeatureId.Of(f.Type(), f.Id()));
+            list.Add(FeatureId.Of(f.Type, f.Id));
         }
         list.Sort();
         return list;

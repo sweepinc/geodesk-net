@@ -14,13 +14,13 @@ internal class Measure
     /// <remarks>Ported from Java <c>com.geodesk.geom.Measure.length(Feature)</c>.</remarks>
     public static double Length(GeoDesk.Feature.IFeature f)
     {
-        return f.Length();
+        return f.Length;
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.geom.Measure.area(Feature)</c>.</remarks>
     public static double Area(GeoDesk.Feature.IFeature f)
     {
-        return f.Area();
+        return f.Area;
     }
 
 }

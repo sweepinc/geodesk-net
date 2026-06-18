@@ -23,15 +23,15 @@ internal abstract class RTree
     public class Node : Box
     {
 
-        readonly List<Bounds> _children;
+        readonly List<IBounds> _children;
         readonly bool _isLeaf;
 
         /// <remarks>Ported from Java <c>com.geodesk.geom.RTree.Node(List, boolean)</c>.</remarks>
-        public Node(List<Bounds>? children, bool isLeaf)
+        public Node(List<IBounds>? children, bool isLeaf)
         {
             if (children == null)
             {
-                children = new List<Bounds>();
+                children = new List<IBounds>();
             }
             else
             {
@@ -45,18 +45,18 @@ internal abstract class RTree
         public bool IsLeaf => _isLeaf;
 
         /// <remarks>Ported from Java <c>com.geodesk.geom.RTree.Node.children()</c>.</remarks>
-        public List<Bounds> Children => _children;
+        public List<IBounds> Children => _children;
 
         // may only be called before tree is built
         /// <remarks>Ported from Java <c>com.geodesk.geom.RTree.Node.add(Bounds)</c>.</remarks>
-        internal void Add(Bounds child)
+        internal void Add(IBounds child)
         {
             _children.Add(child);
             ExpandToInclude(child);
         }
 
         /// <remarks>Ported from Java <c>com.geodesk.geom.RTree.Node.visit(Bounds, Consumer)</c>.</remarks>
-        public void Visit<T>(Bounds bbox, Action<T> consumer) where T : Bounds
+        public void Visit<T>(IBounds bbox, Action<T> consumer) where T : IBounds
         {
             if (_isLeaf)
             {
@@ -80,7 +80,7 @@ internal abstract class RTree
     public Node Root => root!;
 
     /// <remarks>Ported from Java <c>com.geodesk.geom.RTree.query(Bounds, Consumer)</c>.</remarks>
-    public void Query<T>(Bounds bbox, Action<T> consumer) where T : Bounds
+    public void Query<T>(IBounds bbox, Action<T> consumer) where T : IBounds
     {
         root!.Visit(bbox, consumer);
     }

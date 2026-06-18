@@ -93,7 +93,7 @@ internal static class FeaturesSupport
     internal static IFeatures Containing(IFeatures self, IFeature feature)
     {
         if (feature is INode)
-            return self.Select(new ContainsPointFilter(feature.X(), feature.Y()));
+            return self.Select(new ContainsPointFilter(feature.X, feature.Y));
         else
             return self.Select(new ContainsFilter(feature));
     }

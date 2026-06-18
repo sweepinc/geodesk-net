@@ -63,7 +63,7 @@ internal class ContainsFilter : IFilter
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ContainsFilter.accept(Feature, Geometry)</c>.</remarks>
     public bool Accept(IFeature feature, Geometry geom)
     {
-        Box featureBounds = feature.Bounds();
+        Box featureBounds = feature.Bounds;
         if (!featureBounds.Contains(_bounds)) return false;
         if (geom == null) geom = feature.ToGeometry();
 
@@ -87,7 +87,7 @@ internal class ContainsFilter : IFilter
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ContainsFilter.bounds()</c>.</remarks>
-    public Bounds Bounds()
+    public IBounds Bounds()
     {
         return _bounds;
     }

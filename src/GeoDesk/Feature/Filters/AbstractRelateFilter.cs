@@ -67,7 +67,7 @@ internal abstract class AbstractRelateFilter : IFilter
     public abstract bool Accept(IFeature feature, Geometry geom);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.AbstractRelateFilter.bounds()</c>.</remarks>
-    public Bounds Bounds()
+    public IBounds Bounds()
     {
         return bounds;
     }

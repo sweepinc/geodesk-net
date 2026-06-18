@@ -23,43 +23,43 @@ public interface IFeature : IEnumerable<IFeature>
 
     /// <summary>Returns the OSM ID of the feature.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Feature.id()</c>.</remarks>
-    long Id();
+    long Id { get; }
 
     /// <summary>Returns the feature's type (<c>Node</c>, <c>Way</c> or <c>Relation</c>).</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Feature.type()</c>.</remarks>
-    FeatureType Type();
+    FeatureType Type { get; }
 
     /// <summary>Checks if this Feature is an OSM node.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Feature.isNode()</c>.</remarks>
-    bool IsNode() => false;
+    bool IsNode => false;
 
     /// <summary>Checks if this Feature is an OSM way.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Feature.isWay()</c>.</remarks>
-    bool IsWay() => false;
+    bool IsWay => false;
 
     /// <summary>Checks if this Feature is an OSM relation.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Feature.isRelation()</c>.</remarks>
-    bool IsRelation() => false;
+    bool IsRelation => false;
 
     /// <summary>Returns the X coordinate of this feature (Mercator projection).</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Feature.x()</c>.</remarks>
-    int X();
+    int X { get; }
 
     /// <summary>Returns the Y coordinate of this feature (Mercator projection).</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Feature.y()</c>.</remarks>
-    int Y();
+    int Y { get; }
 
     /// <summary>Returns the longitude of this feature (degrees).</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Feature.lon()</c>.</remarks>
-    double Lon() => Mercator.LonFromX(X());
+    double Lon => Mercator.LonFromX(X);
 
     /// <summary>Returns the latitude of this feature (degrees).</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Feature.lat()</c>.</remarks>
-    double Lat() => Mercator.LatFromY(Y());
+    double Lat => Mercator.LatFromY(Y);
 
     /// <summary>Retrieves the bounding box of the feature.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Feature.bounds()</c>.</remarks>
-    Box Bounds();
+    Box Bounds { get; }
 
     /// <summary>
     /// Returns the way's coordinates as an array of integers. X at even indexes, Y at odd.
@@ -69,7 +69,7 @@ public interface IFeature : IEnumerable<IFeature>
 
     /// <summary>Returns the tags of this feature.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Feature.tags()</c>.</remarks>
-    ITags Tags();
+    ITags Tags { get; }
 
     /// <summary>Returns the string value of the given key (or an empty string).</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Feature.tag(String)</c>.</remarks>
@@ -94,7 +94,7 @@ public interface IFeature : IEnumerable<IFeature>
     /// Feature's role in that Relation.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Feature.role()</c>.</remarks>
-    string? Role();
+    string? Role { get; }
 
     /// <summary>Returns the value of a tag as a string.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Feature.stringValue(String)</c>.</remarks>
@@ -117,19 +117,19 @@ public interface IFeature : IEnumerable<IFeature>
 
     /// <summary>Checks whether this Feature is a member of a Relation.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Feature.belongsToRelation()</c>.</remarks>
-    bool BelongsToRelation();
+    bool BelongsToRelation { get; }
 
     /// <summary>Checks whether this Feature represents an area.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Feature.isArea()</c>.</remarks>
-    bool IsArea();
+    bool IsArea { get; }
 
     /// <summary>Measures the length of this feature (in meters), or 0 if not lineal.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Feature.length()</c>.</remarks>
-    double Length() => 0;
+    double Length => 0;
 
     /// <summary>Measures the area of a feature (in square meters), or 0 if not polygonal.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Feature.area()</c>.</remarks>
-    double Area() => 0;
+    double Area => 0;
 
     /// <summary>Creates a JTS Geometry object for this feature.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Feature.toGeometry()</c>.</remarks>

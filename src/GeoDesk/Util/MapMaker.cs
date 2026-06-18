@@ -72,7 +72,7 @@ internal class MapMaker
 
     /// <summary>Adds a Marker for the given bounding box.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.add(Bounds)</c>.</remarks>
-    public Marker Add(Bounds box)
+    public Marker Add(IBounds box)
     {
         return Add(new BoxMarker(box));
     }
@@ -175,7 +175,7 @@ internal class MapMaker
         }
 
         /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.GeometryMarker.bounds()</c>.</remarks>
-        public override Bounds Bounds()
+        public override IBounds Bounds()
         {
             return Box.FromEnvelope(_geom.EnvelopeInternal);
         }
@@ -255,16 +255,16 @@ internal class MapMaker
     class BoxMarker : Marker
     {
 
-        readonly Bounds _box;
+        readonly IBounds _box;
 
         /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.BoxMarker(Bounds)</c>.</remarks>
-        internal BoxMarker(Bounds box)
+        internal BoxMarker(IBounds box)
         {
             _box = box;
         }
 
         /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.BoxMarker.bounds()</c>.</remarks>
-        public override Bounds Bounds()
+        public override IBounds Bounds()
         {
             return _box;
         }
@@ -286,7 +286,7 @@ internal class MapMaker
     {
 
         /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.EmptyMarker.bounds()</c>.</remarks>
-        public override Bounds Bounds()
+        public override IBounds Bounds()
         {
             return new Box();       // TODO: cache
         }

@@ -22,7 +22,7 @@ public class IdLookupTest : AbstractFeatureTest
 
         var f = world.GetNode(presentId);
         Assert.NotNull(f);
-        Assert.Equal(presentId, f!.Id());
+        Assert.Equal(presentId, f!.Id);
 
         f = world.Select("n[place]").GetNode(presentId);
         Assert.NotNull(f);
@@ -43,7 +43,7 @@ public class IdLookupTest : AbstractFeatureTest
 
         var f = world.GetWay(presentId);
         Assert.NotNull(f);
-        Assert.Equal(presentId, f!.Id());
+        Assert.Equal(presentId, f!.Id);
 
         f = world.Select("a[building]").GetWay(presentId);
         Assert.NotNull(f);
@@ -70,7 +70,7 @@ public class IdLookupTest : AbstractFeatureTest
 
         var f = world.GetRelation(presentId);
         Assert.NotNull(f);
-        Assert.Equal(presentId, f!.Id());
+        Assert.Equal(presentId, f!.Id);
 
         f = world.Select("r[route_master]").GetRelation(presentId);
         Assert.NotNull(f);

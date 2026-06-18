@@ -38,7 +38,7 @@ internal class IdFilter : IFilter
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.IdFilter.accept(Feature)</c>.</remarks>
     public bool Accept(IFeature feature)
     {
-        return feature.Id() == id;
+        return feature.Id == id;
     }
 
 }

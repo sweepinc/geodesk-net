@@ -113,7 +113,7 @@ internal abstract class Marker
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.util.Marker.bounds()</c>.</remarks>
-    public abstract Bounds Bounds();
+    public abstract IBounds Bounds();
 
     /// <remarks>Ported from Java <c>com.geodesk.util.Marker.writeStub(Appendable)</c>.</remarks>
     protected abstract void WriteStub(TextWriter outp);

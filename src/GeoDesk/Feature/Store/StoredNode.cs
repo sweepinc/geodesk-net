@@ -29,45 +29,42 @@ internal class StoredNode : StoredFeature, INode
         return Enumerable.Empty<IFeature>().GetEnumerator();
     }
 
-    public override FeatureType Type() => FeatureType.Node;
+    public override FeatureType Type => FeatureType.Node;
 
-    public bool IsNode() => true;
+    public bool IsNode => true;
 
-    public override int X()
+    public override int X => buf.GetInt(ptr - 8);
+
+    public override int Y => buf.GetInt(ptr - 4);
+
+    public override Box Bounds
     {
-        return buf.GetInt(ptr - 8);
-    }
-
-    public override int Y()
-    {
-        return buf.GetInt(ptr - 4);
-    }
-
-    public override Box Bounds()
-    {
-        int x = X();
-        int y = Y();
-        if ((x | y) == 0)
+        get
         {
-            // If coordinates are 0/0, return an empty bbox (missing nodes)
-            return new Box();
+            int x = X;
+            int y = Y;
+            if ((x | y) == 0)
+            {
+                // If coordinates are 0/0, return an empty bbox (missing nodes)
+                return new Box();
+            }
+            return new Box(x, y);
         }
-        return new Box(x, y);
     }
 
     public override int[] ToXY()
     {
-        return new int[] { X(), Y() };
+        return new int[] { X, Y };
     }
 
     public override Geometry ToGeometry()
     {
-        return store.GeometryFactory().CreatePoint(new Coordinate(X(), Y()));
+        return store.GeometryFactory().CreatePoint(new Coordinate(X, Y));
     }
 
     public override string ToString()
     {
-        return "node/" + Id();
+        return "node/" + Id;
     }
 
     public override int GetRelationTablePtr()
@@ -80,10 +77,10 @@ internal class StoredNode : StoredFeature, INode
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.parentWays(int, Matcher, Filter)</c>.</remarks>
     public WorldView ParentWays(int types, Matcher matcher, IFilter? filter)
     {
-        IFilter newFilter = new ParentWayFilter(Id());
+        IFilter newFilter = new ParentWayFilter(Id);
         if (filter != null) newFilter = AndFilter.Create(newFilter, filter);
         return new WorldView(store, types & TypeBits.WAYS &
-            TypeBits.WAYNODE_FLAGGED, Bounds(), matcher, newFilter);
+            TypeBits.WAYNODE_FLAGGED, Bounds, matcher, newFilter);
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.parents(int, Matcher, Filter)</c>.</remarks>

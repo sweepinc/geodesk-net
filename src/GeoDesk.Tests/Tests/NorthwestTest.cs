@@ -53,9 +53,9 @@ public class NorthwestTest
         {
             foreach (var rel in world.Relations("ra[name='Euskirchener Straße'][type=public_transport]"))
             {
-                if (rel.Id() == 9675374)
+                if (rel.Id == 9675374)
                 {
-                    Log.Debug("Area = %s", rel.IsArea());
+                    Log.Debug("Area = %s", rel.IsArea);
                     foreach (var member in rel)
                     {
                         Log.Debug("- %s: %s", member, member.ToGeometry());

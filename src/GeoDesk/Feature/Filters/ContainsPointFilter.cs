@@ -18,7 +18,7 @@ namespace GeoDesk.Feature.Filters;
 internal class ContainsPointFilter : IFilter
 {
 
-    readonly Bounds _bounds;
+    readonly IBounds _bounds;
     readonly int _px;
     readonly int _py;
 
@@ -31,7 +31,7 @@ internal class ContainsPointFilter : IFilter
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ContainsPointFilter.bounds()</c>.</remarks>
-    public Bounds Bounds()
+    public IBounds Bounds()
     {
         return _bounds;
     }
@@ -40,12 +40,12 @@ internal class ContainsPointFilter : IFilter
     public bool Accept(IFeature feature)
     {
         // TODO: ways and nodes can also "contain" a point!
-        if (!feature.IsArea()) return false; // TODO: should set as pre-filter
+        if (!feature.IsArea) return false; // TODO: should set as pre-filter
         if (feature is StoredWay way)
             return PointInPolygon.TestFast(way.IterXY(IFeatureFlags.AREA_FLAG), _px, _py) != 0;
         else if (feature is StoredRelation rel)
             return IsInsideRelation(rel);
-        return _px == feature.X() && _py == feature.Y();
+        return _px == feature.X && _py == feature.Y;
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ContainsPointFilter.isInsideRelation(StoredRelation)</c>.</remarks>
@@ -54,9 +54,9 @@ internal class ContainsPointFilter : IFilter
         var crossings = 0;
         foreach (var member in rel.Members().Ways())
         {
-            var role = member.Role();
+            var role = member.Role;
             if (role != "outer" && role != "inner") continue;
-            Box memberBox = member.Bounds();
+            Box memberBox = member.Bounds;
             if (_py < memberBox.MinY || _py > memberBox.MaxY) continue;
             crossings ^= PointInPolygon.TestFast(((StoredWay)member).IterXY(0), _px, _py);
         }

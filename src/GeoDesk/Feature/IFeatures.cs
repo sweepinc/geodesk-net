@@ -65,7 +65,7 @@ public interface IFeatures : IEnumerable<IFeature>
     }
 
     /// <summary>Returns a view of features whose bounding box intersects the given bounds.</summary>
-    IFeatures In(Bounds bbox);
+    IFeatures In(IBounds bbox);
 
     /// <summary>Returns the first feature in the collection, or null if empty.</summary>
     IFeature? First() => FeaturesSupport.First(this);

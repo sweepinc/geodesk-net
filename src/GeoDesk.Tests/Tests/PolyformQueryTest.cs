@@ -29,7 +29,7 @@ public class PolyformQueryTest
                 .In(Box.OfWorld()))
             {
                 Log.Debug("%s: ", f);
-                Log.Debug("%s", f.Tags().ToString());
+                Log.Debug("%s", f.Tags.ToString());
             }
         }
         finally

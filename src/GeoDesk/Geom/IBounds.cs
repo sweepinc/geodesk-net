@@ -13,7 +13,7 @@ namespace GeoDesk.Geom;
 // In Java the computed members are interface default methods; here they are C#
 // default interface methods. They are callable on a reference typed as Bounds.
 /// <remarks>Ported from Java <c>com.geodesk.geom.Bounds</c>.</remarks>
-public interface Bounds
+public interface IBounds
 {
 
     /// <remarks>Ported from Java <c>com.geodesk.geom.Bounds.minX()</c>.</remarks>
@@ -30,7 +30,7 @@ public interface Bounds
 
     // TODO: doesn't work if both cross the 180
     /// <remarks>Ported from Java <c>com.geodesk.geom.Bounds.intersects(Bounds)</c>.</remarks>
-    bool Intersects(Bounds other)
+    bool Intersects(IBounds other)
     {
         return !(other.MinX > MaxX ||
             other.MaxX < MinX ||
@@ -43,16 +43,17 @@ public interface Bounds
     {
         var minX = MinX;
         var maxX = MaxX;
-        if (maxX < minX) return (x >= minX || x <= maxX) && y >= MinY && y <= MaxY;
-        return x >= minX && x <= maxX && y >= MinY && y <= MaxY;
+        if (maxX < minX)
+            return (x >= minX || x <= maxX) && y >= MinY && y <= MaxY;
+        else
+            return x >= minX && x <= maxX && y >= MinY && y <= MaxY;
     }
 
     // TODO: assumes Bounds are non-null!
     /// <remarks>Ported from Java <c>com.geodesk.geom.Bounds.contains(Bounds)</c>.</remarks>
-    bool Contains(Bounds other)
+    bool Contains(IBounds other)
     {
-        return other.MinX >= MinX && other.MaxX <= MaxX &&
-            other.MinY >= MinY && other.MaxY <= MaxY;
+        return other.MinX >= MinX && other.MaxX <= MaxX && other.MinY >= MinY && other.MaxY <= MaxY;
     }
 
     // TODO: check these, calculations are not consistent

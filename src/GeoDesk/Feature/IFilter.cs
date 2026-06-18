@@ -69,7 +69,7 @@ public interface IFilter
     /// </summary>
     /// <returns>a bounding box, or null if the filter does not use the spatial index</returns>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Filter.bounds()</c>.</remarks>
-    Bounds Bounds() => Box.OfWorld(); // TODO: use singleton
+    IBounds Bounds() => Box.OfWorld(); // TODO: use singleton
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.Filter.acceptedTypes()</c>.</remarks>
     int AcceptedTypes() => TypeBits.ALL;

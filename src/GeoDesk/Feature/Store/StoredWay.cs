@@ -28,13 +28,13 @@ internal class StoredWay : StoredFeature, IWay
     {
     }
 
-    public override FeatureType Type() => FeatureType.Way;
+    public override FeatureType Type => FeatureType.Way;
 
-    public bool IsWay() => true;
+    public bool IsWay => true;
 
     public override string ToString()
     {
-        return "way/" + Id();
+        return "way/" + Id;
     }
 
     // Iterates the way's coordinates as packed long x/y values.
@@ -121,7 +121,7 @@ internal class StoredWay : StoredFeature, IWay
     {
         GeometryFactory factory = store.GeometryFactory();
         WayCoordinateSequence coords = new WayCoordinateSequence(ToXY());
-        if (IsArea()) return factory.CreatePolygon(coords);
+        if (IsArea) return factory.CreatePolygon(coords);
         return factory.CreateLineString(coords);
     }
 
@@ -143,24 +143,27 @@ internal class StoredWay : StoredFeature, IWay
         return IterXY(buf.GetInt(ptr));
     }
 
-    public double Length()
+    public double Length
     {
-        if (IsArea()) return 0;
-        XYIterator iter = IterXY(0);
-        double total = 0;
-        long xy = iter.NextXY();
-        int prevX = XY.X(xy);
-        int prevY = XY.Y(xy);
-        while (iter.HasNext())
+        get
         {
-            xy = iter.NextXY();
-            int x = XY.X(xy);
-            int y = XY.Y(xy);
-            total += Mercator.Distance(prevX, prevY, x, y);
-            prevX = x;
-            prevY = y;
+            if (IsArea) return 0;
+            XYIterator iter = IterXY(0);
+            double total = 0;
+            long xy = iter.NextXY();
+            int prevX = XY.X(xy);
+            int prevY = XY.Y(xy);
+            while (iter.HasNext())
+            {
+                xy = iter.NextXY();
+                int x = XY.X(xy);
+                int y = XY.Y(xy);
+                total += Mercator.Distance(prevX, prevY, x, y);
+                prevX = x;
+                prevY = y;
+            }
+            return total;
         }
-        return total;
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.nodes()</c>.</remarks>

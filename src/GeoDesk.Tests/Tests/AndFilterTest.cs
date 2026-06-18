@@ -102,7 +102,7 @@ public class AndFilterTest : IDisposable
         {
             var len = runway.DoubleValue("length");
             if (len != 0) Log.Debug("Got explicit length: %f", len);
-            if (len == 0) len = runway.Length();
+            if (len == 0) len = runway.Length;
             if (len >= minLength)
             {
                 var airport = airports.Intersecting(runway).First();
@@ -118,7 +118,7 @@ public class AndFilterTest : IDisposable
             }
         }
         foreach (var f in suitableAirports) map.Add(f).Color("orange");
-        foreach (var f in suitableRunways) map.Add(f).Color("red").Tooltip(f.Tags().ToString());
+        foreach (var f in suitableRunways) map.Add(f).Color("red").Tooltip(f.Tags.ToString());
         map.Save("c:\\geodesk\\airports.html");
     }
 
@@ -134,7 +134,7 @@ public class AndFilterTest : IDisposable
 
         foreach (var f in runways)
         {
-            if (f.Id() == 149993709)
+            if (f.Id == 149993709)
             {
                 runway = f;
                 break;

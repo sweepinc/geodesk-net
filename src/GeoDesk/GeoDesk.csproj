@@ -9,10 +9,17 @@
     <!-- CA1416: FileStream.Lock is unsupported on macOS; store locking is best-effort
          and documented as a port limitation, so this is expected. -->
     <NoWarn>$(NoWarn);CS1591;CS0675;CA1416</NoWarn>
+    <!-- Shown on the NuGet.org package page. -->
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="GeoDesk.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Pack the solution README into the package so it renders on NuGet.org. -->
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
 
   <ItemGroup>

@@ -14,11 +14,11 @@ public class BoxMaker
 {
 
     readonly System.Random _random;
-    readonly Bounds _bounds;
+    readonly IBounds _bounds;
     readonly double _scale;
 
     /// <remarks>Ported from Java <c>com.geodesk.tests.BoxMaker(Bounds)</c>.</remarks>
-    public BoxMaker(Bounds bounds)
+    public BoxMaker(IBounds bounds)
     {
         _bounds = bounds;
         _random = new System.Random();
