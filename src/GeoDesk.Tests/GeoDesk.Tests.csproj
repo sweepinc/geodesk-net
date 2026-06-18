@@ -35,8 +35,9 @@
       them as None items copied to Fixtures\ in the output, where TestSettings.GolFile() finds them.
 
       - `gol` is assumed to be installed and on PATH (override with -p:GolTool=...).
-      - Built only when missing/stale (Inputs/Outputs). Failures are non-fatal (a warning is logged
-        and the dependent integration tests skip at runtime).
+      - Built only when missing/stale (Inputs/Outputs). If generation is enabled but the .gol is
+        not produced (tool missing, download failed), the build ERRORS — a fixture that was meant
+        to be produced but isn't would otherwise silently ship a package the tests can't run against.
       - Disable with -p:GenerateGolFixtures=false (e.g. offline / CI without the tool).
     -->
   <PropertyGroup>
@@ -85,8 +86,8 @@
           ContinueOnError="true"
           Condition="!Exists('$(GolFixtureDir)\%(GolFixture.Identity).gol') And Exists('$(GolFixtureDir)\%(GolFixture.Identity).osm.pbf')" />
 
-    <Warning Condition="!Exists('$(GolFixtureDir)\%(GolFixture.Identity).gol')"
-             Text="Could not generate %(GolFixture.Identity).gol. Install GOL Tool 2.0 (https://github.com/clarisma/geodesk-gol) so '$(GolTool)' is on PATH (or place the file in Fixtures\ manually). Integration tests needing this GOL will be skipped." />
+    <Error Condition="!Exists('$(GolFixtureDir)\%(GolFixture.Identity).gol')"
+           Text="Could not generate %(GolFixture.Identity).gol. Install GOL Tool 2.0 (https://github.com/clarisma/geodesk-gol) so '$(GolTool)' is on PATH (or place the file in Fixtures\ manually). Set -p:GenerateGolFixtures=false to skip fixture generation entirely." />
   </Target>
 
   <!--
