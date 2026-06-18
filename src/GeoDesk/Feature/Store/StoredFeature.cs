@@ -15,7 +15,6 @@ using GeoDesk.Geom;
 
 using NetTopologySuite.Geometries;
 
-using DecimalType = GeoDesk.Common.Math.Decimal;
 using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace GeoDesk.Feature.Store;
@@ -94,7 +93,8 @@ internal abstract class StoredFeature : IFeature
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.equals(Object)</c>.</remarks>
     public override bool Equals(object? other)
     {
-        if (other is not IFeature o) return false;
+        if (other is not IFeature o)
+            return false;
         return Type() == o.Type() && Id() == o.Id();
     }
 
@@ -117,7 +117,8 @@ internal abstract class StoredFeature : IFeature
             var tag = buf.GetInt(p);
             if ((char)tag >= keyBits)
             {
-                if ((tag & 0x7ffc) != keyBits) return 0;
+                if ((tag & 0x7ffc) != keyBits)
+                    return 0;
                 return ((long)(p + 2) << 32) | ((long)tag & 0xffff_ffffL);
             }
             p += 4 + (tag & 2);
@@ -138,7 +139,8 @@ internal abstract class StoredFeature : IFeature
         {
             return GetCommonKeyValue(pTags, key);
         }
-        if (uncommonKeysFlag == 0) return 0;
+        if (uncommonKeysFlag == 0)
+            return 0;
         var origin = pTags & unchecked((int)0xffff_fffc);
         p -= 6;
         for (; ; )
@@ -151,7 +153,8 @@ internal abstract class StoredFeature : IFeature
             {
                 return ((long)(p - 2) << 32) | flags | (((long)((char)tag)) << 16);
             }
-            if ((flags & 4) != 0) return 0;
+            if ((flags & 4) != 0)
+                return 0;
             p -= 6 + (flags & 2);
         }
     }
@@ -159,28 +162,35 @@ internal abstract class StoredFeature : IFeature
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.valueAsString(long)</c>.</remarks>
     string ValueAsString(long value)
     {
-        if (value == 0) return "";
+        if (value == 0)
+            return "";
+
         var typeAndSize = (int)value & 3;
         if (typeAndSize == 1)
         {
             return store.StringFromCode((char)(value >> 16));
         }
+
         if (typeAndSize == 3)
         {
             var ppValue = (int)(value >> 32);
             var pValueString = buf.GetInt(ppValue) + ppValue;
             return Bytes.ReadString(buf, pValueString);
         }
+
         if (typeAndSize == 0)
         {
             var number = (char)(value >> 16) + TagValues.MIN_NUMBER;
             return number.ToString(CultureInfo.InvariantCulture);
         }
+
         var wide = buf.GetInt((int)(value >> 32));
         var mantissa = (int)((uint)wide >> 2) + TagValues.MIN_NUMBER;
         var scale = wide & 3;
-        if (scale == 0) return mantissa.ToString(CultureInfo.InvariantCulture);
-        return DecimalType.ToString(DecimalType.Of(mantissa, scale));
+        if (scale == 0)
+            return mantissa.ToString(CultureInfo.InvariantCulture);
+
+        return DecimalCodec.ToString(DecimalCodec.Of(mantissa, scale));
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.valueAsInt(long)</c>.</remarks>
@@ -192,19 +202,23 @@ internal abstract class StoredFeature : IFeature
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.valueAsLong(long)</c>.</remarks>
     long ValueAsLong(long value)
     {
-        if (value == 0) return 0;
+        if (value == 0)
+            return 0;
+
         var typeAndSize = (int)value & 3;
         if (typeAndSize == 0)
         {
             return (char)(value >> 16) + (long)TagValues.MIN_NUMBER;
         }
+
         if (typeAndSize == 2)
         {
             var wide = buf.GetInt((int)(value >> 32));
             var mantissa = (int)((uint)wide >> 2) + TagValues.MIN_NUMBER;
             var scale = wide & 3;
-            return DecimalType.ToLong(DecimalType.Of(mantissa, scale));
+            return DecimalCodec.ToLong(DecimalCodec.Of(mantissa, scale));
         }
+
         if (typeAndSize == 3)
         {
             var ppValue = (int)(value >> 32);
@@ -212,6 +226,7 @@ internal abstract class StoredFeature : IFeature
             var s = Bytes.ReadString(buf, pValueString);
             return TagValues.ToLong(s);
         }
+
         var gs = store.StringFromCode((char)(value >> 16));
         return TagValues.ToLong(gs);
     }
@@ -219,19 +234,21 @@ internal abstract class StoredFeature : IFeature
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.valueAsDouble(long)</c>.</remarks>
     double ValueAsDouble(long value)
     {
-        if (value == 0) return 0;
+        if (value == 0)
+            return 0;
+
         var typeAndSize = (int)value & 3;
         if (typeAndSize == 0)
-        {
             return (char)(value >> 16) + (double)TagValues.MIN_NUMBER;
-        }
+
         if (typeAndSize == 2)
         {
             var wide = buf.GetInt((int)(value >> 32));
             var mantissa = (int)((uint)wide >> 2) + TagValues.MIN_NUMBER;
             var scale = wide & 3;
-            return DecimalType.ToDouble(DecimalType.Of(mantissa, scale));
+            return DecimalCodec.ToDouble(DecimalCodec.Of(mantissa, scale));
         }
+
         if (typeAndSize == 3)
         {
             var ppValue = (int)(value >> 32);
@@ -239,6 +256,7 @@ internal abstract class StoredFeature : IFeature
             var s = Bytes.ReadString(buf, pValueString);
             return MathUtils.DoubleFromString(s);
         }
+
         var gs = store.StringFromCode((char)(value >> 16));
         return MathUtils.DoubleFromString(gs);
     }
@@ -246,22 +264,23 @@ internal abstract class StoredFeature : IFeature
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.valueAsObject(long)</c>.</remarks>
     object ValueAsObject(long value)
     {
-        if (value == 0) return "";
+        if (value == 0)
+            return "";
+
         var typeAndSize = (int)value & 3;
         if (typeAndSize == 1)
-        {
             return store.StringFromCode((char)(value >> 16));
-        }
+
         if (typeAndSize == 3)
         {
             var ppValue = (int)(value >> 32);
             var pValueString = buf.GetInt(ppValue) + ppValue;
             return Bytes.ReadString(buf, pValueString);
         }
+
         if (typeAndSize == 0)
-        {
             return (char)(value >> 16) + TagValues.MIN_NUMBER;
-        }
+
         var wide = buf.GetInt((int)(value >> 32));
         return TagValues.WideNumberToDouble(wide);
     }
@@ -294,12 +313,13 @@ internal abstract class StoredFeature : IFeature
     public bool BooleanValue(string key)
     {
         var value = GetKeyValue(key);
-        if (value == 0) return false;
+        if (value == 0)
+            return false;
+
         var typeAndSize = (int)value & 3;
         if (typeAndSize == 1)
-        {
             return !store.StringFromCode((char)(value >> 16)).Equals("no");
-        }
+
         return true;
     }
 
@@ -351,20 +371,20 @@ internal abstract class StoredFeature : IFeature
     public bool BelongsTo(IFeature parent)
     {
         if (parent.IsRelation())
-        {
             return Parents().Relations().Contains(parent);
-        }
-        else if (parent.IsWay())
-        {
+
+        if (parent.IsWay())
             return Parents().Ways().Contains(parent);
-        }
+
         return false;
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.area()</c>.</remarks>
     public virtual double Area()
     {
-        if (!IsArea()) return 0;
+        if (!IsArea())
+            return 0;
+
         var avgY = (buf.GetInt(ptr - 12) + buf.GetInt(ptr - 4)) / 2;
         var scale = Mercator.MetersAtY(avgY);
         return ToGeometry().Area * scale * scale;
@@ -416,7 +436,8 @@ internal abstract class StoredFeature : IFeature
         /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.TagIterator.next()</c>.</remarks>
         public bool Next()
         {
-            if (_pNextTag < 0) return false;
+            if (_pNextTag < 0)
+                return false;
             if (_pNextTag < _pTagTable)
             {
                 var tag = _owner.buf.GetLong(_pNextTag);
@@ -515,7 +536,8 @@ internal abstract class StoredFeature : IFeature
             var pOld = _pNextTag;
             Reset();
             var count = 0;
-            while (Next()) count++;
+            while (Next())
+                count++;
             _pNextTag = pOld;
             return count;
         }

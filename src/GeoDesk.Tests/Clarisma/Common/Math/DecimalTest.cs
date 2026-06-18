@@ -7,7 +7,7 @@
 
 using Xunit;
 
-using DecimalType = GeoDesk.Common.Math.Decimal;
+using GeoDesk.Common.Math;
 
 namespace Clarisma.Common.Math;
 
@@ -15,8 +15,8 @@ public class DecimalTest
 {
     private static void Test(string original, bool strict, double expected, string expectedStr)
     {
-        long d = DecimalType.Parse(original, strict);
-        double actual = DecimalType.ToDouble(d);
+        long d = DecimalCodec.Parse(original, strict);
+        double actual = DecimalCodec.ToDouble(d);
         if (double.IsNaN(expected))
         {
             Assert.True(double.IsNaN(actual), $"expected NaN for \"{original}\" (strict={strict}), got {actual}");
@@ -26,7 +26,7 @@ public class DecimalTest
             Assert.True(System.Math.Abs(expected - actual) <= 0.0000001,
                 $"expected {expected} for \"{original}\" (strict={strict}), got {actual}");
         }
-        Assert.Equal(expectedStr, DecimalType.ToString(d));
+        Assert.Equal(expectedStr, DecimalCodec.ToString(d));
     }
 
     [Fact]
@@ -86,17 +86,17 @@ public class DecimalTest
     [Fact]
     public void TestToString()
     {
-        Assert.Equal("0.01", DecimalType.ToString(DecimalType.Of(1, 2)));
-        Assert.Equal("-0.003", DecimalType.ToString(DecimalType.Of(-3, 3)));
-        Assert.Equal("0.0000", DecimalType.ToString(DecimalType.Of(0, 4)));
-        Assert.Equal("33.000", DecimalType.ToString(DecimalType.Of(33000, 3)));
-        Assert.Equal("2.1", DecimalType.ToString(DecimalType.Of(21, 1)));
-        Assert.Equal("-55.22", DecimalType.ToString(DecimalType.Of(-5522, 2)));
-        Assert.Equal("-1042.5799000", DecimalType.ToString(DecimalType.Of(-10425799000L, 7)));
-        Assert.Equal("107", DecimalType.ToString(DecimalType.Of(107, 0)));
-        Assert.Equal("-4455", DecimalType.ToString(DecimalType.Of(-4455, 0)));
-        Assert.Equal("0", DecimalType.ToString(DecimalType.Of(0, 0)));
-        Assert.Equal("345678901234567890", DecimalType.ToString(DecimalType.Of(345678901234567890L, 0)));
-        Assert.Equal("-345678901234567890", DecimalType.ToString(DecimalType.Of(-345678901234567890L, 0)));
+        Assert.Equal("0.01", DecimalCodec.ToString(DecimalCodec.Of(1, 2)));
+        Assert.Equal("-0.003", DecimalCodec.ToString(DecimalCodec.Of(-3, 3)));
+        Assert.Equal("0.0000", DecimalCodec.ToString(DecimalCodec.Of(0, 4)));
+        Assert.Equal("33.000", DecimalCodec.ToString(DecimalCodec.Of(33000, 3)));
+        Assert.Equal("2.1", DecimalCodec.ToString(DecimalCodec.Of(21, 1)));
+        Assert.Equal("-55.22", DecimalCodec.ToString(DecimalCodec.Of(-5522, 2)));
+        Assert.Equal("-1042.5799000", DecimalCodec.ToString(DecimalCodec.Of(-10425799000L, 7)));
+        Assert.Equal("107", DecimalCodec.ToString(DecimalCodec.Of(107, 0)));
+        Assert.Equal("-4455", DecimalCodec.ToString(DecimalCodec.Of(-4455, 0)));
+        Assert.Equal("0", DecimalCodec.ToString(DecimalCodec.Of(0, 0)));
+        Assert.Equal("345678901234567890", DecimalCodec.ToString(DecimalCodec.Of(345678901234567890L, 0)));
+        Assert.Equal("-345678901234567890", DecimalCodec.ToString(DecimalCodec.Of(-345678901234567890L, 0)));
     }
 }

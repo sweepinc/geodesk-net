@@ -8,26 +8,12 @@
 namespace GeoDesk.Common.Math;
 
 /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal</c>.</remarks>
-internal class Decimal
+internal static class DecimalCodec
 {
 
     public const long Invalid = long.MinValue;
 
     const long Overflow = unchecked((long)0xf800_0000_0000_0000L);
-
-    readonly long _value;
-
-    /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal(long)</c>.</remarks>
-    Decimal(long value)
-    {
-        _value = value;
-    }
-
-    /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.fromString(String)</c>.</remarks>
-    public static Decimal FromString(string s)
-    {
-        return new Decimal(Parse(s, false));
-    }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.parse(String, boolean)</c>.</remarks>
     public static long Parse(string s, bool strict)
@@ -42,7 +28,8 @@ internal class Decimal
         var negative = false;
 
         var len = s.Length;
-        if (len == 0) return Invalid;
+        if (len == 0)
+            return Invalid;
 
         var i = 0;
         var first = s[i];
@@ -50,13 +37,16 @@ internal class Decimal
         {
             negative = true;
             i++;
-            if (i == len) return Invalid;
+            if (i == len)
+                return Invalid;
         }
         else if (first == '+')
         {
-            if (strict) return Invalid;
+            if (strict)
+                return Invalid;
             i++;
-            if (i == len) return Invalid;
+            if (i == len)
+                return Invalid;
         }
 
         while (i < len)
@@ -67,7 +57,9 @@ internal class Decimal
                 leadingZeroes |= seenZero && !seenNonZero;
                 seenZero = true;
                 value *= 10;
-                if ((value & Overflow) != 0) return Invalid;
+                if ((value & Overflow) != 0)
+                    return Invalid;
+
                 continue;
             }
             if (ch == '.')
@@ -82,7 +74,8 @@ internal class Decimal
                         break;
                     }
                     value = value * 10 + (ch - '0');
-                    if ((value & Overflow) != 0) return Invalid;
+                    if ((value & Overflow) != 0)
+                        return Invalid;
                     scale++;
                 }
                 break;
@@ -92,24 +85,31 @@ internal class Decimal
                 trailingNonNumeric = true;
                 break;
             }
+
             leadingZeroes |= seenZero && !seenNonZero;
             seenNonZero = true;
             value = value * 10 + (ch - '0');
-            if ((value & Overflow) != 0) return Invalid;
+            if ((value & Overflow) != 0)
+                return Invalid;
         }
 
         if (strict)
         {
-            if (trailingNonNumeric) return Invalid;
-            if (seenDot && (scale == 0 || (!seenZero && !seenNonZero)))
-            {
+            if (trailingNonNumeric)
                 return Invalid;
-            }
-            if (leadingZeroes) return Invalid;
-            if (value == 0 && negative) return Invalid;
+
+            if (seenDot && (scale == 0 || (!seenZero && !seenNonZero)))
+                return Invalid;
+
+            if (leadingZeroes)
+                return Invalid;
+
+            if (value == 0 && negative)
+                return Invalid;
         }
 
-        if (scale > 15) return Invalid;
+        if (scale > 15)
+            return Invalid;
 
         var result = (negative ? -value : value) << 4;
         return result | scale;
@@ -131,16 +131,22 @@ internal class Decimal
     /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.toLong(long)</c>.</remarks>
     public static long ToLong(long d)
     {
-        if (d == Invalid) return d;
+        if (d == Invalid)
+            return d;
+
         var scale = (int)d & 15;
-        if (scale == 0) return d >> 4;
+        if (scale == 0)
+            return d >> 4;
+
         long div = 10;
-        for (;;)
+        for (; ; )
         {
             scale--;
-            if (scale == 0) break;
+            if (scale == 0)
+                break;
             div *= 10;
         }
+
         return (d >> 4) / div;
     }
 
@@ -148,30 +154,25 @@ internal class Decimal
     /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.toDouble(long)</c>.</remarks>
     public static double ToDouble(long d)
     {
-        if (d == Invalid) return double.NaN;
+        if (d == Invalid)
+            return double.NaN;
+
         var scale = (int)d & 15;
         var mantissa = d >> 4;
-        if (scale == 0) return mantissa;
+        if (scale == 0)
+            return mantissa;
+
         long div = 10;
-        for (;;)
+        for (; ; )
         {
             scale--;
-            if (scale == 0) break;
+            if (scale == 0)
+                break;
+
             div *= 10;
         }
+
         return (double)mantissa / div;
-    }
-
-    /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.toFloat(long)</c>.</remarks>
-    public static float ToFloat(long d)
-    {
-        return (float)ToDouble(d);
-    }
-
-    /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.toInt(long)</c>.</remarks>
-    public static int ToInt(long d)
-    {
-        return (int)ToLong(d);
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.of(long, int)</c>.</remarks>
@@ -184,10 +185,13 @@ internal class Decimal
     /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.toString(long)</c>.</remarks>
     public static string ToString(long d)
     {
-        if (d == Invalid) return "invalid";
+        if (d == Invalid)
+            return "invalid";
+
         var scale = (int)d & 15;
         var s = (d >> 4).ToString(System.Globalization.CultureInfo.InvariantCulture);
-        if (scale == 0) return s;
+        if (scale == 0)
+            return s;
         var len = s.Length;
         char[] chars;
         if (d < 0)
@@ -197,7 +201,8 @@ internal class Decimal
                 var n = scale - len + 4;
                 chars = new char[scale + 3];
                 s.CopyTo(1, chars, n, len - 1);
-                for (var i = 1; i < n; i++) chars[i] = '0';
+                for (var i = 1; i < n; i++)
+                    chars[i] = '0';
             }
             else
             {
@@ -214,7 +219,8 @@ internal class Decimal
                 var n = scale - len + 2;
                 chars = new char[scale + 2];
                 s.CopyTo(0, chars, n, len);
-                for (var i = 0; i < n; i++) chars[i] = '0';
+                for (var i = 0; i < n; i++)
+                    chars[i] = '0';
             }
             else
             {
@@ -225,40 +231,6 @@ internal class Decimal
         }
         chars[chars.Length - scale - 1] = '.';
         return new string(chars);
-    }
-
-    /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.normalized(long)</c>.</remarks>
-    public static long Normalized(long d)
-    {
-        if (d == Invalid) return Invalid;
-        var scale = (int)d & 15;
-        var v = d >> 4;
-        while (scale > 0)
-        {
-            var x = v / 10;
-            if (x * 10 != v) break;
-            scale--;
-            v = x;
-        }
-        return (v << 4) | scale;
-    }
-
-    /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.intValue()</c>.</remarks>
-    public int IntValue => ToInt(_value);
-
-    /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.longValue()</c>.</remarks>
-    public long LongValue => ToLong(_value);
-
-    /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.floatValue()</c>.</remarks>
-    public float FloatValue => ToFloat(_value);
-
-    /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.doubleValue()</c>.</remarks>
-    public double DoubleValue => ToDouble(_value);
-
-    /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.toString()</c>.</remarks>
-    public override string ToString()
-    {
-        return ToString(_value);
     }
 
 }

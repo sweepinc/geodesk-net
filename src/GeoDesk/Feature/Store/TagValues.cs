@@ -9,8 +9,6 @@ using System.Globalization;
 
 using GeoDesk.Common.Math;
 
-using DecimalType = GeoDesk.Common.Math.Decimal;
-
 namespace GeoDesk.Feature.Store;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.store.TagValues</c>.</remarks>
@@ -38,8 +36,8 @@ internal static class TagValues
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.TagValues.isNarrowNumber(long)</c>.</remarks>
     public static bool IsNarrowNumber(long decimalValue)
     {
-        if (DecimalType.Scale(decimalValue) != 0) return false;
-        var mantissa = DecimalType.Mantissa(decimalValue);
+        if (DecimalCodec.Scale(decimalValue) != 0) return false;
+        var mantissa = DecimalCodec.Mantissa(decimalValue);
         return mantissa >= MIN_NUMBER && mantissa <= MAX_NARROW_NUMBER;
     }
 
