@@ -18,8 +18,8 @@ namespace GeoDesk.Tests.Feature.Query;
 
 /// <summary>
 /// End-to-end query of the generated monaco.gol fixture through the full
-/// FeatureLibrary -> WorldView -> Query -> TileQueryTask/RTreeQueryTask path
-/// (faithful ForkJoinPool execution). Soft-skips if no GOL fixture is available.
+/// FeatureLibrary -> WorldView -> Query -> TileScanner path
+/// (Parallel.ForEachAsync / Channel execution). Soft-skips if no GOL fixture is available.
 /// </summary>
 public class WorldQueryTest
 {

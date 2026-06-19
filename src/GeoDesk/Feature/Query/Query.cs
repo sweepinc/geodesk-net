@@ -7,17 +7,14 @@
 
 using System;
 using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Channels;
+using System.Threading.Tasks;
 
-using GeoDesk.Common.Util;
 using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Store;
 using GeoDesk.Geom;
-
-using Java.Util.Concurrent;
-
-using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace GeoDesk.Feature.Query;
 
@@ -28,6 +25,13 @@ namespace GeoDesk.Feature.Query;
 // surface (HasNext()/Next()) is preserved as well, because other ported iterators (e.g.
 // NodeParentView) call Query.Next() directly and rely on it returning null once the query is
 // exhausted.
+//
+// PORT: the Java engine used a ForkJoinPool shared by the store, throttling submitted tiles via
+// a pending-count and a BlockingCollection. In .NET the tiles are scanned by a background producer
+// (Parallel.ForEachAsync, bounded to MaxPendingTiles) that writes each tile's QueryResults into a
+// bounded Channel; the consumer (this cursor) drains the Channel synchronously. Within a tile the
+// index buckets are scanned in parallel by TileScanner. Cancellation is wired through _cts so that
+// abandoning the cursor (Dispose) stops the producer before the store can unmap its buffers.
 /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query</c>.</remarks>
 internal class Query : IEnumerator<IFeature>, IBounds
 {
@@ -41,15 +45,15 @@ internal class Query : IEnumerator<IFeature>, IBounds
 
     readonly int _types;
     readonly Matcher _matcher;
-    readonly ExecutorService _executor;
     readonly TileIndexWalker _tileWalker;
+
+    readonly Channel<QueryResults> _channel;
+    readonly CancellationTokenSource _cts;
+    Task _producer = Task.CompletedTask;
 
     QueryResults _currentResults;
     int _currentPos;
     IFeature? _nextFeature;
-    int _pendingTiles;
-    bool _allTilesRequested;
-    readonly BlockingCollection<TileQueryTask> _queue;
     volatile Exception? _error;
 
     IFeature? _enumeratorCurrent;
@@ -61,7 +65,6 @@ internal class Query : IEnumerator<IFeature>, IBounds
     public Query(WorldView view)
     {
         _store = view.store;
-        _executor = _store.Executor;
         _types = view.types;
         _matcher = view.matcher;
 
@@ -71,7 +74,12 @@ internal class Query : IEnumerator<IFeature>, IBounds
         _maxX = bbox.MaxX;
         _maxY = bbox.MaxY;
 
-        _queue = new BlockingCollection<TileQueryTask>();
+        _channel = Channel.CreateBounded<QueryResults>(new BoundedChannelOptions(_store.MaxPendingTiles)
+        {
+            SingleReader = true,
+            SingleWriter = false,
+        });
+        _cts = CancellationTokenSource.CreateLinkedTokenSource(_store.QueryCancellation);
         _tileWalker = new TileIndexWalker(_store);
         _currentResults = QueryResults.Empty;
 
@@ -99,76 +107,77 @@ internal class Query : IEnumerator<IFeature>, IBounds
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.maxY()</c>.</remarks>
     public int MaxY => _maxY;
 
-    /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.put(TileQueryTask)</c>.</remarks>
-    internal void Put(TileQueryTask task)
-    {
-        try
-        {
-            _queue.Add(task);
-        }
-        catch (Exception e)
-        {
-            Log.Error("%s", e);
-        }
-    }
-
-    /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.setError(Throwable)</c>.</remarks>
-    internal void SetError(Exception error)
-    {
-        _error = error;
-        // TODO: proper type for query-related exceptions
-    }
-
-    /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.take()</c>.</remarks>
-    internal TileQueryTask? Take()
-    {
-        try
-        {
-            return _queue.Take();
-        }
-        catch (InterruptedException)
-        {
-            return null;
-        }
-    }
-
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.start(Filter)</c>.</remarks>
     public void Start(IFilter? filter)
     {
-        _tileWalker.Start(this, filter);
         _currentResults = QueryResults.Empty;
         _currentPos = -1;
 
-        // Submit initial tasks
-        var maxPendingTiles = _store.MaxPendingTiles;
-        while (_pendingTiles < maxPendingTiles)
-        {
-            RequestTile();
-
-            if (!_tileWalker.Next())
-            {
-                // We've traversed all tiles
-                _allTilesRequested = true;
-                break;
-            }
-        }
+        _producer = ProduceAsync(filter, _cts.Token);
+        _store.TrackProducer(_producer);
 
         FetchNext();
     }
 
+    // PORT: replaces requestTile() + the ForkJoinPool submission throttle. Bounded by
+    // MaxPendingTiles via Parallel.ForEachAsync; each tile's results are written to the channel.
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.requestTile()</c>.</remarks>
-    void RequestTile()
+    async Task ProduceAsync(IFilter? filter, CancellationToken ct)
     {
-        var pool = (ForkJoinPool)_executor; // TODO!
-        var entry = _store.TileIndexEntry(_tileWalker.Tip());
-        if ((entry & 2) != 0)
+        try
         {
-            pool.Submit(new TileQueryTask(this, (int)((uint)entry >> 2), _tileWalker.NorthwestFlags(), _tileWalker.CurrentFilter()));
-            _pendingTiles++;
+            await Parallel.ForEachAsync(
+                EnumerateTiles(filter),
+                new ParallelOptions { MaxDegreeOfParallelism = _store.MaxPendingTiles, CancellationToken = ct },
+                async (tile, ct2) =>
+                {
+                    var results = await new TileScanner(this, tile.Page, tile.Flags, tile.Filter).ScanAsync();
+                    await _channel.Writer.WriteAsync(results, ct2);
+                }).ConfigureAwait(false);
+
+            _channel.Writer.TryComplete();
         }
-        else
+        catch (OperationCanceledException)
         {
-            _tileWalker.SkipChildren();
+            _channel.Writer.TryComplete();
+        }
+        catch (Exception ex)
+        {
+            _channel.Writer.TryComplete(ex);
+        }
+    }
+
+    // PORT: the leaf-tile walk from start()/requestTile(), expressed as a lazy sequence. The walker
+    // is stateful and not thread-safe, but Parallel.ForEachAsync enumerates the source on a single
+    // thread, while the scan bodies run in parallel over the already-extracted TileRefs.
+    IEnumerable<TileRef> EnumerateTiles(IFilter? filter)
+    {
+        _tileWalker.Start(this, filter);
+        do
+        {
+            var entry = _store.TileIndexEntry(_tileWalker.Tip());
+            if (FeatureStore.IsTileLoadedAndCurrent(entry))
+                yield return new TileRef(FeatureStore.PageFromEntry(entry), _tileWalker.NorthwestFlags(), _tileWalker.CurrentFilter());
+            else
+                _tileWalker.SkipChildren();
+        }
+        while (_tileWalker.Next());
+    }
+
+    // PORT: replaces take(). Blocks the consumer until the next tile's results arrive; returns null
+    // once the producer has completed and the channel is drained. A producer fault surfaces as the
+    // channel's completion exception, which is stashed and re-thrown from HasNext().
+    /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.take()</c>.</remarks>
+    QueryResults? TakeBatch()
+    {
+        try
+        {
+            return _channel.Reader.ReadAsync().AsTask().GetAwaiter().GetResult();
+        }
+        catch (ChannelClosedException e)
+        {
+            _error = e.InnerException;
+            return null;
         }
     }
 
@@ -185,34 +194,17 @@ internal class Query : IEnumerator<IFeature>, IBounds
                 _currentPos = 0;
                 if (_currentResults.next == null)
                 {
-                    // We've consumed all retrieved results
+                    // We've consumed all retrieved results; block for the next tile's results
 
-                    if (_pendingTiles == 0)
+                    var batch = TakeBatch();
+                    if (batch == null)
                     {
-                        // no further tasks are pending, we're done
+                        // producer is done (or faulted): no more results
                         _nextFeature = null;
                         return;
                     }
 
-                    // Retrieve the next task from the queue, blocking if necessary
-
-                    var task = Take()!;
-                    _pendingTiles -= task.TilesProcessed;
-                    while (!_allTilesRequested)
-                    {
-                        RequestTile();
-                        if (_tileWalker.Next())
-                        {
-                            if (_pendingTiles == _store.MaxPendingTiles)
-                                break;
-                        }
-                        else
-                        {
-                            _allTilesRequested = true;
-                        }
-                    }
-
-                    _currentResults = task.GetRawResult();
+                    _currentResults = batch;
                     continue;    // go back to loop since batch could be empty
                 }
 
@@ -282,9 +274,36 @@ internal class Query : IEnumerator<IFeature>, IBounds
         throw new NotSupportedException();
     }
 
+    // PORT: stops the background producer and waits for any in-flight tile scans to finish before
+    // returning, so the store can safely unmap buffers once all cursors are disposed.
     public void Dispose()
     {
+        _cts.Cancel();
+        try
+        {
+            _producer.Wait();
+        }
+        catch
+        {
+            // producer completes via cancellation/fault; nothing to surface here
+        }
+        _cts.Dispose();
+    }
 
+    // The data a tile scan needs, extracted from the (single-threaded) tile walk so the parallel
+    // scan bodies never touch the stateful walker.
+    readonly struct TileRef
+    {
+        public readonly int Page;
+        public readonly int Flags;
+        public readonly IFilter? Filter;
+
+        public TileRef(int page, int flags, IFilter? filter)
+        {
+            Page = page;
+            Flags = flags;
+            Filter = filter;
+        }
     }
 
 }

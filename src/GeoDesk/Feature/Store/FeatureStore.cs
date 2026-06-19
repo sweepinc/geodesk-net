@@ -8,12 +8,12 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Threading;
+using System.Threading.Tasks;
 
 using GeoDesk.Common.Pbf;
 using GeoDesk.Common.Store;
 using GeoDesk.Feature.Match;
-
-using Java.Util.Concurrent;
 
 using NetTopologySuite.Geometries;
 
@@ -44,10 +44,15 @@ internal class FeatureStore : FreeStore
     string[] _codesToStrings = Array.Empty<string>();
     Dictionary<int, int> _keysToCategories = new Dictionary<int, int>();
     MatcherCompiler? _matchers;
-    ExecutorService? _executor;
     GeometryFactory? _geometryFactory;
     int _maxPendingTiles;
     readonly object _matchersLock = new object();
+
+    // PORT: replaces the shared ForkJoinPool. Query producers run on the ThreadPool; the store
+    // tracks them so Close() can cancel and wait for in-flight tile scans before unmapping buffers.
+    readonly CancellationTokenSource _queryCancellation = new CancellationTokenSource();
+    readonly object _producersLock = new object();
+    readonly HashSet<Task> _producers = new HashSet<Task>();
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore(Path)</c>.</remarks>
     public FeatureStore(string path)
@@ -122,16 +127,33 @@ internal class FeatureStore : FreeStore
     void EnableQueries()
     {
         _matchers = new MatcherCompiler(_stringsToCodes, _codesToStrings, _keysToCategories);
-        _executor = new ForkJoinPool(); // TODO: ability to set parallelism
         _maxPendingTiles = Environment.ProcessorCount * 2;
         _geometryFactory = new GeometryFactory();
     }
 
-    /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.executor()</c>.</remarks>
-    public ExecutorService Executor => _executor!;
-
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.maxPendingTiles()</c>.</remarks>
     public int MaxPendingTiles => _maxPendingTiles;
+
+    // PORT: token a Query links its producer to, so Close() can cancel all in-flight scans.
+    internal CancellationToken QueryCancellation => _queryCancellation.Token;
+
+    // PORT: registers a Query's background producer so Close() can wait for it. The task removes
+    // itself from the set when it completes.
+    internal void TrackProducer(Task producer)
+    {
+        lock (_producersLock)
+        {
+            _producers.Add(producer);
+        }
+        producer.ContinueWith(static (t, state) =>
+        {
+            var self = (FeatureStore)state!;
+            lock (self._producersLock)
+            {
+                self._producers.Remove(t);
+            }
+        }, this, TaskScheduler.Default);
+    }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.tileIndexEntry(int)</c>.</remarks>
     public int TileIndexEntry(int tip)
@@ -220,20 +242,22 @@ internal class FeatureStore : FreeStore
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.close()</c>.</remarks>
     public new void Close()
     {
-        if (_executor != null)
+        // Cancel and wait for any in-flight query producers (and their tile scans) before allowing
+        // Store.close() to unmap the buffers (otherwise risk of crash).
+        _queryCancellation.Cancel();
+        Task[] pending;
+        lock (_producersLock)
         {
-            // Wait for pending tasks to complete before allowing
-            // Store.close() to unmap the buffers (otherwise risk of crash)
-
-            _executor.Shutdown();
-            try
-            {
-                _executor.AwaitTermination(24, TimeUnit.Hours);
-            }
-            catch (InterruptedException)
-            {
-                // do nothing
-            }
+            pending = new Task[_producers.Count];
+            _producers.CopyTo(pending);
+        }
+        try
+        {
+            Task.WaitAll(pending);
+        }
+        catch
+        {
+            // producers complete via cancellation; any faults were already surfaced to consumers
         }
         base.Close();
     }

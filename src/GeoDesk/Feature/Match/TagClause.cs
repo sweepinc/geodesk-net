@@ -121,8 +121,7 @@ internal class TagClause : Variable, IComparable<TagClause>
             if (other.IsKeyRequired())
             {
                 // [!k][k] and [!k][k=v] will never yield any results
-                throw new QueryException(string.Format(CultureInfo.InvariantCulture,
-                    "Conflicting clauses for key {0}", Name));
+                throw new QueryException(string.Format(CultureInfo.InvariantCulture, "Conflicting clauses for key {0}", Name));
             }
             else if (other._exp != null)
             {
