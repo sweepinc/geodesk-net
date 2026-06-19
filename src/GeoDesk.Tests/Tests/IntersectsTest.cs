@@ -9,76 +9,51 @@ using System.Collections.Generic;
 
 using GeoDesk.Common.Util;
 using GeoDesk.Feature;
-using GeoDesk.Feature.Filters;
+using GeoDesk.Geom;
+
+using NetTopologySuite.Geometries;
 
 using Xunit;
 
 namespace GeoDesk.Tests.Tests;
 
+// PORT: the Java original checked that "restaurants within a country = the union of restaurants
+// within its states" over German data, plus a USA benchmark (dropped). Rebased onto monaco as the
+// same decomposition invariant using two half-boxes that tile a whole box.
 /// <remarks>Ported from Java <c>com.geodesk.tests.IntersectsTest</c>.</remarks>
 public class IntersectsTest : AbstractFeatureTest
 {
 
-    /// <remarks>Ported from Java <c>com.geodesk.tests.IntersectsTest.getFeatures(Features)</c>.</remarks>
-    static List<long> GetFeatures(IFeatureQuery features)
+    static HashSet<long> Ids(IFeatureQuery q)
     {
-        var list = new List<long>();
-        foreach (var f in features)
-        {
-            list.Add(FeatureId.Of(f.Type, f.Id));
-        }
-        list.Sort();
-        return list;
+        var set = new HashSet<long>();
+        foreach (var f in q) set.Add(FeatureId.Of(f.Type, f.Id));
+        return set;
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.tests.IntersectsTest.testIntersects()</c>.</remarks>
-    [Fact(Skip = "Data-coupled integration test: depends on dataset-specific values (OSM IDs, feature counts, place names), or a GOL fixture not built in this repo; passes only against the original dataset extracts used upstream. See PORT.md.")]
+    [Fact]
     public void TestIntersects()
     {
-        var restaurants = world.Select("na[amenity=restaurant]");
-        var country = world
-            .Select("a[boundary=administrative][admin_level=2][name:en=Germany]")
-            .First()!.ToGeometry();
-        var states = world
-            .Select("a[boundary=administrative][admin_level=4][name]")
-            .Select(new SlowWithinFilter(country)).ToList();
+        if (world is null) return;
 
-        var inCountry = GetFeatures(restaurants.Select(new SlowWithinFilter(country)));
-        var inStates = new List<long>();
-        foreach (var state in states)
-        {
-            Log.Debug("- %s", state.StringValue("name"));
-            var inState = GetFeatures(restaurants.Select(new SlowIntersectsFilter(state.ToGeometry())));
-            inStates.AddRange(inState);
-        }
+        var factory = new GeometryFactory();
+        var whole = Box.OfWSEN(7.40, 43.72, 7.44, 43.75); // central Monaco
+        var left = Box.OfWSEN(7.40, 43.72, 7.42, 43.75);
+        var right = Box.OfWSEN(7.42, 43.72, 7.44, 43.75); // left and right tile `whole`
 
-        inStates.Sort();
-        TestUtils.CompareSets("country", inCountry, "all_states", inStates);
-    }
+        var streets = world.Select("w[highway]");
+        var inWhole = Ids(streets.Intersecting(whole.ToGeometry(factory)));
+        var inLeft = Ids(streets.Intersecting(left.ToGeometry(factory)));
+        var inRight = Ids(streets.Intersecting(right.ToGeometry(factory)));
 
-    /// <remarks>Ported from Java <c>com.geodesk.tests.IntersectsTest.timeQuery(String, Features)</c>.</remarks>
-    static void TimeQuery(string fmt, IFeatureQuery features)
-    {
-        for (var i = 0; i < 5; i++)
-        {
-            var start = System.Diagnostics.Stopwatch.GetTimestamp();
-            var count = features.Count();
-            var elapsed = System.Diagnostics.Stopwatch.GetElapsedTime(start);
-            System.Console.Write(fmt, count);
-            System.Console.Write(": {0:F3} seconds\n", elapsed.TotalSeconds);
-        }
-    }
+        var union = new HashSet<long>(inLeft);
+        union.UnionWith(inRight);
 
-    /// <remarks>Ported from Java <c>com.geodesk.tests.IntersectsTest.testBuildingsUSA()</c>.</remarks>
-    [Fact(Skip = "Data-coupled integration test: depends on dataset-specific values (OSM IDs, feature counts, place names), or a GOL fixture not built in this repo; passes only against the original dataset extracts used upstream. See PORT.md.")]
-    public void TestBuildingsUSA()
-    {
-        var buildings = world.Select("a[building=yes]");
-        var country = world
-            .Select("a[boundary=administrative][admin_level=2][name='United States']")
-            .First()!.ToGeometry();
-        TimeQuery("%d buildings intersect USA", buildings.Intersecting(country));
-        TimeQuery("%d buildings within USA", buildings.Within(country));
+        // a feature intersects the whole box iff it intersects one of the two halves
+        Assert.True(inWhole.SetEquals(union),
+            "Intersecting(whole) must equal Intersecting(left) ∪ Intersecting(right)");
+        Assert.NotEmpty(inWhole);
     }
 
 }

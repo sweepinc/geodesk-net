@@ -5,27 +5,43 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-using GeoDesk.Common.Util;
+using GeoDesk.Feature;
 
 using Xunit;
 
 namespace GeoDesk.Tests.Tests;
 
+// PORT: the Java original printed the bicycle routes connected to a specific German route_master.
+// Rebased onto monaco's road network: ConnectedTo must find ways sharing a node with the source,
+// and they must all be ways.
 /// <remarks>Ported from Java <c>com.geodesk.tests.ConnectedToTest</c>.</remarks>
 public class ConnectedToTest : AbstractFeatureTest
 {
 
     /// <remarks>Ported from Java <c>com.geodesk.tests.ConnectedToTest.testConnectedTo()</c>.</remarks>
-    [Fact(Skip = "Data-coupled integration test: depends on dataset-specific values (OSM IDs, feature counts, place names), or a GOL fixture not built in this repo; passes only against the original dataset extracts used upstream. See PORT.md.")]
+    [Fact]
     public void TestConnectedTo()
     {
-        var route = world
-            .Select("r[type=route_master][route_master=bicycle][ref=D10]")
-            .First();
+        if (world is null) return;
 
-        foreach (var f in world.Select("r[route=bicycle]").ConnectedTo(route!))
+        // Find a highway that connects to other highways (monaco's network is connected).
+        IFeature? hub = null;
+        var searched = 0;
+        foreach (var street in world.Select("w[highway]"))
         {
-            Log.Debug("- %s %s", f, f.StringValue("name"));
+            if (world.Select("w[highway]").ConnectedTo(street).Count() > 0)
+            {
+                hub = street;
+                break;
+            }
+            if (++searched >= 100) break;
+        }
+
+        Assert.NotNull(hub); // expected connected highways in monaco
+
+        foreach (var f in world.Select("w[highway]").ConnectedTo(hub!))
+        {
+            Assert.Equal(FeatureType.Way, f.Type);
         }
     }
 

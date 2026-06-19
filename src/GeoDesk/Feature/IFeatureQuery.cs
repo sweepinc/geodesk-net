@@ -80,8 +80,8 @@ public interface IFeatureQuery : IEnumerable<IFeature>
     /// <summary>Creates an array containing all features in this collection.</summary>
     IFeature[] ToArray() => FeaturesSupport.ToArray(this);
 
-    /// <summary>Checks whether this collection contains the given object.</summary>
-    bool Contains(object f) => FeaturesSupport.Contains(this, f);
+    /// <summary>Checks whether this collection contains the given feature.</summary>
+    bool Contains(IFeature feature) => FeaturesSupport.Contains(this, feature);
 
     /// <summary>Returns a view filtered by the given <see cref="IFilter"/>.</summary>
     IFeatureQuery Select(IFilter filter);

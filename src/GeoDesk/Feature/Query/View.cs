@@ -235,49 +235,131 @@ public abstract class View : IFeatureQuery
     // view type directly (C# default interface methods are reachable only through the interface).
     // Both these and the IFeatures defaults delegate to FeaturesSupport, so the logic lives once.
 
-    public IFeature? First() => FeaturesSupport.First(this);
-    public long Count() => FeaturesSupport.Count(this);
-    public bool IsEmpty() => FeaturesSupport.IsEmpty(this);
-    public List<IFeature> ToList() => FeaturesSupport.ToList(this);
-    public IFeature[] ToArray() => FeaturesSupport.ToArray(this);
-    public void AddTo(ICollection<IFeature> collection) => FeaturesSupport.AddTo(this, collection);
+    /// <inheritdoc />
+    public virtual IFeature? First() => FeaturesSupport.First(this);
 
-    public INode? GetNode(long id) => FeaturesSupport.GetNode(this, id);
-    public IWay? GetWay(long id) => FeaturesSupport.GetWay(this, id);
-    public IRelation? GetRelation(long id) => FeaturesSupport.GetRelation(this, id);
+    /// <inheritdoc />
+    public virtual long Count() => FeaturesSupport.Count(this);
 
-    public IFeatureQuery ConnectedTo(IFeature f) => FeaturesSupport.ConnectedTo(this, f);
-    public IFeatureQuery ConnectedTo(Geometry geom) => FeaturesSupport.ConnectedTo(this, geom);
-    public IFeatureQuery ContainingXY(int x, int y) => FeaturesSupport.ContainingXY(this, x, y);
-    public IFeatureQuery ContainingLonLat(double lon, double lat) => FeaturesSupport.ContainingLonLat(this, lon, lat);
-    public IFeatureQuery Containing(IFeature feature) => FeaturesSupport.Containing(this, feature);
-    public IFeatureQuery Containing(Geometry geom) => FeaturesSupport.Containing(this, geom);
-    public IFeatureQuery Containing(IPreparedGeometry prepared) => FeaturesSupport.Containing(this, prepared);
-    public IFeatureQuery CoveredBy(IFeature feature) => FeaturesSupport.CoveredBy(this, feature);
-    public IFeatureQuery CoveredBy(Geometry geom) => FeaturesSupport.CoveredBy(this, geom);
-    public IFeatureQuery CoveredBy(IPreparedGeometry prepared) => FeaturesSupport.CoveredBy(this, prepared);
-    public IFeatureQuery Crossing(IFeature feature) => FeaturesSupport.Crossing(this, feature);
-    public IFeatureQuery Crossing(Geometry geom) => FeaturesSupport.Crossing(this, geom);
-    public IFeatureQuery Crossing(IPreparedGeometry prepared) => FeaturesSupport.Crossing(this, prepared);
-    public IFeatureQuery Disjoint(IFeature feature) => FeaturesSupport.Disjoint(this, feature);
-    public IFeatureQuery Disjoint(Geometry geom) => FeaturesSupport.Disjoint(this, geom);
-    public IFeatureQuery Disjoint(IPreparedGeometry prepared) => FeaturesSupport.Disjoint(this, prepared);
-    public IFeatureQuery Intersecting(IFeature feature) => FeaturesSupport.Intersecting(this, feature);
-    public IFeatureQuery Intersecting(Geometry geom) => FeaturesSupport.Intersecting(this, geom);
-    public IFeatureQuery Intersecting(IPreparedGeometry prepared) => FeaturesSupport.Intersecting(this, prepared);
-    public IFeatureQuery MaxMetersFromXY(double distance, int x, int y) => FeaturesSupport.MaxMetersFromXY(this, distance, x, y);
-    public IFeatureQuery MaxMetersFromLonLat(double distance, double lon, double lat) => FeaturesSupport.MaxMetersFromLonLat(this, distance, lon, lat);
-    public IFeatureQuery MaxMetersFrom(double distance, Geometry geom) => FeaturesSupport.MaxMetersFrom(this, distance, geom);
-    public IFeatureQuery MaxMetersFrom(double distance, IFeature feature) => FeaturesSupport.MaxMetersFrom(this, distance, feature);
-    public IFeatureQuery Overlapping(IFeature feature) => FeaturesSupport.Overlapping(this, feature);
-    public IFeatureQuery Overlapping(Geometry geom) => FeaturesSupport.Overlapping(this, geom);
-    public IFeatureQuery Overlapping(IPreparedGeometry prepared) => FeaturesSupport.Overlapping(this, prepared);
-    public IFeatureQuery Touching(IFeature feature) => FeaturesSupport.Touching(this, feature);
-    public IFeatureQuery Touching(Geometry geom) => FeaturesSupport.Touching(this, geom);
-    public IFeatureQuery Touching(IPreparedGeometry prepared) => FeaturesSupport.Touching(this, prepared);
-    public IFeatureQuery Within(IFeature feature) => FeaturesSupport.Within(this, feature);
-    public IFeatureQuery Within(Geometry geom) => FeaturesSupport.Within(this, geom);
-    public IFeatureQuery Within(IPreparedGeometry prepared) => FeaturesSupport.Within(this, prepared);
+    /// <inheritdoc />
+    public virtual bool IsEmpty() => FeaturesSupport.IsEmpty(this);
+
+    /// <inheritdoc />
+    public virtual List<IFeature> ToList() => FeaturesSupport.ToList(this);
+
+    /// <inheritdoc />
+    public virtual IFeature[] ToArray() => FeaturesSupport.ToArray(this);
+
+    /// <inheritdoc />
+    public virtual bool Contains(IFeature f) => FeaturesSupport.Contains(this, f);
+
+    /// <inheritdoc />
+    public virtual void AddTo(ICollection<IFeature> collection) => FeaturesSupport.AddTo(this, collection);
+
+    /// <inheritdoc />
+    public virtual INode? GetNode(long id) => FeaturesSupport.GetNode(this, id);
+
+    /// <inheritdoc />
+    public virtual IWay? GetWay(long id) => FeaturesSupport.GetWay(this, id);
+
+    /// <inheritdoc />
+    public virtual IRelation? GetRelation(long id) => FeaturesSupport.GetRelation(this, id);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery ConnectedTo(IFeature f) => FeaturesSupport.ConnectedTo(this, f);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery ConnectedTo(Geometry geom) => FeaturesSupport.ConnectedTo(this, geom);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery ContainingXY(int x, int y) => FeaturesSupport.ContainingXY(this, x, y);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery ContainingLonLat(double lon, double lat) => FeaturesSupport.ContainingLonLat(this, lon, lat);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery Containing(IFeature feature) => FeaturesSupport.Containing(this, feature);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery Containing(Geometry geom) => FeaturesSupport.Containing(this, geom);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery Containing(IPreparedGeometry prepared) => FeaturesSupport.Containing(this, prepared);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery CoveredBy(IFeature feature) => FeaturesSupport.CoveredBy(this, feature);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery CoveredBy(Geometry geom) => FeaturesSupport.CoveredBy(this, geom);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery CoveredBy(IPreparedGeometry prepared) => FeaturesSupport.CoveredBy(this, prepared);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery Crossing(IFeature feature) => FeaturesSupport.Crossing(this, feature);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery Crossing(Geometry geom) => FeaturesSupport.Crossing(this, geom);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery Crossing(IPreparedGeometry prepared) => FeaturesSupport.Crossing(this, prepared);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery Disjoint(IFeature feature) => FeaturesSupport.Disjoint(this, feature);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery Disjoint(Geometry geom) => FeaturesSupport.Disjoint(this, geom);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery Disjoint(IPreparedGeometry prepared) => FeaturesSupport.Disjoint(this, prepared);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery Intersecting(IFeature feature) => FeaturesSupport.Intersecting(this, feature);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery Intersecting(Geometry geom) => FeaturesSupport.Intersecting(this, geom);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery Intersecting(IPreparedGeometry prepared) => FeaturesSupport.Intersecting(this, prepared);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery MaxMetersFromXY(double distance, int x, int y) => FeaturesSupport.MaxMetersFromXY(this, distance, x, y);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery MaxMetersFromLonLat(double distance, double lon, double lat) => FeaturesSupport.MaxMetersFromLonLat(this, distance, lon, lat);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery MaxMetersFrom(double distance, Geometry geom) => FeaturesSupport.MaxMetersFrom(this, distance, geom);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery MaxMetersFrom(double distance, IFeature feature) => FeaturesSupport.MaxMetersFrom(this, distance, feature);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery Overlapping(IFeature feature) => FeaturesSupport.Overlapping(this, feature);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery Overlapping(Geometry geom) => FeaturesSupport.Overlapping(this, geom);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery Overlapping(IPreparedGeometry prepared) => FeaturesSupport.Overlapping(this, prepared);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery Touching(IFeature feature) => FeaturesSupport.Touching(this, feature);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery Touching(Geometry geom) => FeaturesSupport.Touching(this, geom);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery Touching(IPreparedGeometry prepared) => FeaturesSupport.Touching(this, prepared);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery Within(IFeature feature) => FeaturesSupport.Within(this, feature);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery Within(Geometry geom) => FeaturesSupport.Within(this, geom);
+
+    /// <inheritdoc />
+    public virtual IFeatureQuery Within(IPreparedGeometry prepared) => FeaturesSupport.Within(this, prepared);
 
     /// <remarks>Implements Java <c>java.lang.Iterable.iterator()</c> (abstract in this base).</remarks>
     public abstract IEnumerator<IFeature> GetEnumerator();

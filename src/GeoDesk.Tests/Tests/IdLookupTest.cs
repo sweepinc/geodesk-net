@@ -5,81 +5,67 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+using System.Linq;
+
 using Xunit;
 
 namespace GeoDesk.Tests.Tests;
 
+// PORT: the Java original hard-coded OSM ids from a German extract. Rebased onto monaco by taking an
+// id *from* the fixture and asserting it round-trips, plus type-mismatch and absent-id behavior.
 /// <remarks>Ported from Java <c>com.geodesk.tests.IdLookupTest</c>.</remarks>
 public class IdLookupTest : AbstractFeatureTest
 {
 
+    const long AbsentId = long.MaxValue;
+
     /// <remarks>Ported from Java <c>com.geodesk.tests.IdLookupTest.testLookupNode()</c>.</remarks>
-    [Fact(Skip = "Data-coupled integration test: depends on dataset-specific values (OSM IDs, feature counts, place names), or a GOL fixture not built in this repo; passes only against the original dataset extracts used upstream. See PORT.md.")]
+    [Fact]
     public void TestLookupNode()
     {
-        long presentId = 240109189;
-        long absentId = 1;
+        if (world is null) return;
 
-        var f = world.GetNode(presentId);
+        var id = world.Select("n").First().Id; // an id known to exist in monaco
+
+        var f = world.GetNode(id);
         Assert.NotNull(f);
-        Assert.Equal(presentId, f!.Id);
+        Assert.Equal(id, f!.Id);
 
-        f = world.Select("n[place]").GetNode(presentId);
-        Assert.NotNull(f);
-
-        f = world.Select("w").GetNode(presentId);
-        Assert.Null(f);
-
-        f = world.GetNode(absentId);
-        Assert.Null(f);
+        Assert.Null(world.Select("w").GetNode(id)); // that id is not a way
+        Assert.Null(world.GetNode(AbsentId));        // absent id
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.tests.IdLookupTest.testLookupWay()</c>.</remarks>
-    [Fact(Skip = "Data-coupled integration test: depends on dataset-specific values (OSM IDs, feature counts, place names), or a GOL fixture not built in this repo; passes only against the original dataset extracts used upstream. See PORT.md.")]
+    [Fact]
     public void TestLookupWay()
     {
-        long presentId = 27426031;
-        long absentId = 1;
+        if (world is null) return;
 
-        var f = world.GetWay(presentId);
+        var id = world.Select("w").First().Id;
+
+        var f = world.GetWay(id);
         Assert.NotNull(f);
-        Assert.Equal(presentId, f!.Id);
+        Assert.Equal(id, f!.Id);
 
-        f = world.Select("a[building]").GetWay(presentId);
-        Assert.NotNull(f);
-
-        f = world.Select("n").GetWay(presentId);
-        Assert.Null(f);
-
-        f = world.Select("w").GetWay(presentId);
-        Assert.Null(f);
-
-        f = world.Select("r").GetWay(presentId);
-        Assert.Null(f);
-
-        f = world.GetWay(absentId);
-        Assert.Null(f);
+        Assert.Null(world.Select("n").GetWay(id)); // that id is not a node
+        Assert.Null(world.Select("r").GetWay(id)); // nor a relation
+        Assert.Null(world.GetWay(AbsentId));
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.tests.IdLookupTest.testLookupRelation()</c>.</remarks>
-    [Fact(Skip = "Data-coupled integration test: depends on dataset-specific values (OSM IDs, feature counts, place names), or a GOL fixture not built in this repo; passes only against the original dataset extracts used upstream. See PORT.md.")]
+    [Fact]
     public void TestLookupRelation()
     {
-        long presentId = 2599004;
-        long absentId = 1;
+        if (world is null) return;
 
-        var f = world.GetRelation(presentId);
+        var id = world.Select("r").First().Id;
+
+        var f = world.GetRelation(id);
         Assert.NotNull(f);
-        Assert.Equal(presentId, f!.Id);
+        Assert.Equal(id, f!.Id);
 
-        f = world.Select("r[route_master]").GetRelation(presentId);
-        Assert.NotNull(f);
-
-        f = world.Select("r[restriction]").GetRelation(presentId);
-        Assert.Null(f);
-
-        f = world.GetRelation(absentId);
-        Assert.Null(f);
+        Assert.Null(world.Select("n").GetRelation(id)); // that id is not a node
+        Assert.Null(world.GetRelation(AbsentId));
     }
 
 }

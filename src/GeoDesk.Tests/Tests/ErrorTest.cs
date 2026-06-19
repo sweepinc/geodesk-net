@@ -40,18 +40,25 @@ public class ErrorTest : AbstractFeatureTest
 
     }
 
+    // PORT: Issue #22 — a filter that throws mid-query must surface its error to the caller (not
+    // hang or swallow it). Monaco has far more than 10 ways, so BadFilter throws; we assert the
+    // exception propagates out of the query. This also exercises the engine's error path (the
+    // background scan's fault is surfaced through to the consuming enumerator).
     /// <remarks>Ported from Java <c>com.geodesk.tests.ErrorTest.testFilterError()</c> (Issue #22).</remarks>
-    [Fact(Skip = "Data-coupled integration test: depends on dataset-specific values (OSM IDs, feature counts, place names), or a GOL fixture not built in this repo; passes only against the original dataset extracts used upstream. See PORT.md.")]
+    [Fact]
     public void TestFilterError()
     {
-        var count = 0;
-        var badFilter = new BadFilter();
+        if (world is null) return;
 
-        foreach (var f in world.Select("w").Select(badFilter))
+        var badFilter = new BadFilter();
+        var ex = Assert.ThrowsAny<Exception>(() =>
         {
-            count++;
-            Log.Debug("%d: %s", count, f);
-        }
+            foreach (var f in world.Select("w").Select(badFilter))
+            {
+                // drain the query; BadFilter throws once it has accepted more than 10 features
+            }
+        });
+        Assert.Contains("BadFilter", ex.ToString());
     }
 
 }

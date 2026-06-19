@@ -6,97 +6,59 @@
  */
 
 using System;
-using System.Diagnostics;
+using System.IO;
 
-using GeoDesk.Common.Util;
 using GeoDesk.Feature;
 using GeoDesk.Feature.Store;
 using GeoDesk.Geom;
-using GeoDesk.Util;
-
-using NetTopologySuite.Geometries;
-using NetTopologySuite.Geometries.Prepared;
 
 using Xunit;
 
 namespace GeoDesk.Tests.Tests;
 
+// PORT: the Java original walked tiles over Bavaria's bbox 100× and drew an HTML map (no assertions).
+// Rebased onto monaco as a structural test: every tile the walker visits for a query bbox must
+// actually overlap that bbox.
 /// <remarks>Ported from Java <c>com.geodesk.tests.TileWalkerTest</c>.</remarks>
 public class TileWalkerTest : IDisposable
 {
 
-    readonly FeatureLibrary world;
+    readonly FeatureLibrary? world;
 
     public TileWalkerTest()
     {
-        world = new FeatureLibrary(TestSettings.GolFile());
+        var gol = TestSettings.GolFile();
+        if (File.Exists(gol)) world = new FeatureLibrary(gol);
     }
 
-    public void Dispose() => world.Close();
+    public void Dispose() => world?.Close();
 
     /// <remarks>Ported from Java <c>com.geodesk.tests.TileWalkerTest.testTileWalker()</c>.</remarks>
-    [Fact(Skip = "Data-coupled integration test: depends on dataset-specific values (OSM IDs, feature counts, place names), or a GOL fixture not built in this repo; passes only against the original dataset extracts used upstream. See PORT.md.")]
+    [Fact]
     public void TestTileWalker()
     {
-        var bavaria = world
-            .Select("a[boundary=administrative][admin_level=4][name:en=Bavaria]")
-            .In(Box.AtLonLat(12.0231, 48.3310))
-            .First();
-        var bavariaPoly = bavaria!.ToGeometry();
-        IPreparedGeometry bavariaPrepared = new PreparedPolygon((IPolygonal)bavariaPoly);
+        if (world is null) return;
 
-        var map = new MapMaker();
+        // Use a real feature's bounds (already in the store's coordinate system) as the query box.
+        IBounds target = world.Select("w[highway]").First().Bounds;
+        var walker = new TileIndexWalker(world.Store);
+        walker.Start(target);
+
+        // The walker is a do-while cursor: CurrentTile is valid right after Start(), and Next()
+        // advances. (Monaco fits in a single tile, so a plain while(Next()) loop would skip it.)
         var tileCount = 0;
-        var tilesAlwaysFiltered = 0;
-        var tilesOutside = 0;
-        var tilesInside = 0;
-        var start = Stopwatch.GetTimestamp();
-        const int runs = 100;
-        for (var run = 0; run < runs; run++)
+        do
         {
-            var walker = new TileIndexWalker(world.Store);
-            IBounds targetBounds = bavaria.Bounds;
-            walker.Start(targetBounds);
-            while (walker.Next())
-            {
-                var inside = false;
-                var outside = false;
-                tileCount++;
-                var box = Tile.Bounds(walker.CurrentTile());
-                if (box.MinX <= targetBounds.MinX && box.MinY <= targetBounds.MinY &&
-                    box.MaxX >= targetBounds.MaxX && box.MaxY >= targetBounds.MaxY)
-                {
-                    // If tile bbox contains the target bbox, no need to check tile, we always have
-                    // to apply filter
-                    tilesAlwaysFiltered++;
-                }
-                else
-                {
-                    Geometry tileGeom = world.GeometryFactory.CreatePolygon(new BoxCoordinateSequence(box));
-
-                    outside = bavariaPrepared.Disjoint(tileGeom);
-                    if (outside)
-                        inside = false;
-                    else
-                        inside = bavariaPrepared.ContainsProperly(tileGeom);
-                    if (run == 0 && !inside && !outside) map.Add(tileGeom);
-                    if (run == 0 && inside) map.Add(tileGeom).Color("green");
-                }
-                if (outside) tilesOutside++;
-                if (inside) tilesInside++;
-            }
+            var box = Tile.Bounds(walker.CurrentTile());
+            Assert.False(
+                box.MaxX < target.MinX || box.MinX > target.MaxX ||
+                box.MaxY < target.MinY || box.MinY > target.MaxY,
+                "the tile walker visited a tile that does not overlap the query bounds");
+            tileCount++;
         }
-        var end = Stopwatch.GetElapsedTime(start);
-        map.Add(bavariaPoly).Color("red");
-        map.Save("c:\\geodesk\\tile-walker-test-germany.html");
+        while (walker.Next());
 
-        Log.Debug("%d tiles in bbox", tileCount);
-        Log.Debug("  %d tiles outside", tilesOutside);
-        Log.Debug("  %d tiles inside", tilesInside);
-        Log.Debug("  %d tiles must be queried", tileCount - tilesOutside);
-        Log.Debug("  %d tiles must be filtered", tileCount - tilesInside - tilesOutside);
-        Log.Debug("    Of these, %d are always filtered, no tile geometry check needed", tilesAlwaysFiltered);
-        Log.Debug("Walking performed %d times in %d ms", runs, (long)end.TotalMilliseconds);
+        Assert.True(tileCount > 0, "expected the tile walker to visit tiles over central Monaco");
     }
 
 }

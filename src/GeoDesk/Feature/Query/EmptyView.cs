@@ -7,8 +7,8 @@
 
 using System.Collections.Generic;
 using System.Linq;
+
 using GeoDesk.Feature.Match;
-using GeoDesk.Feature.Store;
 using GeoDesk.Geom;
 
 namespace GeoDesk.Feature.Query;
@@ -20,9 +20,10 @@ internal class EmptyView : View
     public static readonly IFeatureQuery Any = new EmptyView();
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.EmptyView()</c>.</remarks>
-    public EmptyView()
-        : base(null!, 0, null!, null)
+    public EmptyView() :
+        base(null!, 0, null!, null)
     {
+
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.EmptyView.select(int, String)</c>.</remarks>
@@ -38,19 +39,13 @@ internal class EmptyView : View
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.EmptyView.isEmpty()</c>.</remarks>
-    public bool IsEmpty()
-    {
-        return true;
-    }
+    public override bool IsEmpty() => true;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.EmptyView.count()</c>.</remarks>
-    public long Count()
-    {
-        return 0;
-    }
+    public override long Count() => 0;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.EmptyView.contains(Object)</c>.</remarks>
-    public bool Contains(object f)
+    public override bool Contains(IFeature f)
     {
         return false;
     }

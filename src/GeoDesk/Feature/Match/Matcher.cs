@@ -26,6 +26,9 @@ internal class Matcher
         acceptedTypes = types;
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.Matcher.acceptedTypes()</c>.</remarks>
+    public int AcceptedTypes => acceptedTypes;
+
     /// <summary>
     /// Checks whether a feature meets the conditions of this Matcher.
     /// </summary>
@@ -79,13 +82,12 @@ internal class Matcher
     /// a <c>Matcher</c> to be applied to member features with the given role, or <c>null</c> if
     /// members with this role are not accepted
     /// </returns>
-    /// <remarks>Ported from Java <c>com.geodesk.feature.match.Matcher.acceptRole(int, String)</c>.</remarks>
+    /// <remarks>
+    /// Ported from Java <c>com.geodesk.feature.match.Matcher.acceptRole(int, String)</c>.
+    /// </remarks>
     public virtual Matcher? AcceptRole(int roleCode, string? roleString)
     {
         return this;
     }
-
-    /// <remarks>Ported from Java <c>com.geodesk.feature.match.Matcher.acceptedTypes()</c>.</remarks>
-    public int AcceptedTypes => acceptedTypes;
 
 }

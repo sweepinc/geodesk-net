@@ -58,8 +58,11 @@ internal sealed class TileScanner
         _maxY = query.MaxY;
     }
 
+    // Returns ValueTask: a tile with no accepted buckets completes synchronously (returns
+    // QueryResults.Empty without awaiting), so ValueTask avoids allocating a Task on that path. The
+    // single caller awaits the result exactly once, which is the required ValueTask usage.
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.TileQueryTask.exec()</c>.</remarks>
-    public async Task<QueryResults> ScanAsync()
+    public async ValueTask<QueryResults> ScanAsync()
     {
         // Fork one task per accepted index bucket across the requested type categories...
         var branches = new List<Task<QueryResults>>();
@@ -164,10 +167,8 @@ internal sealed class TileScanner
                     {
                         var pFeature = p + 16;
                         if (_matcher.Accept(_buf, pFeature))
-                        {
                             if (_filter == null || _filter.Accept(_store.GetFeature(_buf, pFeature)))
                                 results.Add(pFeature | (int)(((uint)flags >> 3) & 3));
-                        }
                     }
                 }
             }
