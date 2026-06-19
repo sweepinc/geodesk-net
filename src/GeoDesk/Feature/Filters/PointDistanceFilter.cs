@@ -37,10 +37,7 @@ internal class PointDistanceFilter : IFilter
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.PointDistanceFilter.bounds()</c>.</remarks>
-    public IBounds Bounds()
-    {
-        return _bounds;
-    }
+    public IBounds Bounds => _bounds;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.PointDistanceFilter.segmentsWithinDistance(StoredWay, int)</c>.</remarks>
     bool SegmentsWithinDistance(StoredWay way, int areaFlag)

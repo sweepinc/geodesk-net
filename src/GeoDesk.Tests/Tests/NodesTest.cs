@@ -29,10 +29,9 @@ public class NodesTest : AbstractFeatureTest
         foreach (var node in world.Nodes("n[geodesk:duplicate]"))
         {
             var tagCount = 0;
-            var tags = node.Tags;
-            while (tags.Next())
+            foreach (var tag in node.Tags)
             {
-                if (!tags.Key()!.StartsWith("geodesk:")) tagCount++;
+                if (!tag.Key.StartsWith("geodesk:")) tagCount++;
             }
             Assert.Equal(0, tagCount);
 
@@ -40,7 +39,7 @@ public class NodesTest : AbstractFeatureTest
             foreach (var otherNode in world.Nodes().In(Box.AtXY(node.X, node.Y)))
             {
                 if (otherNode.Equals(node)) continue;
-                Assert.False(otherNode.Tags.IsEmpty());
+                Assert.False(otherNode.Tags.IsEmpty);
                 nodeCount++;
             }
             Assert.True(nodeCount > 0);
@@ -61,10 +60,9 @@ public class NodesTest : AbstractFeatureTest
         foreach (var node in world.Nodes("n[geodesk:orphan]"))
         {
             var tagCount = 0;
-            var tags = node.Tags;
-            while (tags.Next())
+            foreach (var tag in node.Tags)
             {
-                if (!tags.Key()!.StartsWith("geodesk:")) tagCount++;
+                if (!tag.Key.StartsWith("geodesk:")) tagCount++;
             }
             Assert.Equal(0, tagCount);
 

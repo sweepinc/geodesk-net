@@ -121,7 +121,8 @@ internal class StoredWay : StoredFeature, IWay
     {
         GeometryFactory factory = store.GeometryFactory();
         WayCoordinateSequence coords = new WayCoordinateSequence(ToXY());
-        if (IsArea) return factory.CreatePolygon(coords);
+        if (IsArea)
+            return factory.CreatePolygon(coords);
         return factory.CreateLineString(coords);
     }
 
@@ -147,7 +148,8 @@ internal class StoredWay : StoredFeature, IWay
     {
         get
         {
-            if (IsArea) return 0;
+            if (IsArea)
+                return 0;
             XYIterator iter = IterXY(0);
             double total = 0;
             long xy = iter.NextXY();
@@ -167,17 +169,19 @@ internal class StoredWay : StoredFeature, IWay
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.nodes()</c>.</remarks>
-    public IFeatures Nodes()
+    public IFeatureQuery Nodes()
     {
         return new WayNodeView(store, buf, ptr);
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.nodes(String)</c>.</remarks>
-    public IFeatures Nodes(string query)
+    public IFeatureQuery Nodes(string query)
     {
-        if ((buf.Get(ptr) & IFeatureFlags.WAYNODE_FLAG) == 0) return EmptyView.Any;
+        if ((buf.Get(ptr) & IFeatureFlags.WAYNODE_FLAG) == 0)
+            return EmptyView.Any;
         Matcher matcher = store.GetMatcher(query);
-        if ((matcher.AcceptedTypes() & TypeBits.NODES) == 0) return EmptyView.Any;
+        if ((matcher.AcceptedTypes & TypeBits.NODES) == 0)
+            return EmptyView.Any;
         return new WayNodeView(store, buf, ptr, TypeBits.NODES, matcher, null);
     }
 
@@ -185,7 +189,8 @@ internal class StoredWay : StoredFeature, IWay
     public override IEnumerator<IFeature> GetEnumerator()
     {
         int flags = buf.GetInt(ptr);
-        if ((flags & IFeatureFlags.WAYNODE_FLAG) == 0) return Enumerable.Empty<IFeature>().GetEnumerator();
+        if ((flags & IFeatureFlags.WAYNODE_FLAG) == 0)
+            return Enumerable.Empty<IFeature>().GetEnumerator();
         int ppBody = ptr + 12;
         int pBody = buf.GetInt(ppBody) + ppBody;
         return new Iter(store, buf, pBody - 4 -
@@ -253,7 +258,9 @@ internal class StoredWay : StoredFeature, IWay
                     {
                         node = (int)BitOperations.RotateLeft((uint)node, 16);
                     }
+
                     _tex += (node >> 4);
+
                     if ((node & NfDifferentTile) != 0)
                     {
                         // TODO: test wide tip delta
@@ -270,13 +277,18 @@ internal class StoredWay : StoredFeature, IWay
                             tipDelta >>= 1;     // signed
                         }
                         _tip += tipDelta;
+
                         var entry = _store.TileIndexEntry(_tip);
-                        if (!FeatureStore.IsTileLoadedAndCurrent(entry)) throw new MissingTileException(_tip);
+                        if (!FeatureStore.IsTileLoadedAndCurrent(entry))
+                            throw new MissingTileException(_tip);
+
                         var tilePage = FeatureStore.PageFromEntry(entry);
                         _foreignBuf = _store.BufferOfPage(tilePage);
+
                         var ppExports = _store.OffsetOfPage(tilePage) + 24;
                         _pExports = ppExports + _foreignBuf.GetInt(ppExports);
                     }
+
                     nodeBuf = _foreignBuf!;
                     var ppExported = _pExports + (_tex << 2);
                     pNode = ppExported + _foreignBuf!.GetInt(ppExported);
@@ -287,6 +299,7 @@ internal class StoredWay : StoredFeature, IWay
                     nodeBuf = _buf;
                     pNode = _pNext + (node >> 1) + 2;
                 }
+
                 _pNext -= 4;
                 _pNext &= -1 + (node & NfLast);     // set _pNext to 0 if this is the last node
                 if (_filter.Accept(nodeBuf, pNode))
@@ -295,6 +308,7 @@ internal class StoredWay : StoredFeature, IWay
                     return;
                 }
             }
+
             _featureNode = null;
         }
 

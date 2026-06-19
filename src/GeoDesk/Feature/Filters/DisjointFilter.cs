@@ -43,10 +43,7 @@ internal class DisjointFilter : IFilter
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.DisjointFilter.strategy()</c>.</remarks>
-    public int Strategy()
-    {
-        return FilterStrategy.FastTileFilter | FilterStrategy.NeedsGeometry;
-    }
+    public int Strategy => FilterStrategy.FastTileFilter | FilterStrategy.NeedsGeometry;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.DisjointFilter.filterForTile(int, Polygon)</c>.</remarks>
     public IFilter? FilterForTile(int tile, Polygon tileGeometry)

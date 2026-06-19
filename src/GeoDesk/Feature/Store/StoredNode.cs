@@ -84,7 +84,7 @@ internal class StoredNode : StoredFeature, INode
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.parents(int, Matcher, Filter)</c>.</remarks>
-    public IFeatures Parents(int types, Matcher matcher, IFilter? filter)
+    public IFeatureQuery Parents(int types, Matcher matcher, IFilter? filter)
     {
         int acceptedFlags = ((types & TypeBits.RELATIONS) != 0) ?
             IFeatureFlags.RELATION_MEMBER_FLAG : 0;
@@ -110,16 +110,16 @@ internal class StoredNode : StoredFeature, INode
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.parents()</c>.</remarks>
-    public override IFeatures Parents()
+    public override IFeatureQuery Parents()
     {
         return Parents(TypeBits.RELATIONS | TypeBits.WAYS, Matcher.ALL, null);
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.parents(String)</c>.</remarks>
-    public override IFeatures Parents(string query)
+    public override IFeatureQuery Parents(string query)
     {
         Matcher matcher = store.GetMatcher(query);
-        return Parents(matcher.AcceptedTypes(), matcher, null);
+        return Parents(matcher.AcceptedTypes, matcher, null);
     }
 
     // TODO: No need to dereference the nodes in a way; we could simply check for

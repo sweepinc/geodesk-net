@@ -19,7 +19,7 @@ namespace GeoDesk.Tests.Tests;
 public class MapMakerTest : IDisposable
 {
 
-    readonly IFeatures features;
+    readonly IFeatureQuery features;
 
     public MapMakerTest()
     {

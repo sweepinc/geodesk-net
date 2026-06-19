@@ -6,7 +6,9 @@
  */
 
 using System;
+
 using GeoDesk.Geom;
+
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Geometries.Implementation;
 

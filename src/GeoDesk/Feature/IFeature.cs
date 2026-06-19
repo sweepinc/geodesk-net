@@ -69,7 +69,7 @@ public interface IFeature : IEnumerable<IFeature>
 
     /// <summary>Returns the tags of this feature.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Feature.tags()</c>.</remarks>
-    ITags Tags { get; }
+    TagCollection Tags { get; }
 
     /// <summary>Returns the string value of the given key (or an empty string).</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Feature.tag(String)</c>.</remarks>
@@ -137,40 +137,40 @@ public interface IFeature : IEnumerable<IFeature>
 
     /// <summary>Returns the way's nodes.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Feature.nodes()</c>.</remarks>
-    IFeatures Nodes()
+    IFeatureQuery Nodes()
     {
         return EmptyView.Any;
     }
 
     /// <summary>Returns the way's nodes that match the given query.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Feature.nodes(String)</c>.</remarks>
-    IFeatures Nodes(string query)
+    IFeatureQuery Nodes(string query)
     {
         return EmptyView.Any;
     }
 
     /// <summary>Returns the members of this Relation.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Feature.members()</c>.</remarks>
-    IFeatures Members()
+    IFeatureQuery Members()
     {
         return EmptyView.Any;
     }
 
     /// <summary>Returns the members of this Relation that match the given query.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Feature.members(String)</c>.</remarks>
-    IFeatures Members(string query)
+    IFeatureQuery Members(string query)
     {
         return EmptyView.Any;
     }
 
     /// <summary>Returns all ways and relations to which this Feature belongs.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Feature.parents()</c>.</remarks>
-    IFeatures Parents();
+    IFeatureQuery Parents();
 
     /// <summary>
     /// Returns all ways and relations to which this Feature belongs that match the given query.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Feature.parents(String)</c>.</remarks>
-    IFeatures Parents(string query);
+    IFeatureQuery Parents(string query);
 
 }

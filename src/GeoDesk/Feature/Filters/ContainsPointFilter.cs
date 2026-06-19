@@ -31,10 +31,7 @@ internal class ContainsPointFilter : IFilter
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ContainsPointFilter.bounds()</c>.</remarks>
-    public IBounds Bounds()
-    {
-        return _bounds;
-    }
+    public IBounds Bounds => _bounds;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ContainsPointFilter.accept(Feature)</c>.</remarks>
     public bool Accept(IFeature feature)

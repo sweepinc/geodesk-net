@@ -32,7 +32,7 @@ internal abstract class TableView : View
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.TableView.in(Bounds)</c>.</remarks>
-    public override IFeatures In(IBounds bbox)
+    public override IFeatureQuery In(IBounds bbox)
     {
         return Select(new BoundsFilter(bbox));
     }

@@ -7,6 +7,7 @@
 
 using GeoDesk.Feature.Match;
 using GeoDesk.Geom;
+
 using NetTopologySuite.Geometries;
 
 namespace GeoDesk.Feature;
@@ -24,7 +25,7 @@ public interface IFilter
     /// </summary>
     /// <returns>a bit set of strategy flags</returns>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Filter.strategy()</c>.</remarks>
-    int Strategy() => 0;
+    int Strategy => 0;
 
     /// <summary>
     /// Checks whether the given feature should be included in the query results.
@@ -69,9 +70,9 @@ public interface IFilter
     /// </summary>
     /// <returns>a bounding box, or null if the filter does not use the spatial index</returns>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Filter.bounds()</c>.</remarks>
-    IBounds Bounds() => Box.OfWorld(); // TODO: use singleton
+    IBounds Bounds => Box.OfWorld(); // TODO: use singleton
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.Filter.acceptedTypes()</c>.</remarks>
-    int AcceptedTypes() => TypeBits.ALL;
+    int AcceptedTypes => TypeBits.ALL;
 
 }

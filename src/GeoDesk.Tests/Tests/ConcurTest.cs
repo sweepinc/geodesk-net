@@ -6,8 +6,6 @@
  */
 
 using System;
-using System.Linq;
-using System.Reflection;
 
 using GeoDesk.Feature;
 using GeoDesk.Geom;
@@ -16,15 +14,15 @@ using Xunit;
 
 namespace GeoDesk.Tests.Tests;
 
-// PORT: ConcurTest is a Java main() program (not a JUnit test) that reflectively runs every
-// snake_case, no-arg, long-returning method as a comprehensive API exercise. The snake_case method
-// names are retained deliberately — the runner discovers the methods by their underscores. The
-// Java main() becomes the RunAll [Fact].
+// PORT: ConcurTest is a Java main() program (not a JUnit test) that runs every snake_case, no-arg,
+// long-returning method as a comprehensive API exercise. The snake_case method names are retained
+// deliberately to mirror the Java source. The Java main() becomes the RunAll [Fact], which invokes
+// each method directly.
 /// <remarks>Ported from Java <c>com.geodesk.tests.ConcurTest</c>.</remarks>
 public class ConcurTest : IDisposable
 {
 
-    readonly IFeatures world;
+    readonly IFeatureQuery world;
     readonly FeatureLibrary _lib;
 
     public ConcurTest()
@@ -209,7 +207,7 @@ public class ConcurTest : IDisposable
     long tags_count()
     {
         long count = 0;
-        foreach (var f in world) count += f.Tags.Size();
+        foreach (var f in world) count += f.Tags.Count;
         return count;
     }
 
@@ -218,8 +216,7 @@ public class ConcurTest : IDisposable
         long count = 0;
         foreach (var f in world)
         {
-            var tags = f.Tags;
-            while (tags.Next()) count++;
+            foreach (var _ in f.Tags) count++;
         }
         return count;
     }
@@ -229,8 +226,7 @@ public class ConcurTest : IDisposable
         long totalLen = 0;
         foreach (var f in world)
         {
-            var tags = f.Tags;
-            while (tags.Next()) totalLen += tags.Key()!.Length;
+            foreach (var tag in f.Tags) totalLen += tag.Key.Length;
         }
         return totalLen;
     }
@@ -240,8 +236,7 @@ public class ConcurTest : IDisposable
         long totalLen = 0;
         foreach (var f in world)
         {
-            var tags = f.Tags;
-            while (tags.Next()) totalLen += tags.StringValue()!.Length;
+            foreach (var tag in f.Tags) totalLen += tag.Value.Length;
         }
         return totalLen;
     }
@@ -251,8 +246,7 @@ public class ConcurTest : IDisposable
         long sum = 0;
         foreach (var f in world)
         {
-            var tags = f.Tags;
-            while (tags.Next()) sum += tags.LongValue();
+            foreach (var tag in f.Tags) sum += tag.LongValue;
         }
         return sum;
     }
@@ -300,21 +294,44 @@ public class ConcurTest : IDisposable
         return hash;
     }
 
+    static void Run(string name, Func<long> test)
+    {
+        Console.WriteLine(name + "=" + test());
+    }
+
     /// <remarks>Ported from Java <c>com.geodesk.tests.ConcurTest.main(String[])</c>.</remarks>
     [Fact]
     public void RunAll()
     {
-        var testMethods = GetType()
-            .GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-            .Where(m => m.Name.Contains('_'))
-            .OrderBy(m => m.Name, StringComparer.Ordinal)
-            .ToList();
-
-        foreach (var method in testMethods)
-        {
-            var result = (long)method.Invoke(this, null)!;
-            Console.WriteLine(method.Name + "=" + result);
-        }
+        Run(nameof(italian_restaurant_count), italian_restaurant_count);
+        Run(nameof(member_count), member_count);
+        Run(nameof(member_iter_count), member_iter_count);
+        Run(nameof(parent_count), parent_count);
+        Run(nameof(parent_iter_count), parent_iter_count);
+        Run(nameof(parents_of_count), parents_of_count);
+        Run(nameof(parent_relations_count), parent_relations_count);
+        Run(nameof(parent_relations_of_count), parent_relations_of_count);
+        Run(nameof(parent_ways_count), parent_ways_count);
+        Run(nameof(parent_ways_of_count), parent_ways_of_count);
+        Run(nameof(waynode_parents_count), waynode_parents_count);
+        Run(nameof(waynode_parent_ways_count), waynode_parent_ways_count);
+        Run(nameof(waynode_count), waynode_count);
+        Run(nameof(waynode_iter_count), waynode_iter_count);
+        Run(nameof(nonsense_parent_count), nonsense_parent_count);
+        Run(nameof(nonsense_parents_of_count), nonsense_parents_of_count);
+        Run(nameof(relation_member_role_len), relation_member_role_len);
+        Run(nameof(street_crossing_count), street_crossing_count);
+        Run(nameof(street_crossing_iter_count), street_crossing_iter_count);
+        Run(nameof(street_crossing_in_count), street_crossing_in_count);
+        Run(nameof(tags_count), tags_count);
+        Run(nameof(tags_iter_count), tags_iter_count);
+        Run(nameof(tags_key_len), tags_key_len);
+        Run(nameof(tags_str_len), tags_str_len);
+        Run(nameof(tags_int_sum), tags_int_sum);
+        Run(nameof(xy_hash), xy_hash);
+        Run(nameof(lonlat_100nd_hash), lonlat_100nd_hash);
+        Run(nameof(waynodes_lonlat_100nd_hash), waynodes_lonlat_100nd_hash);
+        Run(nameof(id_hash), id_hash);
     }
 
 }

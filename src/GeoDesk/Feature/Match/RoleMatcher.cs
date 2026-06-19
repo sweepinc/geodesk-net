@@ -16,8 +16,8 @@ internal class RoleMatcher : Matcher
     readonly int _roleCode;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.RoleMatcher(FeatureStore, String)</c>.</remarks>
-    public RoleMatcher(FeatureStore store, string role)
-        : base(TypeBits.ALL)
+    public RoleMatcher(FeatureStore store, string role) :
+        base(TypeBits.ALL)
     {
         _roleCode = store.CodeFromString(role);
         // TODO: empty role should be 0

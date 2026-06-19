@@ -54,7 +54,7 @@ public class TileWalkerTest : IDisposable
         const int runs = 100;
         for (var run = 0; run < runs; run++)
         {
-            var walker = new TileIndexWalker(world.Store());
+            var walker = new TileIndexWalker(world.Store);
             IBounds targetBounds = bavaria.Bounds;
             walker.Start(targetBounds);
             while (walker.Next())
@@ -72,7 +72,7 @@ public class TileWalkerTest : IDisposable
                 }
                 else
                 {
-                    Geometry tileGeom = world.GeometryFactory().CreatePolygon(new BoxCoordinateSequence(box));
+                    Geometry tileGeom = world.GeometryFactory.CreatePolygon(new BoxCoordinateSequence(box));
 
                     outside = bavariaPrepared.Disjoint(tileGeom);
                     if (outside)

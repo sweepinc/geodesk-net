@@ -69,28 +69,19 @@ internal class FeatureStore : FreeStore
         _tileIndexOfs = OffsetOfPage(tileIndexPage);
 
         EnableQueries();
-        var zoomLevels = ZoomLevels();
+        var zoomLevels = ZoomLevels;
         _minZoom = ZoomLevelsUtil.MinZoom(zoomLevels);
         _zoomSteps = ZoomLevelsUtil.ZoomSteps(zoomLevels);
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.tileIndexBuf()</c>.</remarks>
-    public NioBuffer TileIndexBuf()
-    {
-        return _tileIndexBuf!;
-    }
+    public NioBuffer TileIndexBuf => _tileIndexBuf!;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.tileIndexOfs()</c>.</remarks>
-    public int TileIndexOfs()
-    {
-        return _tileIndexOfs;
-    }
+    public int TileIndexOfs => _tileIndexOfs;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.zoomLevels()</c>.</remarks>
-    public int ZoomLevels()
-    {
-        return baseMapping!.GetInt(ZOOM_LEVELS_OFS);
-    }
+    public int ZoomLevels => baseMapping!.GetInt(ZOOM_LEVELS_OFS);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.readStringTable()</c>.</remarks>
     void ReadStringTable()
@@ -137,16 +128,10 @@ internal class FeatureStore : FreeStore
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.executor()</c>.</remarks>
-    public ExecutorService Executor()
-    {
-        return _executor!;
-    }
+    public ExecutorService Executor => _executor!;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.maxPendingTiles()</c>.</remarks>
-    public int MaxPendingTiles()
-    {
-        return _maxPendingTiles;
-    }
+    public int MaxPendingTiles => _maxPendingTiles;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.tileIndexEntry(int)</c>.</remarks>
     public int TileIndexEntry(int tip)

@@ -18,7 +18,7 @@ using NetTopologySuite.Geometries.Prepared;
 namespace GeoDesk.Feature;
 
 /// <summary>
-/// Shared implementations of <see cref="IFeatures"/>' convenience operations. Both the interface's
+/// Shared implementations of <see cref="IFeatureQuery"/>' convenience operations. Both the interface's
 /// default methods and <see cref="GeoDesk.Feature.Query.View"/>'s concrete members delegate here, so
 /// the logic lives once. (C# default interface methods are only callable through the interface; a
 /// concrete method cannot delegate back to the default — so the body is hoisted here instead.)
@@ -31,13 +31,13 @@ internal static class FeaturesSupport
 
     // --- terminal operations ---
 
-    internal static IFeature? First(IFeatures self)
+    internal static IFeature? First(IFeatureQuery self)
     {
         using var iter = self.GetEnumerator();
         return iter.MoveNext() ? iter.Current : null;
     }
 
-    internal static long Count(IFeatures self)
+    internal static long Count(IFeatureQuery self)
     {
         long count = 0;
         using var iter = self.GetEnumerator();
@@ -46,13 +46,13 @@ internal static class FeaturesSupport
         return count;
     }
 
-    internal static bool IsEmpty(IFeatures self) => First(self) == null;
+    internal static bool IsEmpty(IFeatureQuery self) => First(self) == null;
 
-    internal static List<IFeature> ToList(IFeatures self) => [.. self];
+    internal static List<IFeature> ToList(IFeatureQuery self) => [.. self];
 
-    internal static IFeature[] ToArray(IFeatures self) => ToList(self).ToArray();
+    internal static IFeature[] ToArray(IFeatureQuery self) => ToList(self).ToArray();
 
-    internal static bool Contains(IFeatures self, object f)
+    internal static bool Contains(IFeatureQuery self, object f)
     {
         using var iter = self.GetEnumerator();
         while (iter.MoveNext())
@@ -62,7 +62,7 @@ internal static class FeaturesSupport
         return false;
     }
 
-    internal static void AddTo(IFeatures self, ICollection<IFeature> collection)
+    internal static void AddTo(IFeatureQuery self, ICollection<IFeature> collection)
     {
         foreach (var f in self)
             collection.Add(f);
@@ -70,27 +70,27 @@ internal static class FeaturesSupport
 
     // --- by-id lookups ---
 
-    internal static INode? GetNode(IFeatures self, long id) => (INode?)First(self.Select(new IdFilter(TypeBits.NODES, id)));
+    internal static INode? GetNode(IFeatureQuery self, long id) => (INode?)First(self.Select(new IdFilter(TypeBits.NODES, id)));
 
-    internal static IWay? GetWay(IFeatures self, long id) => (IWay?)First(self.Select(new IdFilter(TypeBits.WAYS, id)));
+    internal static IWay? GetWay(IFeatureQuery self, long id) => (IWay?)First(self.Select(new IdFilter(TypeBits.WAYS, id)));
 
-    internal static IRelation? GetRelation(IFeatures self, long id) => (IRelation?)First(self.Select(new IdFilter(TypeBits.RELATIONS, id)));
+    internal static IRelation? GetRelation(IFeatureQuery self, long id) => (IRelation?)First(self.Select(new IdFilter(TypeBits.RELATIONS, id)));
 
     // --- spatial-predicate filters ---
 
-    internal static IFeatures ConnectedTo(IFeatures self, IFeature f) => self.Select(new ConnectedFilter(f));
-    internal static IFeatures ConnectedTo(IFeatures self, Geometry geom) => self.Select(new ConnectedFilter(geom));
+    internal static IFeatureQuery ConnectedTo(IFeatureQuery self, IFeature f) => self.Select(new ConnectedFilter(f));
+    internal static IFeatureQuery ConnectedTo(IFeatureQuery self, Geometry geom) => self.Select(new ConnectedFilter(geom));
 
-    internal static IFeatures ContainingXY(IFeatures self, int x, int y) => self.Select(new ContainsPointFilter(x, y));
+    internal static IFeatureQuery ContainingXY(IFeatureQuery self, int x, int y) => self.Select(new ContainsPointFilter(x, y));
 
-    internal static IFeatures ContainingLonLat(IFeatures self, double lon, double lat)
+    internal static IFeatureQuery ContainingLonLat(IFeatureQuery self, double lon, double lat)
     {
         var x = Mercator.XFromLon(lon);
         var y = Mercator.YFromLat(lat);
         return self.Select(new ContainsPointFilter(x, y));
     }
 
-    internal static IFeatures Containing(IFeatures self, IFeature feature)
+    internal static IFeatureQuery Containing(IFeatureQuery self, IFeature feature)
     {
         if (feature is INode)
             return self.Select(new ContainsPointFilter(feature.X, feature.Y));
@@ -98,63 +98,63 @@ internal static class FeaturesSupport
             return self.Select(new ContainsFilter(feature));
     }
 
-    internal static IFeatures Containing(IFeatures self, Geometry geom) => self.Select(new ContainsFilter(geom));
+    internal static IFeatureQuery Containing(IFeatureQuery self, Geometry geom) => self.Select(new ContainsFilter(geom));
 
-    internal static IFeatures Containing(IFeatures self, IPreparedGeometry prepared) => self.Select(new ContainsFilter(prepared));
+    internal static IFeatureQuery Containing(IFeatureQuery self, IPreparedGeometry prepared) => self.Select(new ContainsFilter(prepared));
 
-    internal static IFeatures CoveredBy(IFeatures self, IFeature feature) => self.Select(new CoveredByFilter(feature));
+    internal static IFeatureQuery CoveredBy(IFeatureQuery self, IFeature feature) => self.Select(new CoveredByFilter(feature));
 
-    internal static IFeatures CoveredBy(IFeatures self, Geometry geom) => self.Select(new CoveredByFilter(geom));
+    internal static IFeatureQuery CoveredBy(IFeatureQuery self, Geometry geom) => self.Select(new CoveredByFilter(geom));
 
-    internal static IFeatures CoveredBy(IFeatures self, IPreparedGeometry prepared) => self.Select(new CoveredByFilter(prepared));
+    internal static IFeatureQuery CoveredBy(IFeatureQuery self, IPreparedGeometry prepared) => self.Select(new CoveredByFilter(prepared));
 
-    internal static IFeatures Crossing(IFeatures self, IFeature feature) => self.Select(new CrossesFilter(feature));
+    internal static IFeatureQuery Crossing(IFeatureQuery self, IFeature feature) => self.Select(new CrossesFilter(feature));
 
-    internal static IFeatures Crossing(IFeatures self, Geometry geom) => self.Select(new CrossesFilter(geom));
+    internal static IFeatureQuery Crossing(IFeatureQuery self, Geometry geom) => self.Select(new CrossesFilter(geom));
 
-    internal static IFeatures Crossing(IFeatures self, IPreparedGeometry prepared) => self.Select(new CrossesFilter(prepared));
+    internal static IFeatureQuery Crossing(IFeatureQuery self, IPreparedGeometry prepared) => self.Select(new CrossesFilter(prepared));
 
-    internal static IFeatures Disjoint(IFeatures self, IFeature feature) => self.Select(new DisjointFilter(feature));
+    internal static IFeatureQuery Disjoint(IFeatureQuery self, IFeature feature) => self.Select(new DisjointFilter(feature));
 
-    internal static IFeatures Disjoint(IFeatures self, Geometry geom) => self.Select(new DisjointFilter(geom));
+    internal static IFeatureQuery Disjoint(IFeatureQuery self, Geometry geom) => self.Select(new DisjointFilter(geom));
 
-    internal static IFeatures Disjoint(IFeatures self, IPreparedGeometry prepared) => self.Select(new DisjointFilter(prepared));
+    internal static IFeatureQuery Disjoint(IFeatureQuery self, IPreparedGeometry prepared) => self.Select(new DisjointFilter(prepared));
 
-    internal static IFeatures Intersecting(IFeatures self, IFeature feature) => self.Select(new IntersectsFilter(feature));
+    internal static IFeatureQuery Intersecting(IFeatureQuery self, IFeature feature) => self.Select(new IntersectsFilter(feature));
 
-    internal static IFeatures Intersecting(IFeatures self, Geometry geom) => self.Select(new IntersectsFilter(geom));
+    internal static IFeatureQuery Intersecting(IFeatureQuery self, Geometry geom) => self.Select(new IntersectsFilter(geom));
 
-    internal static IFeatures Intersecting(IFeatures self, IPreparedGeometry prepared) => self.Select(new IntersectsFilter(prepared));
+    internal static IFeatureQuery Intersecting(IFeatureQuery self, IPreparedGeometry prepared) => self.Select(new IntersectsFilter(prepared));
 
-    internal static IFeatures MaxMetersFromXY(IFeatures self, double distance, int x, int y) => self.Select(new PointDistanceFilter(distance, x, y));
+    internal static IFeatureQuery MaxMetersFromXY(IFeatureQuery self, double distance, int x, int y) => self.Select(new PointDistanceFilter(distance, x, y));
 
-    internal static IFeatures MaxMetersFromLonLat(IFeatures self, double distance, double lon, double lat)
+    internal static IFeatureQuery MaxMetersFromLonLat(IFeatureQuery self, double distance, double lon, double lat)
     {
         var x = Mercator.XFromLon(lon);
         var y = Mercator.YFromLat(lat);
         return self.Select(new PointDistanceFilter(distance, x, y));
     }
 
-    internal static IFeatures MaxMetersFrom(IFeatures self, double distance, Geometry geom) => throw new NotImplementedException("todo");
+    internal static IFeatureQuery MaxMetersFrom(IFeatureQuery self, double distance, Geometry geom) => throw new NotImplementedException("todo");
 
-    internal static IFeatures MaxMetersFrom(IFeatures self, double distance, IFeature feature) => throw new NotImplementedException("todo");
+    internal static IFeatureQuery MaxMetersFrom(IFeatureQuery self, double distance, IFeature feature) => throw new NotImplementedException("todo");
 
-    internal static IFeatures Overlapping(IFeatures self, IFeature feature) => self.Select(new OverlapsFilter(feature));
+    internal static IFeatureQuery Overlapping(IFeatureQuery self, IFeature feature) => self.Select(new OverlapsFilter(feature));
 
-    internal static IFeatures Overlapping(IFeatures self, Geometry geom) => self.Select(new OverlapsFilter(geom));
+    internal static IFeatureQuery Overlapping(IFeatureQuery self, Geometry geom) => self.Select(new OverlapsFilter(geom));
 
-    internal static IFeatures Overlapping(IFeatures self, IPreparedGeometry prepared) => self.Select(new OverlapsFilter(prepared));
+    internal static IFeatureQuery Overlapping(IFeatureQuery self, IPreparedGeometry prepared) => self.Select(new OverlapsFilter(prepared));
 
-    internal static IFeatures Touching(IFeatures self, IFeature feature) => self.Select(new TouchesFilter(feature));
+    internal static IFeatureQuery Touching(IFeatureQuery self, IFeature feature) => self.Select(new TouchesFilter(feature));
 
-    internal static IFeatures Touching(IFeatures self, Geometry geom) => self.Select(new TouchesFilter(geom));
+    internal static IFeatureQuery Touching(IFeatureQuery self, Geometry geom) => self.Select(new TouchesFilter(geom));
 
-    internal static IFeatures Touching(IFeatures self, IPreparedGeometry prepared) => self.Select(new TouchesFilter(prepared));
+    internal static IFeatureQuery Touching(IFeatureQuery self, IPreparedGeometry prepared) => self.Select(new TouchesFilter(prepared));
 
-    internal static IFeatures Within(IFeatures self, IFeature feature) => self.Select(new WithinFilter(feature));
+    internal static IFeatureQuery Within(IFeatureQuery self, IFeature feature) => self.Select(new WithinFilter(feature));
 
-    internal static IFeatures Within(IFeatures self, Geometry geom) => self.Select(new WithinFilter(geom));
+    internal static IFeatureQuery Within(IFeatureQuery self, Geometry geom) => self.Select(new WithinFilter(geom));
 
-    internal static IFeatures Within(IFeatures self, IPreparedGeometry prepared) => self.Select(new WithinFilter(prepared));
+    internal static IFeatureQuery Within(IFeatureQuery self, IPreparedGeometry prepared) => self.Select(new WithinFilter(prepared));
 
 }

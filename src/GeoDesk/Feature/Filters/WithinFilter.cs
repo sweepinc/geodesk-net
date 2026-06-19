@@ -45,11 +45,8 @@ internal class WithinFilter : AbstractRelateFilter
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.WithinFilter.strategy()</c>.</remarks>
-    public override int Strategy()
-    {
-        return FilterStrategy.FastTileFilter | FilterStrategy.NeedsGeometry | FilterStrategy.UsesBbox |
+    public override int Strategy => FilterStrategy.FastTileFilter | FilterStrategy.NeedsGeometry | FilterStrategy.UsesBbox |
             FilterStrategy.StrictBbox | FilterStrategy.RestrictsTypes;
-    }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.WithinFilter.filterForTile(int, Polygon)</c>.</remarks>
     public override IFilter? FilterForTile(int tile, Polygon tileGeometry)

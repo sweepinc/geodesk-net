@@ -47,10 +47,7 @@ internal class ContainsFilter : IFilter
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ContainsFilter.strategy()</c>.</remarks>
-    public int Strategy()
-    {
-        return FilterStrategy.UsesBbox | FilterStrategy.RestrictsTypes;
-    }
+    public int Strategy => FilterStrategy.UsesBbox | FilterStrategy.RestrictsTypes;
 
     // TODO: needs acceptedTypes() ???
 
@@ -87,9 +84,6 @@ internal class ContainsFilter : IFilter
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ContainsFilter.bounds()</c>.</remarks>
-    public IBounds Bounds()
-    {
-        return _bounds;
-    }
+    public IBounds Bounds => _bounds;
 
 }

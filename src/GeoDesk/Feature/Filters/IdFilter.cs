@@ -24,16 +24,10 @@ internal class IdFilter : IFilter
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.IdFilter.strategy()</c>.</remarks>
-    public int Strategy()
-    {
-        return FilterStrategy.RestrictsTypes;
-    }
+    public int Strategy => FilterStrategy.RestrictsTypes;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.IdFilter.acceptedTypes()</c>.</remarks>
-    public int AcceptedTypes()
-    {
-        return types;
-    }
+    public int AcceptedTypes => types;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.IdFilter.accept(Feature)</c>.</remarks>
     public bool Accept(IFeature feature)

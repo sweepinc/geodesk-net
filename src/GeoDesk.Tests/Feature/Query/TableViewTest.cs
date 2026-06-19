@@ -41,7 +41,7 @@ public class TableViewTest
             return;
         }
 
-        IFeatures world = FeatureLibrary.Open(gol);
+        IFeatureQuery world = FeatureLibrary.Open(gol);
         try
         {
             // 1) Relation members: at least one relation in Monaco has members.

@@ -30,7 +30,7 @@ internal class NodeParentView : ParentRelationView
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.NodeParentView.newWith(int, Matcher, Filter)</c>.</remarks>
-    internal override IFeatures NewWith(int types, Matcher matcher, IFilter? filter)
+    internal override IFeatureQuery NewWith(int types, Matcher matcher, IFilter? filter)
     {
         if ((types & TypeBits.RELATIONS) == 0)
         {

@@ -8,9 +8,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+
 using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Store;
 using GeoDesk.Geom;
+
 using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace GeoDesk.Feature.Query;
@@ -37,7 +39,7 @@ internal class WayNodeView : TableView
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.WayNodeView.newWith(int, Matcher, Filter)</c>.</remarks>
-    internal override IFeatures NewWith(int types, Matcher matcher, IFilter? filter)
+    internal override IFeatureQuery NewWith(int types, Matcher matcher, IFilter? filter)
     {
         return new WayNodeView(store, buf, ptr, types, matcher, filter);
     }
@@ -54,6 +56,7 @@ internal class WayNodeView : TableView
     {
         if ((_flags & IncludeGeometryNodes) == 0)
             return new StoredWay.Iter(store, buf, BodyPtr() - 4 - (_flags & IFeatureFlags.RELATION_MEMBER_FLAG), matcher);
+
         return new AllNodesIter(this, BodyPtr());
     }
 
@@ -75,10 +78,10 @@ internal class WayNodeView : TableView
             _owner = owner;
             if ((owner._flags & IFeatureFlags.WAYNODE_FLAG) != 0)
             {
-                _featureNodeIter = new StoredWay.Iter(owner.store, owner.buf,
-                    pBody - 4 - (owner._flags & IFeatureFlags.RELATION_MEMBER_FLAG), Matcher.ALL);
-                    // TODO: filters must apply to anonymous nodes as well!
-                if (_featureNodeIter.HasNext()) _nextFeatureNode = _featureNodeIter.Next();
+                _featureNodeIter = new StoredWay.Iter(owner.store, owner.buf, pBody - 4 - (owner._flags & IFeatureFlags.RELATION_MEMBER_FLAG), Matcher.ALL);
+                // TODO: filters must apply to anonymous nodes as well!
+                if (_featureNodeIter.HasNext())
+                    _nextFeatureNode = _featureNodeIter.Next();
             }
         }
 
@@ -106,7 +109,8 @@ internal class WayNodeView : TableView
 
         public bool MoveNext()
         {
-            if (!HasNext()) return false;
+            if (!HasNext())
+                return false;
             _current = NextFeature();
             return true;
         }

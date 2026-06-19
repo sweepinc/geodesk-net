@@ -19,7 +19,7 @@ namespace GeoDesk.Tests.Tests;
 public class MaxMetersFromTest : IDisposable
 {
 
-    readonly IFeatures features;
+    readonly IFeatureQuery features;
     readonly FeatureLibrary _lib;
 
     public MaxMetersFromTest()

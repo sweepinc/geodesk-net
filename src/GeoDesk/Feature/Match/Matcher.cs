@@ -86,9 +86,6 @@ internal class Matcher
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.Matcher.acceptedTypes()</c>.</remarks>
-    public int AcceptedTypes()
-    {
-        return acceptedTypes;
-    }
+    public int AcceptedTypes => acceptedTypes;
 
 }

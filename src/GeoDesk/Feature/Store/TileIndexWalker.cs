@@ -62,7 +62,7 @@ internal class TileIndexWalker
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker(FeatureStore)</c>.</remarks>
     public TileIndexWalker(FeatureStore store)
-        : this(store.TileIndexBuf(), store.TileIndexOfs(), store.ZoomLevels())
+        : this(store.TileIndexBuf, store.TileIndexOfs, store.ZoomLevels)
     {
     }
 
@@ -83,7 +83,7 @@ internal class TileIndexWalker
         _acceptedTiles = null;
         if (filter != null)
         {
-            var strategy = filter.Strategy();
+            var strategy = filter.Strategy;
             if ((strategy & FilterStrategy.FastTileFilter) != 0)
             {
                 _tileBasedAcceleration = true;
@@ -185,7 +185,7 @@ internal class TileIndexWalker
                     // filter, or substituting the filter for a cheaper one), create a polygon for the
                     // current tile and check with the Filter
 
-                    if (level.filter != null && (level.filter.Strategy() & FilterStrategy.FastTileFilter) != 0)
+                    if (level.filter != null && (level.filter.Strategy & FilterStrategy.FastTileFilter) != 0)
                     {
                         _filter = level.filter.FilterForTile(_currentTile, Tile.Polygon(_currentTile));
                         if (_filter == FalseFilter.Instance) continue;

@@ -6,8 +6,9 @@
  */
 
 using System;
+
 using GeoDesk.Feature.Match;
-using GeoDesk.Feature.Store;
+
 using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace GeoDesk.Feature.Query;
@@ -26,8 +27,8 @@ internal class TileQueryTask : QueryTask
     internal IFilter? filter;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.TileQueryTask(Query, int, int, Filter)</c>.</remarks>
-    public TileQueryTask(Query query, int tilePage, int northwestFlags, IFilter? filter)
-        : base(query)
+    public TileQueryTask(Query query, int tilePage, int northwestFlags, IFilter? filter) :
+        base(query)
     {
         _tilePage = tilePage;
         bboxFlags = northwestFlags;
@@ -38,7 +39,9 @@ internal class TileQueryTask : QueryTask
     RTreeQueryTask? SearchRTree(int ppTree, Matcher matcher, RTreeQueryTask? task)
     {
         var p = buf!.GetInt(ppTree);
-        if (p == 0) return task;
+        if (p == 0)
+            return task;
+
         p = ppTree + p;
         for (; ; )
         {
@@ -49,9 +52,13 @@ internal class TileQueryTask : QueryTask
                 task = new RTreeQueryTask(this, p, matcher, task);
                 task.Fork();
             }
-            if (last != 0) break;
+
+            if (last != 0)
+                break;
+
             p += 8;
         }
+
         return task;
     }
 
@@ -59,7 +66,9 @@ internal class TileQueryTask : QueryTask
     RTreeQueryTask? SearchNodeRTree(int ppTree, Matcher matcher, RTreeQueryTask? task)
     {
         var p = buf!.GetInt(ppTree);
-        if (p == 0) return task;
+        if (p == 0)
+            return task;
+
         p = ppTree + p;
         for (; ; )
         {
@@ -70,9 +79,13 @@ internal class TileQueryTask : QueryTask
                 task = new RTreeQueryTask.Nodes(this, p, matcher, task);
                 task.Fork();
             }
-            if (last != 0) break;
+
+            if (last != 0)
+                break;
+
             p += 8;
         }
+
         return task;
     }
 
@@ -81,18 +94,22 @@ internal class TileQueryTask : QueryTask
     {
         try
         {
-            var store = query.Store();
+            var store = query.Store;
             buf = store.BufferOfPage(_tilePage);
             var pTile = store.OffsetOfPage(_tilePage);
 
-            var matcher = query.Matcher();
+            var matcher = query.Matcher;
             RTreeQueryTask? task = null;
 
-            var types = query.Types();
-            if ((types & TypeBits.NODES) != 0) task = SearchNodeRTree(pTile + 8, matcher, task);
-            if ((types & TypeBits.NONAREA_WAYS) != 0) task = SearchRTree(pTile + 12, matcher, task);
-            if ((types & TypeBits.AREAS) != 0) task = SearchRTree(pTile + 16, matcher, task);
-            if ((types & TypeBits.NONAREA_RELATIONS) != 0) task = SearchRTree(pTile + 20, matcher, task);
+            var types = query.Types;
+            if ((types & TypeBits.NODES) != 0)
+                task = SearchNodeRTree(pTile + 8, matcher, task);
+            if ((types & TypeBits.NONAREA_WAYS) != 0)
+                task = SearchRTree(pTile + 12, matcher, task);
+            if ((types & TypeBits.AREAS) != 0)
+                task = SearchRTree(pTile + 16, matcher, task);
+            if ((types & TypeBits.NONAREA_RELATIONS) != 0)
+                task = SearchRTree(pTile + 20, matcher, task);
 
             var res = QueryResults.Empty;
             while (task != null)
@@ -100,6 +117,7 @@ internal class TileQueryTask : QueryTask
                 res = QueryResults.Merge(res, task.Join());
                 task = task.next;
             }
+
             results = res;
         }
         catch (Exception ex)
@@ -107,15 +125,13 @@ internal class TileQueryTask : QueryTask
             query.SetError(ex);
             results = QueryResults.Empty;
         }
+
         _tilesProcessed = 1;
         query.Put(this);
         return true;
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.TileQueryTask.tilesProcessed()</c>.</remarks>
-    public int TilesProcessed()
-    {
-        return _tilesProcessed;
-    }
+    public int TilesProcessed => _tilesProcessed;
 
 }

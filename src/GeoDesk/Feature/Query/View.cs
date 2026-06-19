@@ -19,7 +19,7 @@ using NetTopologySuite.Geometries.Prepared;
 namespace GeoDesk.Feature.Query;
 
 /// <remarks>Ported from Java <c>com.geodesk.feature.query.View</c>.</remarks>
-public abstract class View : IFeatures
+public abstract class View : IFeatureQuery
 {
 
     internal readonly FeatureStore store;
@@ -37,7 +37,7 @@ public abstract class View : IFeatures
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.newWith(int, Matcher, Filter)</c>.</remarks>
-    internal abstract IFeatures NewWith(int types, Matcher matcher, IFilter? filter);
+    internal abstract IFeatureQuery NewWith(int types, Matcher matcher, IFilter? filter);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.types()</c>.</remarks>
     public int TypesValue()
@@ -46,7 +46,7 @@ public abstract class View : IFeatures
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.select(int)</c>.</remarks>
-    protected IFeatures Select(int newTypes)
+    protected IFeatureQuery Select(int newTypes)
     {
         newTypes &= types;
         if (newTypes == 0)
@@ -56,13 +56,13 @@ public abstract class View : IFeatures
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.select(int, String)</c>.</remarks>
-    protected virtual IFeatures Select(int newTypes, string query)
+    protected virtual IFeatureQuery Select(int newTypes, string query)
     {
         var newMatcher = store.GetMatcher(query);
         if (matcher != Matcher.ALL)
             newMatcher = new AndMatcher(matcher, newMatcher);
 
-        newTypes &= types & newMatcher.AcceptedTypes();
+        newTypes &= types & newMatcher.AcceptedTypes;
         if (newTypes == 0)
             return EmptyView.Any;
 
@@ -70,49 +70,49 @@ public abstract class View : IFeatures
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.select(String)</c>.</remarks>
-    public virtual IFeatures Select(string query)
+    public virtual IFeatureQuery Select(string query)
     {
         return Select(TypeBits.ALL, query);
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.nodes()</c>.</remarks>
-    public IFeatures Nodes()
+    public IFeatureQuery Nodes()
     {
         return Select(TypeBits.NODES);
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.nodes(String)</c>.</remarks>
-    public IFeatures Nodes(string query)
+    public IFeatureQuery Nodes(string query)
     {
         return Select(TypeBits.NODES, query);
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.ways()</c>.</remarks>
-    public IFeatures Ways()
+    public IFeatureQuery Ways()
     {
         return Select(TypeBits.WAYS);
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.ways(String)</c>.</remarks>
-    public IFeatures Ways(string query)
+    public IFeatureQuery Ways(string query)
     {
         return Select(TypeBits.WAYS, query);
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.relations()</c>.</remarks>
-    public IFeatures Relations()
+    public IFeatureQuery Relations()
     {
         return Select(TypeBits.RELATIONS);
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.relations(String)</c>.</remarks>
-    public IFeatures Relations(string query)
+    public IFeatureQuery Relations(string query)
     {
         return Select(TypeBits.RELATIONS, query);
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.select(Filter)</c>.</remarks>
-    public virtual IFeatures Select(IFilter filter)
+    public virtual IFeatureQuery Select(IFilter filter)
     {
         var newTypes = types;
         if (this.filter != null)
@@ -122,10 +122,10 @@ public abstract class View : IFeatures
                 return EmptyView.Any;
         }
 
-        var strategy = filter.Strategy();
+        var strategy = filter.Strategy;
         if ((strategy & FilterStrategy.RestrictsTypes) != 0)
         {
-            newTypes &= filter.AcceptedTypes();
+            newTypes &= filter.AcceptedTypes;
             if (newTypes == 0)
                 return EmptyView.Any;
         }
@@ -134,7 +134,7 @@ public abstract class View : IFeatures
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.parentsOf(Feature)</c>.</remarks>
-    public virtual IFeatures ParentsOf(IFeature child)
+    public virtual IFeatureQuery ParentsOf(IFeature child)
     {
         if (child.IsNode)
         {
@@ -159,7 +159,7 @@ public abstract class View : IFeatures
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.membersOf(Feature)</c>.</remarks>
-    public virtual IFeatures MembersOf(IFeature parent)
+    public virtual IFeatureQuery MembersOf(IFeature parent)
     {
         if (parent.IsRelation)
             return ((StoredRelation)parent).Members(types, matcher, filter);
@@ -169,7 +169,7 @@ public abstract class View : IFeatures
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.nodesOf(Feature)</c>.</remarks>
-    public virtual IFeatures NodesOf(IFeature parent)
+    public virtual IFeatureQuery NodesOf(IFeature parent)
     {
         if ((types & TypeBits.NODES) == 0)
             return EmptyView.Any;
@@ -195,10 +195,10 @@ public abstract class View : IFeatures
     // PORT: Java's View does not declare in(); it is abstract here so View can satisfy the
     // Features.in(Bounds) contract, with each concrete view providing the body.
     /// <remarks>Implements Java <c>com.geodesk.feature.Features.in(Bounds)</c> (abstract in this base).</remarks>
-    public abstract IFeatures In(IBounds bbox);
+    public abstract IFeatureQuery In(IBounds bbox);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.select(Features)</c>.</remarks>
-    public IFeatures Select(IFeatures otherFeatures)
+    public IFeatureQuery Select(IFeatureQuery otherFeatures)
     {
         // TODO: This assumes both views are WorldViews (which is wrong); at least one must be a WorldView
         // TODO: Throw exception if the Views have different stores
@@ -246,38 +246,38 @@ public abstract class View : IFeatures
     public IWay? GetWay(long id) => FeaturesSupport.GetWay(this, id);
     public IRelation? GetRelation(long id) => FeaturesSupport.GetRelation(this, id);
 
-    public IFeatures ConnectedTo(IFeature f) => FeaturesSupport.ConnectedTo(this, f);
-    public IFeatures ConnectedTo(Geometry geom) => FeaturesSupport.ConnectedTo(this, geom);
-    public IFeatures ContainingXY(int x, int y) => FeaturesSupport.ContainingXY(this, x, y);
-    public IFeatures ContainingLonLat(double lon, double lat) => FeaturesSupport.ContainingLonLat(this, lon, lat);
-    public IFeatures Containing(IFeature feature) => FeaturesSupport.Containing(this, feature);
-    public IFeatures Containing(Geometry geom) => FeaturesSupport.Containing(this, geom);
-    public IFeatures Containing(IPreparedGeometry prepared) => FeaturesSupport.Containing(this, prepared);
-    public IFeatures CoveredBy(IFeature feature) => FeaturesSupport.CoveredBy(this, feature);
-    public IFeatures CoveredBy(Geometry geom) => FeaturesSupport.CoveredBy(this, geom);
-    public IFeatures CoveredBy(IPreparedGeometry prepared) => FeaturesSupport.CoveredBy(this, prepared);
-    public IFeatures Crossing(IFeature feature) => FeaturesSupport.Crossing(this, feature);
-    public IFeatures Crossing(Geometry geom) => FeaturesSupport.Crossing(this, geom);
-    public IFeatures Crossing(IPreparedGeometry prepared) => FeaturesSupport.Crossing(this, prepared);
-    public IFeatures Disjoint(IFeature feature) => FeaturesSupport.Disjoint(this, feature);
-    public IFeatures Disjoint(Geometry geom) => FeaturesSupport.Disjoint(this, geom);
-    public IFeatures Disjoint(IPreparedGeometry prepared) => FeaturesSupport.Disjoint(this, prepared);
-    public IFeatures Intersecting(IFeature feature) => FeaturesSupport.Intersecting(this, feature);
-    public IFeatures Intersecting(Geometry geom) => FeaturesSupport.Intersecting(this, geom);
-    public IFeatures Intersecting(IPreparedGeometry prepared) => FeaturesSupport.Intersecting(this, prepared);
-    public IFeatures MaxMetersFromXY(double distance, int x, int y) => FeaturesSupport.MaxMetersFromXY(this, distance, x, y);
-    public IFeatures MaxMetersFromLonLat(double distance, double lon, double lat) => FeaturesSupport.MaxMetersFromLonLat(this, distance, lon, lat);
-    public IFeatures MaxMetersFrom(double distance, Geometry geom) => FeaturesSupport.MaxMetersFrom(this, distance, geom);
-    public IFeatures MaxMetersFrom(double distance, IFeature feature) => FeaturesSupport.MaxMetersFrom(this, distance, feature);
-    public IFeatures Overlapping(IFeature feature) => FeaturesSupport.Overlapping(this, feature);
-    public IFeatures Overlapping(Geometry geom) => FeaturesSupport.Overlapping(this, geom);
-    public IFeatures Overlapping(IPreparedGeometry prepared) => FeaturesSupport.Overlapping(this, prepared);
-    public IFeatures Touching(IFeature feature) => FeaturesSupport.Touching(this, feature);
-    public IFeatures Touching(Geometry geom) => FeaturesSupport.Touching(this, geom);
-    public IFeatures Touching(IPreparedGeometry prepared) => FeaturesSupport.Touching(this, prepared);
-    public IFeatures Within(IFeature feature) => FeaturesSupport.Within(this, feature);
-    public IFeatures Within(Geometry geom) => FeaturesSupport.Within(this, geom);
-    public IFeatures Within(IPreparedGeometry prepared) => FeaturesSupport.Within(this, prepared);
+    public IFeatureQuery ConnectedTo(IFeature f) => FeaturesSupport.ConnectedTo(this, f);
+    public IFeatureQuery ConnectedTo(Geometry geom) => FeaturesSupport.ConnectedTo(this, geom);
+    public IFeatureQuery ContainingXY(int x, int y) => FeaturesSupport.ContainingXY(this, x, y);
+    public IFeatureQuery ContainingLonLat(double lon, double lat) => FeaturesSupport.ContainingLonLat(this, lon, lat);
+    public IFeatureQuery Containing(IFeature feature) => FeaturesSupport.Containing(this, feature);
+    public IFeatureQuery Containing(Geometry geom) => FeaturesSupport.Containing(this, geom);
+    public IFeatureQuery Containing(IPreparedGeometry prepared) => FeaturesSupport.Containing(this, prepared);
+    public IFeatureQuery CoveredBy(IFeature feature) => FeaturesSupport.CoveredBy(this, feature);
+    public IFeatureQuery CoveredBy(Geometry geom) => FeaturesSupport.CoveredBy(this, geom);
+    public IFeatureQuery CoveredBy(IPreparedGeometry prepared) => FeaturesSupport.CoveredBy(this, prepared);
+    public IFeatureQuery Crossing(IFeature feature) => FeaturesSupport.Crossing(this, feature);
+    public IFeatureQuery Crossing(Geometry geom) => FeaturesSupport.Crossing(this, geom);
+    public IFeatureQuery Crossing(IPreparedGeometry prepared) => FeaturesSupport.Crossing(this, prepared);
+    public IFeatureQuery Disjoint(IFeature feature) => FeaturesSupport.Disjoint(this, feature);
+    public IFeatureQuery Disjoint(Geometry geom) => FeaturesSupport.Disjoint(this, geom);
+    public IFeatureQuery Disjoint(IPreparedGeometry prepared) => FeaturesSupport.Disjoint(this, prepared);
+    public IFeatureQuery Intersecting(IFeature feature) => FeaturesSupport.Intersecting(this, feature);
+    public IFeatureQuery Intersecting(Geometry geom) => FeaturesSupport.Intersecting(this, geom);
+    public IFeatureQuery Intersecting(IPreparedGeometry prepared) => FeaturesSupport.Intersecting(this, prepared);
+    public IFeatureQuery MaxMetersFromXY(double distance, int x, int y) => FeaturesSupport.MaxMetersFromXY(this, distance, x, y);
+    public IFeatureQuery MaxMetersFromLonLat(double distance, double lon, double lat) => FeaturesSupport.MaxMetersFromLonLat(this, distance, lon, lat);
+    public IFeatureQuery MaxMetersFrom(double distance, Geometry geom) => FeaturesSupport.MaxMetersFrom(this, distance, geom);
+    public IFeatureQuery MaxMetersFrom(double distance, IFeature feature) => FeaturesSupport.MaxMetersFrom(this, distance, feature);
+    public IFeatureQuery Overlapping(IFeature feature) => FeaturesSupport.Overlapping(this, feature);
+    public IFeatureQuery Overlapping(Geometry geom) => FeaturesSupport.Overlapping(this, geom);
+    public IFeatureQuery Overlapping(IPreparedGeometry prepared) => FeaturesSupport.Overlapping(this, prepared);
+    public IFeatureQuery Touching(IFeature feature) => FeaturesSupport.Touching(this, feature);
+    public IFeatureQuery Touching(Geometry geom) => FeaturesSupport.Touching(this, geom);
+    public IFeatureQuery Touching(IPreparedGeometry prepared) => FeaturesSupport.Touching(this, prepared);
+    public IFeatureQuery Within(IFeature feature) => FeaturesSupport.Within(this, feature);
+    public IFeatureQuery Within(Geometry geom) => FeaturesSupport.Within(this, geom);
+    public IFeatureQuery Within(IPreparedGeometry prepared) => FeaturesSupport.Within(this, prepared);
 
     /// <remarks>Implements Java <c>java.lang.Iterable.iterator()</c> (abstract in this base).</remarks>
     public abstract IEnumerator<IFeature> GetEnumerator();

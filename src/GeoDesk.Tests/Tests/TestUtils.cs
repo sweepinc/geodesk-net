@@ -102,7 +102,7 @@ public static class TestUtils
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.tests.TestUtils.getSet(Features)</c>.</remarks>
-    public static List<long> GetSet(IFeatures features)
+    public static List<long> GetSet(IFeatureQuery features)
     {
         var list = new List<long>();
         foreach (var f in features)
@@ -129,13 +129,11 @@ public static class TestUtils
     /// <remarks>Ported from Java <c>com.geodesk.tests.TestUtils.primaryTag(Feature)</c>.</remarks>
     public static string PrimaryTag(IFeature f)
     {
-        var tags = f.Tags;
-        while (tags.Next())
+        foreach (var tag in f.Tags)
         {
-            var key = tags.Key();
-            if (!IsIgnoredKey(key!))
+            if (!IsIgnoredKey(tag.Key))
             {
-                return key + "=" + tags.Value();
+                return tag.Key + "=" + tag.Value;
             }
         }
         return "";

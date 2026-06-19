@@ -382,172 +382,53 @@ internal abstract class StoredFeature : IFeature
     public abstract Geometry ToGeometry();
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.tags()</c>.</remarks>
-    public ITags Tags => new TagIterator(this, ptr + 8);
+    public TagCollection Tags => new TagCollection(this);
 
-    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.TagIterator</c>.</remarks>
-    sealed class TagIterator : ITags
+    // --- Internal hooks used by TagCollection / TagCollection.Enumerator to walk and decode tags. ---
+
+    internal int Ptr => ptr;
+
+    /// <summary>True if this feature has no tags (O(1) empty-table-marker check).</summary>
+    internal bool HasNoTags()
     {
-
-        readonly StoredFeature _owner;
-        readonly int _pTagTable;
-        readonly int _uncommonKeysFlag;
-        int _pNextTag;
-        string? _key;
-        long _value;
-
-        /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.TagIterator(int)</c>.</remarks>
-        public TagIterator(StoredFeature owner, int ppTags)
-        {
-            _owner = owner;
-            var rawTagsPtr = owner.buf.GetInt(ppTags);
-            _uncommonKeysFlag = rawTagsPtr & 1;
-            _pTagTable = (rawTagsPtr ^ _uncommonKeysFlag) + ppTags;
-            Reset();
-        }
-
-        /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.TagIterator.reset()</c>.</remarks>
-        void Reset()
-        {
-            _pNextTag = _pTagTable;
-            if (_owner.buf.GetInt(_pNextTag) == TagValues.EMPTY_TABLE_MARKER)
-            {
-                _pNextTag = (_uncommonKeysFlag != 0) ? (_pTagTable - 6) : -1;
-            }
-        }
-
-        /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.TagIterator.next()</c>.</remarks>
-        public bool Next()
-        {
-            if (_pNextTag < 0)
-                return false;
-            if (_pNextTag < _pTagTable)
-            {
-                var tag = _owner.buf.GetLong(_pNextTag);
-                var rawPointer = (int)(tag >> 16);
-                var flags = rawPointer & 7;
-                var origin = _pTagTable & unchecked((int)0xffff_fffc);
-                var pKey = ((rawPointer ^ flags) >> 1) + origin;
-                _key = Bytes.ReadString(_owner.buf, pKey);
-                _value = ((long)(_pNextTag - 2) << 32) | flags | (((long)((char)tag)) << 16);
-                if ((flags & 4) != 0)
-                {
-                    _pNextTag = -1;
-                }
-                else
-                {
-                    _pNextTag -= 6 + (flags & 2);
-                }
-            }
-            else
-            {
-                var tag = _owner.buf.GetInt(_pNextTag);
-                _key = _owner.store.StringFromCode((tag >> 2) & 0x1fff);
-                _value = ((long)(_pNextTag + 2) << 32) | ((long)tag & 0xffff_ffffL);
-                if ((tag & 0x8000) != 0)
-                {
-                    _pNextTag = (_uncommonKeysFlag == 0) ? -1 : (_pTagTable - 6);
-                }
-                else
-                {
-                    _pNextTag += 4 + (tag & 2);
-                }
-            }
-            return true;
-        }
-
-        /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.TagIterator.key()</c>.</remarks>
-        public string? Key()
-        {
-            return _key;
-        }
-
-        /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.TagIterator.value()</c>.</remarks>
-        public object? Value()
-        {
-            return _owner.ValueAsObject(_value);
-        }
-
-        /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.TagIterator.stringValue()</c>.</remarks>
-        public string? StringValue()
-        {
-            return _owner.ValueAsString(_value);
-        }
-
-        /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.TagIterator.intValue()</c>.</remarks>
-        public int IntValue()
-        {
-            return _owner.ValueAsInt(_value);
-        }
-
-        /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.TagIterator.longValue()</c>.</remarks>
-        public long LongValue()
-        {
-            return _owner.ValueAsLong(_value);
-        }
-
-        /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.TagIterator.doubleValue()</c>.</remarks>
-        public double DoubleValue()
-        {
-            return _owner.ValueAsDouble(_value);
-        }
-
-        /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.TagIterator.toMap()</c>.</remarks>
-        public IDictionary<string, object?> ToMap()
-        {
-            var map = new Dictionary<string, object?>();
-            var pOld = _pNextTag;
-            Reset();
-            while (Next())
-            {
-                map[Key()!] = Value();
-            }
-            _pNextTag = pOld;
-            return map;
-        }
-
-        /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.TagIterator.isEmpty()</c>.</remarks>
-        public bool IsEmpty()
-        {
-            return _owner.buf.GetInt(_pTagTable) == TagValues.EMPTY_TABLE_MARKER &&
-                _uncommonKeysFlag == 0;
-        }
-
-        /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.TagIterator.size()</c>.</remarks>
-        public int Size()
-        {
-            var pOld = _pNextTag;
-            Reset();
-            var count = 0;
-            while (Next())
-                count++;
-            _pNextTag = pOld;
-            return count;
-        }
-
+        var ppTags = ptr + 8;
+        var rawTagsPtr = buf.GetInt(ppTags);
+        var uncommonKeysFlag = rawTagsPtr & 1;
+        var pTagTable = (rawTagsPtr ^ uncommonKeysFlag) + ppTags;
+        return buf.GetInt(pTagTable) == TagValues.EMPTY_TABLE_MARKER && uncommonKeysFlag == 0;
     }
+
+    /// <summary>Looks up the raw encoded value of a tag by key (0 if absent).</summary>
+    internal long GetTagValue(string key) => GetKeyValue(key);
+
+    /// <summary>Decodes a raw encoded tag value to its string / numeric forms (lazily, on demand).</summary>
+    internal string DecodeTagValue(long value) => ValueAsString(value);
+    internal int DecodeTagInt(long value) => ValueAsInt(value);
+    internal long DecodeTagLong(long value) => ValueAsLong(value);
+    internal double DecodeTagDouble(long value) => ValueAsDouble(value);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.belongsToRelation()</c>.</remarks>
     public bool BelongsToRelation => (buf.GetInt(ptr) & IFeatureFlags.RELATION_MEMBER_FLAG) != 0;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.parents()</c>.</remarks>
-    public virtual IFeatures Parents()
+    public virtual IFeatureQuery Parents()
     {
         return BelongsToRelation ?
             new Query.ParentRelationView(store, buf, GetRelationTablePtr()) : Query.EmptyView.Any;
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.parents(String)</c>.</remarks>
-    public virtual IFeatures Parents(string query)
+    public virtual IFeatureQuery Parents(string query)
     {
         if (BelongsToRelation)
         {
             var matcher = store.GetMatcher(query);
-            if ((matcher.AcceptedTypes() & Match.TypeBits.RELATIONS) != 0)
+            if ((matcher.AcceptedTypes & Match.TypeBits.RELATIONS) != 0)
             {
                 // PORT: faithful to the Java source, which constructs this view but does
                 // not return it (the method always falls through to EmptyView.Any).
                 _ = new Query.ParentRelationView(store, buf, GetRelationTablePtr(),
-                    matcher.AcceptedTypes(), matcher, null);
+                    matcher.                    AcceptedTypes, matcher, null);
             }
         }
         return Query.EmptyView.Any;

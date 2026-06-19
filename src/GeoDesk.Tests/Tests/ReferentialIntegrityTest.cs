@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 using GeoDesk.Common.Util;
@@ -248,7 +249,7 @@ public class ReferentialIntegrityTest : IDisposable
         }
     }
 
-    void TestContainsQueries(IFeatures feats, HashSet<IFeature> others)
+    void TestContainsQueries(IFeatureQuery feats, HashSet<IFeature> others)
     {
         CheckContains(feats.Select("a[landuse]"), others);
         CheckContains(feats.Nodes("na[shop]").Select("*[opening_hours]"), others);
@@ -271,7 +272,7 @@ public class ReferentialIntegrityTest : IDisposable
     /// Checks whether contains() returns true/false for features that are in / not in a collection.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.tests.ReferentialIntegrityTest.testContains(Features, Set)</c>.</remarks>
-    void CheckContains(IFeatures feats, HashSet<IFeature> others)
+    void CheckContains(IFeatureQuery feats, HashSet<IFeature> others)
     {
         var notContained = new HashSet<IFeature>(others);
         foreach (var f in feats)
@@ -286,7 +287,7 @@ public class ReferentialIntegrityTest : IDisposable
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.tests.ReferentialIntegrityTest.randomSample(Features, int)</c>.</remarks>
-    HashSet<IFeature> RandomSample(IFeatures feats, int sampleInterval)
+    HashSet<IFeature> RandomSample(IFeatureQuery feats, int sampleInterval)
     {
         var sample = new HashSet<IFeature>();
         var random = new Random();
@@ -425,12 +426,11 @@ public class ReferentialIntegrityTest : IDisposable
     {
         var v = f.StringValue(k);
         Assert.True(v.Length == 0 || v == "no");
-        var tags = f.Tags;
-        while (tags.Next())
+        foreach (var tag in f.Tags)
         {
-            if (tags.Key() == k)
+            if (tag.Key == k)
             {
-                v = tags.StringValue()!;
+                v = tag.Value;
                 Assert.True(v.Length == 0 || v == "no");
             }
         }
@@ -451,12 +451,12 @@ public class ReferentialIntegrityTest : IDisposable
             var tags = f.Tags;
             var tagCount = 0;
 
-            var tagMap = tags.ToMap();
+            var tagMap = tags.Values.ToDictionary(t => t.Key, t => t.Value);
 
-            while (tags.Next())
+            foreach (var tag in tags)
             {
-                var k = tags.Key()!;
-                var v = tags.StringValue()!;
+                var k = tag.Key;
+                var v = tag.Value;
 
                 if (!f.HasTag(k, v))
                 {
@@ -481,7 +481,7 @@ public class ReferentialIntegrityTest : IDisposable
                 Assert.True(tagMap.ContainsKey(k));
                 tagCount++;
             }
-            Assert.Equal(tagCount, tags.Size());
+            Assert.Equal(tagCount, tags.Count);
             Assert.Equal(tagCount, tagMap.Count);
 
             totalFeatureCount++;
@@ -597,7 +597,7 @@ public class ReferentialIntegrityTest : IDisposable
     [Fact]
     public void TestMemberRoleQueries()
     {
-        Matcher matcher = new RoleMatcher(features.Store(), "admin_centre");
+        Matcher matcher = new RoleMatcher(features.Store, "admin_centre");
         for (var run = 0; run < 10; run++)
         {
             var start = Stopwatch.GetTimestamp();
@@ -632,10 +632,9 @@ public class ReferentialIntegrityTest : IDisposable
 
         foreach (var f in features)
         {
-            var tags = f.Tags;
-            while (tags.Next())
+            foreach (var tag in f.Tags)
             {
-                strings.Add(f + ": " + tags.StringValue());
+                strings.Add(f + ": " + tag.Value);
             }
         }
 

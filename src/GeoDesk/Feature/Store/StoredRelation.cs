@@ -138,20 +138,20 @@ internal class StoredRelation : StoredFeature, IRelation
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredRelation.members()</c>.</remarks>
-    public IFeatures Members()
+    public IFeatureQuery Members()
     {
         return Members(TypeBits.ALL, Matcher.ALL, null);
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredRelation.members(int, String)</c>.</remarks>
-    IFeatures Members(int types, string query)
+    IFeatureQuery Members(int types, string query)
     {
         Matcher matcher = store.GetMatcher(query);
-        return Members(types & matcher.AcceptedTypes(), matcher, null);
+        return Members(types & matcher.AcceptedTypes, matcher, null);
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredRelation.members(int, Matcher, Filter)</c>.</remarks>
-    public IFeatures Members(int types, Matcher matcher, IFilter? filter)
+    public IFeatureQuery Members(int types, Matcher matcher, IFilter? filter)
     {
         int ppMembers = ptr + 12;
         int pMembers = ppMembers + buf.GetInt(ppMembers);
@@ -160,7 +160,7 @@ internal class StoredRelation : StoredFeature, IRelation
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredRelation.members(String)</c>.</remarks>
-    public IFeatures Members(string q)
+    public IFeatureQuery Members(string q)
     {
         return Members(TypeBits.ALL, q);
     }

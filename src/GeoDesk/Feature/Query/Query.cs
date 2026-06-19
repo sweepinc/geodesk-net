@@ -33,14 +33,17 @@ internal class Query : IEnumerator<IFeature>, IBounds
 {
 
     readonly FeatureStore _store;
-    int _minX;
+
+    readonly int _minX;
     readonly int _minY;
-    int _maxX;
+    readonly int _maxX;
     readonly int _maxY;
+
     readonly int _types;
     readonly Matcher _matcher;
     readonly ExecutorService _executor;
     readonly TileIndexWalker _tileWalker;
+
     QueryResults _currentResults;
     int _currentPos;
     IFeature? _nextFeature;
@@ -51,41 +54,38 @@ internal class Query : IEnumerator<IFeature>, IBounds
 
     IFeature? _enumeratorCurrent;
 
+    /// <summary>
+    /// Initializes a new instance.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query(WorldView)</c>.</remarks>
     public Query(WorldView view)
     {
         _store = view.store;
-        _executor = _store.Executor();
+        _executor = _store.Executor;
         _types = view.types;
         _matcher = view.matcher;
+
         var bbox = view.bounds;
         _minX = bbox.MinX;
         _minY = bbox.MinY;
         _maxX = bbox.MaxX;
         _maxY = bbox.MaxY;
+
         _queue = new BlockingCollection<TileQueryTask>();
         _tileWalker = new TileIndexWalker(_store);
         _currentResults = QueryResults.Empty;
+
         Start(view.filter);
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.store()</c>.</remarks>
-    public FeatureStore Store()
-    {
-        return _store;
-    }
+    public FeatureStore Store => _store;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.types()</c>.</remarks>
-    public int Types()
-    {
-        return _types;
-    }
+    public int Types => _types;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.matcher()</c>.</remarks>
-    public Matcher Matcher()
-    {
-        return _matcher;
-    }
+    public Matcher Matcher => _matcher;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.minX()</c>.</remarks>
     public int MinX => _minX;
@@ -140,10 +140,11 @@ internal class Query : IEnumerator<IFeature>, IBounds
         _currentPos = -1;
 
         // Submit initial tasks
-        var maxPendingTiles = _store.MaxPendingTiles();
+        var maxPendingTiles = _store.MaxPendingTiles;
         while (_pendingTiles < maxPendingTiles)
         {
             RequestTile();
+
             if (!_tileWalker.Next())
             {
                 // We've traversed all tiles
@@ -151,6 +152,7 @@ internal class Query : IEnumerator<IFeature>, IBounds
                 break;
             }
         }
+
         FetchNext();
     }
 
@@ -161,8 +163,7 @@ internal class Query : IEnumerator<IFeature>, IBounds
         var entry = _store.TileIndexEntry(_tileWalker.Tip());
         if ((entry & 2) != 0)
         {
-            pool.Submit(new TileQueryTask(this, (int)((uint)entry >> 2),
-                _tileWalker.NorthwestFlags(), _tileWalker.CurrentFilter()));
+            pool.Submit(new TileQueryTask(this, (int)((uint)entry >> 2), _tileWalker.NorthwestFlags(), _tileWalker.CurrentFilter()));
             _pendingTiles++;
         }
         else
@@ -196,13 +197,13 @@ internal class Query : IEnumerator<IFeature>, IBounds
                     // Retrieve the next task from the queue, blocking if necessary
 
                     var task = Take()!;
-                    _pendingTiles -= task.TilesProcessed();
+                    _pendingTiles -= task.TilesProcessed;
                     while (!_allTilesRequested)
                     {
                         RequestTile();
                         if (_tileWalker.Next())
                         {
-                            if (_pendingTiles == _store.MaxPendingTiles())
+                            if (_pendingTiles == _store.MaxPendingTiles)
                                 break;
                         }
                         else

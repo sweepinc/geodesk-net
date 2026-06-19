@@ -19,7 +19,7 @@ namespace GeoDesk.Tests.Tests;
 public class TagsTest : IDisposable
 {
 
-    readonly IFeatures world;
+    readonly IFeatureQuery world;
     readonly FeatureLibrary _lib;
 
     public TagsTest()

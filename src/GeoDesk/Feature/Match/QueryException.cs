@@ -14,15 +14,17 @@ public class QueryException : Exception
 {
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.QueryException(String)</c>.</remarks>
-    public QueryException(string msg)
-        : base(msg)
+    public QueryException(string msg) :
+        base(msg)
     {
+
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.QueryException(String, Exception)</c>.</remarks>
-    public QueryException(string msg, Exception ex)
-        : base(msg, ex)
+    public QueryException(string msg, Exception ex) :
+        base(msg, ex)
     {
+
     }
 
 }

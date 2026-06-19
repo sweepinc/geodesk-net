@@ -43,17 +43,11 @@ internal abstract class AbstractRelateFilter : IFilter
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.AbstractRelateFilter.strategy()</c>.</remarks>
-    public virtual int Strategy()
-    {
-        return FilterStrategy.FastTileFilter | FilterStrategy.NeedsGeometry | FilterStrategy.UsesBbox |
+    public virtual int Strategy => FilterStrategy.FastTileFilter | FilterStrategy.NeedsGeometry | FilterStrategy.UsesBbox |
             FilterStrategy.RestrictsTypes;
-    }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.AbstractRelateFilter.acceptedTypes()</c>.</remarks>
-    public int AcceptedTypes()
-    {
-        return acceptedTypes;
-    }
+    public int AcceptedTypes => acceptedTypes;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.AbstractRelateFilter.filterForTile(int, Polygon)</c>.</remarks>
     public virtual IFilter? FilterForTile(int tile, Polygon tileGeometry)
@@ -67,9 +61,6 @@ internal abstract class AbstractRelateFilter : IFilter
     public abstract bool Accept(IFeature feature, Geometry geom);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.AbstractRelateFilter.bounds()</c>.</remarks>
-    public IBounds Bounds()
-    {
-        return bounds;
-    }
+    public IBounds Bounds => bounds;
 
 }

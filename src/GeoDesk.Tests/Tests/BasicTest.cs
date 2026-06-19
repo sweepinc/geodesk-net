@@ -17,7 +17,7 @@ namespace GeoDesk.Tests.Tests;
 public class BasicTest : IDisposable
 {
 
-    readonly IFeatures features;
+    readonly IFeatureQuery features;
     readonly FeatureLibrary _lib;
 
     public BasicTest()

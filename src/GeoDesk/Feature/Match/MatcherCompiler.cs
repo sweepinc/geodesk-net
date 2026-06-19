@@ -49,12 +49,10 @@ internal class MatcherCompiler
     Matcher CreateMatcher(string query)
     {
         _parser.Parse(query);
+
         var selectors = _parser.Query();
         if (selectors == null)
-        {
-            // empty query matches everything
             return Matcher.ALL;
-        }
 
         var sel = selectors;
         var commonType = 0;
@@ -62,13 +60,10 @@ internal class MatcherCompiler
         {
             var type = sel.MatchTypes();
             if (commonType == 0)
-            {
                 commonType = type;
-            }
             else if (type != commonType)
-            {
                 throw new QueryException("Polyform queries are not supported.");
-            }
+
             sel = sel.Next();
         }
 

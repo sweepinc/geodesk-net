@@ -87,7 +87,7 @@ internal class RTreeQueryTask : QueryTask
         var minY = query.MinY;
         var maxX = query.MaxX;
         var maxY = query.MaxY;
-        var acceptedTypes = query.Types();
+        var acceptedTypes = query.Types;
 
         for (; ; )
         {
@@ -108,7 +108,7 @@ internal class RTreeQueryTask : QueryTask
                         {
                             // TODO: We should return results as Features rather than pointers, since
                             //  we are creating a Feature anyway in order to apply a filter
-                            if (filter == null || filter.Accept(query.Store().GetFeature(buf, pFeature)))
+                            if (filter == null || filter.Accept(query.Store.GetFeature(buf, pFeature)))
                                 results!.Add(pFeature | (int)(((uint)flags >> 3) & 3));
                         }
                     }
@@ -151,7 +151,7 @@ internal class RTreeQueryTask : QueryTask
                     {
                         // TODO: We should return results as Features rather than pointers, since we
                         //  are creating a Feature anyway in order to apply a filter
-                        if (filter == null || filter.Accept(new StoredNode(query.Store(), buf, pFeature)))
+                        if (filter == null || filter.Accept(new StoredNode(query.Store, buf, pFeature)))
                             results!.Add(pFeature);
                     }
                 }

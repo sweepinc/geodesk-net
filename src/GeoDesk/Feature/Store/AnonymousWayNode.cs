@@ -77,7 +77,7 @@ internal class AnonymousWayNode : INode
     public Box Bounds => new Box(_x, _y);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.AnonymousWayNode.tags()</c>.</remarks>
-    public ITags Tags => EmptyTags.SINGLETON;
+    public TagCollection Tags => default;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.AnonymousWayNode.tag(String)</c>.</remarks>
     public string Tag(string k)
@@ -183,7 +183,7 @@ internal class AnonymousWayNode : INode
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.AnonymousWayNode.parents(int, Matcher, Filter)</c>.</remarks>
-    public IFeatures Parents(int types, Matcher matcher, IFilter? filter)
+    public IFeatureQuery Parents(int types, Matcher matcher, IFilter? filter)
     {
         if ((types & TypeBits.WAYS) == 0)
             return EmptyView.Any;
@@ -194,18 +194,18 @@ internal class AnonymousWayNode : INode
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.AnonymousWayNode.parents()</c>.</remarks>
-    public IFeatures Parents()
+    public IFeatureQuery Parents()
     {
         return new WorldView(_store, TypeBits.WAYS, Bounds, Matcher.ALL, new ParentWayFilter(_x, _y));
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.AnonymousWayNode.parents(String)</c>.</remarks>
-    public IFeatures Parents(string query)
+    public IFeatureQuery Parents(string query)
     {
         var matcher = _store.GetMatcher(query);
-        if ((matcher.AcceptedTypes() & TypeBits.WAYS) == 0)
+        if ((matcher.AcceptedTypes & TypeBits.WAYS) == 0)
             return EmptyView.Any;
-        return new WorldView(_store, matcher.AcceptedTypes(), Bounds, matcher, new ParentWayFilter(_x, _y));
+        return new WorldView(_store, matcher.AcceptedTypes, Bounds, matcher, new ParentWayFilter(_x, _y));
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.AnonymousWayNode.ParentWayFilter</c>.</remarks>

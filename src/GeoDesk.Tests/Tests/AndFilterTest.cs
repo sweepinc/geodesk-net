@@ -71,11 +71,11 @@ public class AndFilterTest : IDisposable
         map.Add(bavaria!).Color("red");
         map.Add(danube!).Color("blue");
 
-        var walker = new TileIndexWalker(world.Store());
+        var walker = new TileIndexWalker(world.Store);
         var filter = AndFilter.Create(new WithinFilter(bavaria!), new IntersectsFilter(danube!));
 
-        map.Add(filter.Bounds()).Color("orange");
-        walker.Start(filter.Bounds(), filter);
+        map.Add(filter.Bounds).Color("orange");
+        walker.Start(filter.Bounds, filter);
         while (walker.Next())
         {
             var marker = map.Add(Tile.Polygon(walker.CurrentTile()))
@@ -141,10 +141,10 @@ public class AndFilterTest : IDisposable
             }
         }
 
-        var walker = new TileIndexWalker(world.Store());
+        var walker = new TileIndexWalker(world.Store);
         IFilter filter = new IntersectsFilter(runway!.ToGeometry());
-        walker.Start(filter.Bounds(), filter);
-        map.Add(filter.Bounds()).Color("orange");
+        walker.Start(filter.Bounds, filter);
+        map.Add(filter.Bounds).Color("orange");
         while (walker.Next())
         {
             var marker = map.Add(Tile.Polygon(walker.CurrentTile()))
@@ -152,7 +152,7 @@ public class AndFilterTest : IDisposable
             if (walker.CurrentFilter() != filter) marker.Color("green");
         }
 
-        var airport = airports.In(filter.Bounds()).First();
+        var airport = airports.In(filter.Bounds).First();
         Assert.NotNull(airport);
         Assert.True(runway.ToGeometry().Intersects(airport!.ToGeometry()));
         var runwayPrepared = PreparedGeometryFactory.Prepare(runway.ToGeometry());

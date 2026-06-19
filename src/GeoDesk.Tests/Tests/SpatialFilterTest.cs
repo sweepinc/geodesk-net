@@ -217,7 +217,7 @@ public class SpatialFilterTest
             Console.Write("Found {0} counties in Germany in {1} ms\n", countyCount, Millis(startQuery));
 
             Log.Debug("Creating GeometryCollection of counties...");
-            Geometry totalCountyGeom = world.GeometryFactory().CreateGeometryCollection(countyGeometries.ToArray());
+            Geometry totalCountyGeom = world.GeometryFactory.CreateGeometryCollection(countyGeometries.ToArray());
             Log.Debug("Unioning the GeometryCollection...");
             totalCountyGeom = totalCountyGeom.Buffer(0);
             Log.Debug("Creating a map...");

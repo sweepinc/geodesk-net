@@ -38,10 +38,7 @@ internal class IntersectsFilter : AbstractRelateFilter
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.IntersectsFilter.strategy()</c>.</remarks>
-    public override int Strategy()
-    {
-        return FilterStrategy.FastTileFilter | FilterStrategy.NeedsGeometry | FilterStrategy.UsesBbox;
-    }
+    public override int Strategy => FilterStrategy.FastTileFilter | FilterStrategy.NeedsGeometry | FilterStrategy.UsesBbox;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.IntersectsFilter.filterForTile(int, Polygon)</c>.</remarks>
     public override IFilter? FilterForTile(int tile, Polygon tileGeometry)

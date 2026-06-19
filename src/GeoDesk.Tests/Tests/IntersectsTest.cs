@@ -20,7 +20,7 @@ public class IntersectsTest : AbstractFeatureTest
 {
 
     /// <remarks>Ported from Java <c>com.geodesk.tests.IntersectsTest.getFeatures(Features)</c>.</remarks>
-    static List<long> GetFeatures(IFeatures features)
+    static List<long> GetFeatures(IFeatureQuery features)
     {
         var list = new List<long>();
         foreach (var f in features)
@@ -57,7 +57,7 @@ public class IntersectsTest : AbstractFeatureTest
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.tests.IntersectsTest.timeQuery(String, Features)</c>.</remarks>
-    static void TimeQuery(string fmt, IFeatures features)
+    static void TimeQuery(string fmt, IFeatureQuery features)
     {
         for (var i = 0; i < 5; i++)
         {

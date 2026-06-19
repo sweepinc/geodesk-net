@@ -17,7 +17,7 @@ namespace GeoDesk.Feature.Query;
 internal class EmptyView : View
 {
 
-    public static readonly IFeatures Any = new EmptyView();
+    public static readonly IFeatureQuery Any = new EmptyView();
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.EmptyView()</c>.</remarks>
     public EmptyView()
@@ -26,13 +26,13 @@ internal class EmptyView : View
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.EmptyView.select(int, String)</c>.</remarks>
-    protected override IFeatures Select(int newTypes, string query)
+    protected override IFeatureQuery Select(int newTypes, string query)
     {
         return this;
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.EmptyView.newWith(int, Matcher, Filter)</c>.</remarks>
-    internal override IFeatures NewWith(int types, Matcher matcher, IFilter? filter)
+    internal override IFeatureQuery NewWith(int types, Matcher matcher, IFilter? filter)
     {
         return this;
     }
@@ -56,37 +56,37 @@ internal class EmptyView : View
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.EmptyView.select(String)</c>.</remarks>
-    public override IFeatures Select(string filter)
+    public override IFeatureQuery Select(string filter)
     {
         return Any;
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.EmptyView.in(Bounds)</c>.</remarks>
-    public override IFeatures In(IBounds bbox)
+    public override IFeatureQuery In(IBounds bbox)
     {
         return this;
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.EmptyView.select(Filter)</c>.</remarks>
-    public override IFeatures Select(IFilter filter)
+    public override IFeatureQuery Select(IFilter filter)
     {
         return this;
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.EmptyView.nodesOf(Feature)</c>.</remarks>
-    public override IFeatures NodesOf(IFeature parent)
+    public override IFeatureQuery NodesOf(IFeature parent)
     {
         return this;
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.EmptyView.membersOf(Feature)</c>.</remarks>
-    public override IFeatures MembersOf(IFeature parent)
+    public override IFeatureQuery MembersOf(IFeature parent)
     {
         return this;
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.EmptyView.parentsOf(Feature)</c>.</remarks>
-    public override IFeatures ParentsOf(IFeature child)
+    public override IFeatureQuery ParentsOf(IFeature child)
     {
         return this;
     }

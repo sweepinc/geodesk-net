@@ -47,13 +47,13 @@ public class WorldView : View
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.WorldView.newWith(int, Matcher, Filter)</c>.</remarks>
-    internal override IFeatures NewWith(int types, Matcher matcher, IFilter? filter)
+    internal override IFeatureQuery NewWith(int types, Matcher matcher, IFilter? filter)
     {
         return new WorldView(store, types, bounds, matcher, filter);
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.WorldView.in(Bounds)</c>.</remarks>
-    public override IFeatures In(IBounds bbox)
+    public override IFeatureQuery In(IBounds bbox)
     {
         return new WorldView(this, bbox);
     }
@@ -90,7 +90,7 @@ public class WorldView : View
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.WorldView.select(Filter)</c>.</remarks>
-    public override IFeatures Select(IFilter filter)
+    public override IFeatureQuery Select(IFilter filter)
     {
         var newTypes = types;
         if (this.filter != null)
@@ -99,17 +99,18 @@ public class WorldView : View
             if (filter == FalseFilter.Instance)
                 return EmptyView.Any;
         }
-        var strategy = filter.Strategy();
+
+        var strategy = filter.Strategy;
         if ((strategy & FilterStrategy.RestrictsTypes) != 0)
         {
-            newTypes &= filter.AcceptedTypes();
+            newTypes &= filter.AcceptedTypes;
             if (newTypes == 0)
                 return EmptyView.Any;
         }
 
         // TODO: review: filter type check
 
-        var filterBounds = filter.Bounds();
+        var filterBounds = filter.Bounds;
         // TODO: proper combining of bboxes
         return new WorldView(store, types, filterBounds != null ? filterBounds : bounds, matcher, filter);
     }

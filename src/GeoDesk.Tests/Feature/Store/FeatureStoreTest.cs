@@ -55,9 +55,9 @@ public class FeatureStoreTest
             Assert.Equal(-1, store.CodeFromString(" not a real key "));
 
             // Zoom levels must be a non-zero bitset.
-            Assert.NotEqual(0, store.ZoomLevels());
+            Assert.NotEqual(0, store.ZoomLevels);
 
-            output.WriteLine($"Opened {Path.GetFileName(gol)}: highway={highwayCode}, name={nameCode}, zoomLevels=0x{store.ZoomLevels():X}");
+            output.WriteLine($"Opened {Path.GetFileName(gol)}: highway={highwayCode}, name={nameCode}, zoomLevels=0x{store.ZoomLevels:X}");
         }
         finally
         {

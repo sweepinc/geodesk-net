@@ -48,7 +48,7 @@ public class FastFilterTest : IDisposable
         map.Add(bavariaPoly).Color("red");
 
         var tileCount = 0;
-        var walker = new TileIndexWalker(world.Store());
+        var walker = new TileIndexWalker(world.Store);
         IFilter filter = new IntersectsFilter(bavariaPoly);
         walker.Start(bavaria.Bounds, filter);
         while (walker.Next())
@@ -128,7 +128,7 @@ public class FastFilterTest : IDisposable
         map.Add(rhineGeom).Color("red");
 
         var tileCount = 0;
-        var walker = new TileIndexWalker(world.Store());
+        var walker = new TileIndexWalker(world.Store);
         IFilter filter = new CrossesFilter(rhineGeom);
         walker.Start(rhine.Bounds, filter);
         while (walker.Next())

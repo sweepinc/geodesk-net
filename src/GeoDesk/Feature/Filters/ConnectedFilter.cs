@@ -39,10 +39,7 @@ internal class ConnectedFilter : IFilter
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ConnectedFilter.bounds()</c>.</remarks>
-    public IBounds Bounds()
-    {
-        return _bounds;
-    }
+    public IBounds Bounds => _bounds;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ConnectedFilter.collectPoints(Feature)</c>.</remarks>
     void CollectPoints(IFeature f)

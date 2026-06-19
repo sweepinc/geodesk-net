@@ -25,9 +25,9 @@ public class FeatureLibrary : WorldView, IDisposable
     /// <param name="path">the path of the GOL file</param>
     /// <remarks>
     /// The returned <see cref="FeatureLibrary"/> is the disposable root and is itself an
-    /// <see cref="IFeatures"/> collection of all features. To call <see cref="IFeatures"/>' default
+    /// <see cref="IFeatureQuery"/> collection of all features. To call <see cref="IFeatureQuery"/>' default
     /// convenience methods (e.g. <c>ContainingXY</c>) directly on the root, reference it as
-    /// <see cref="IFeatures"/>. Ported from Java <c>com.geodesk.feature.Features.open(String)</c>.
+    /// <see cref="IFeatureQuery"/>. Ported from Java <c>com.geodesk.feature.Features.open(String)</c>.
     /// </remarks>
     public static FeatureLibrary Open(string path)
     {
@@ -46,11 +46,11 @@ public class FeatureLibrary : WorldView, IDisposable
 
     }
 
+    /// <remarks>Ported from Java <c>com.geodesk.feature.FeatureLibrary.store()</c>.</remarks>
+    internal FeatureStore Store => store;
+
     /// <remarks>Ported from Java <c>com.geodesk.feature.FeatureLibrary.geometryFactory()</c>.</remarks>
-    public GeometryFactory GeometryFactory()
-    {
-        return store.GeometryFactory();
-    }
+    public GeometryFactory GeometryFactory => store.GeometryFactory();
 
     /// <summary>
     /// Closes the library and releases its resources.
@@ -70,12 +70,6 @@ public class FeatureLibrary : WorldView, IDisposable
     public void Dispose()
     {
         Close();
-    }
-
-    /// <remarks>Ported from Java <c>com.geodesk.feature.FeatureLibrary.store()</c>.</remarks>
-    internal FeatureStore Store()
-    {
-        return store;
     }
 
 }

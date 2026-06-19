@@ -5,10 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-using System;
 using System.Collections.Generic;
 
-using GeoDesk.Feature.Filters;
 using GeoDesk.Feature.Match;
 using GeoDesk.Geom;
 
@@ -20,32 +18,32 @@ namespace GeoDesk.Feature;
 /// <summary>
 /// A collection of features.
 /// </summary>
-public interface IFeatures : IEnumerable<IFeature>
+public interface IFeatureQuery : IEnumerable<IFeature>
 {
 
     /// <summary>Returns a view containing only features matching the given query.</summary>
-    IFeatures Select(string query);
+    IFeatureQuery Select(string query);
 
     /// <summary>Returns a view that contains only nodes.</summary>
-    IFeatures Nodes();
+    IFeatureQuery Nodes();
 
     /// <summary>Returns a view that contains only nodes matching the given query.</summary>
-    IFeatures Nodes(string query);
+    IFeatureQuery Nodes(string query);
 
     /// <summary>Returns a view that contains only ways.</summary>
-    IFeatures Ways();
+    IFeatureQuery Ways();
 
     /// <summary>Returns a view that contains only ways matching the given query.</summary>
-    IFeatures Ways(string query);
+    IFeatureQuery Ways(string query);
 
     /// <summary>Returns a view that contains only relations.</summary>
-    IFeatures Relations();
+    IFeatureQuery Relations();
 
     /// <summary>Returns a view that contains only relations matching the given query.</summary>
-    IFeatures Relations(string query);
+    IFeatureQuery Relations(string query);
 
     /// <summary>Returns a sub-view of features that are nodes of the given way.</summary>
-    IFeatures NodesOf(IFeature parent)
+    IFeatureQuery NodesOf(IFeature parent)
     {
         throw new QueryException("Not implemented for this query.");
     }
@@ -53,19 +51,19 @@ public interface IFeatures : IEnumerable<IFeature>
     /// <summary>
     /// Returns the features that are nodes of the given way, or members of the given relation.
     /// </summary>
-    IFeatures MembersOf(IFeature parent)
+    IFeatureQuery MembersOf(IFeature parent)
     {
         throw new QueryException("Not implemented for this query.");
     }
 
     /// <summary>Returns the features that are parent elements of the given feature.</summary>
-    IFeatures ParentsOf(IFeature child)
+    IFeatureQuery ParentsOf(IFeature child)
     {
         throw new QueryException("Not implemented for this query.");
     }
 
     /// <summary>Returns a view of features whose bounding box intersects the given bounds.</summary>
-    IFeatures In(IBounds bbox);
+    IFeatureQuery In(IBounds bbox);
 
     /// <summary>Returns the first feature in the collection, or null if empty.</summary>
     IFeature? First() => FeaturesSupport.First(this);
@@ -86,123 +84,120 @@ public interface IFeatures : IEnumerable<IFeature>
     bool Contains(object f) => FeaturesSupport.Contains(this, f);
 
     /// <summary>Returns a view filtered by the given <see cref="IFilter"/>.</summary>
-    IFeatures Select(IFilter filter);
+    IFeatureQuery Select(IFilter filter);
 
     /// <summary>Returns the features present in both this collection and <paramref name="other"/>.</summary>
-    IFeatures Select(IFeatures other);
+    IFeatureQuery Select(IFeatureQuery other);
 
     // --- Spatial-predicate filters (ported from com.geodesk.feature.Features default methods) ---
 
     /// <summary>Returns all features that have at least one common vertex with the given feature.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.connectedTo(Feature)</c>.</remarks>
-    IFeatures ConnectedTo(IFeature f) => FeaturesSupport.ConnectedTo(this, f);
+    IFeatureQuery ConnectedTo(IFeature f) => FeaturesSupport.ConnectedTo(this, f);
 
     /// <summary>
     /// Returns all features that have at least one common vertex with the given Geometry.
     /// Coordinates of the Geometry are rounded to integers.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.connectedTo(Geometry)</c>.</remarks>
-    IFeatures ConnectedTo(Geometry geom) => FeaturesSupport.ConnectedTo(this, geom);
+    IFeatureQuery ConnectedTo(Geometry geom) => FeaturesSupport.ConnectedTo(this, geom);
 
     /// <summary>Returns all features that contain the given Mercator-projected coordinate.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.containingXY(int, int)</c>.</remarks>
-    IFeatures ContainingXY(int x, int y) => FeaturesSupport.ContainingXY(this, x, y);
+    IFeatureQuery ContainingXY(int x, int y) => FeaturesSupport.ContainingXY(this, x, y);
 
     /// <summary>Returns all features that contain the given longitude/latitude coordinate.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.containingLonLat(double, double)</c>.</remarks>
-    IFeatures ContainingLonLat(double lon, double lat) => FeaturesSupport.ContainingLonLat(this, lon, lat);
+    IFeatureQuery ContainingLonLat(double lon, double lat) => FeaturesSupport.ContainingLonLat(this, lon, lat);
 
     /// <summary>Returns all features that contain the given feature.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.containing(Feature)</c>.</remarks>
-    IFeatures Containing(IFeature feature) => FeaturesSupport.Containing(this, feature);
+    IFeatureQuery Containing(IFeature feature) => FeaturesSupport.Containing(this, feature);
 
     /// <summary>Returns all features that contain the given Geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.containing(Geometry)</c>.</remarks>
-    IFeatures Containing(Geometry geom) => FeaturesSupport.Containing(this, geom);
+    IFeatureQuery Containing(Geometry geom) => FeaturesSupport.Containing(this, geom);
 
     /// <summary>Returns all features that contain the given PreparedGeometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.containing(PreparedGeometry)</c>.</remarks>
-    IFeatures Containing(IPreparedGeometry prepared) => FeaturesSupport.Containing(this, prepared);
+    IFeatureQuery Containing(IPreparedGeometry prepared) => FeaturesSupport.Containing(this, prepared);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.coveredBy(Feature)</c>.</remarks>
-    IFeatures CoveredBy(IFeature feature) => FeaturesSupport.CoveredBy(this, feature);
+    IFeatureQuery CoveredBy(IFeature feature) => FeaturesSupport.CoveredBy(this, feature);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.coveredBy(Geometry)</c>.</remarks>
-    IFeatures CoveredBy(Geometry geom) => FeaturesSupport.CoveredBy(this, geom);
+    IFeatureQuery CoveredBy(Geometry geom) => FeaturesSupport.CoveredBy(this, geom);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.coveredBy(PreparedGeometry)</c>.</remarks>
-    IFeatures CoveredBy(IPreparedGeometry prepared) => FeaturesSupport.CoveredBy(this, prepared);
+    IFeatureQuery CoveredBy(IPreparedGeometry prepared) => FeaturesSupport.CoveredBy(this, prepared);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.crossing(Feature)</c>.</remarks>
-    IFeatures Crossing(IFeature feature) => FeaturesSupport.Crossing(this, feature);
+    IFeatureQuery Crossing(IFeature feature) => FeaturesSupport.Crossing(this, feature);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.crossing(Geometry)</c>.</remarks>
-    IFeatures Crossing(Geometry geom) => FeaturesSupport.Crossing(this, geom);
+    IFeatureQuery Crossing(Geometry geom) => FeaturesSupport.Crossing(this, geom);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.crossing(PreparedGeometry)</c>.</remarks>
-    IFeatures Crossing(IPreparedGeometry prepared) => FeaturesSupport.Crossing(this, prepared);
+    IFeatureQuery Crossing(IPreparedGeometry prepared) => FeaturesSupport.Crossing(this, prepared);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.disjoint(Feature)</c>.</remarks>
-    IFeatures Disjoint(IFeature feature) => FeaturesSupport.Disjoint(this, feature);
+    IFeatureQuery Disjoint(IFeature feature) => FeaturesSupport.Disjoint(this, feature);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.disjoint(Geometry)</c>.</remarks>
-    IFeatures Disjoint(Geometry geom) => FeaturesSupport.Disjoint(this, geom);
+    IFeatureQuery Disjoint(Geometry geom) => FeaturesSupport.Disjoint(this, geom);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.disjoint(PreparedGeometry)</c>.</remarks>
-    IFeatures Disjoint(IPreparedGeometry prepared) => FeaturesSupport.Disjoint(this, prepared);
+    IFeatureQuery Disjoint(IPreparedGeometry prepared) => FeaturesSupport.Disjoint(this, prepared);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.intersecting(Feature)</c>.</remarks>
-    IFeatures Intersecting(IFeature feature) => FeaturesSupport.Intersecting(this, feature);
+    IFeatureQuery Intersecting(IFeature feature) => FeaturesSupport.Intersecting(this, feature);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.intersecting(Geometry)</c>.</remarks>
-    IFeatures Intersecting(Geometry geom) => FeaturesSupport.Intersecting(this, geom);
+    IFeatureQuery Intersecting(Geometry geom) => FeaturesSupport.Intersecting(this, geom);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.intersecting(PreparedGeometry)</c>.</remarks>
-    IFeatures Intersecting(IPreparedGeometry prepared) => FeaturesSupport.Intersecting(this, prepared);
+    IFeatureQuery Intersecting(IPreparedGeometry prepared) => FeaturesSupport.Intersecting(this, prepared);
 
     /// <summary>Returns all features whose closest point lies within a given radius (meters).</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.maxMetersFromXY(double, int, int)</c>.</remarks>
-    IFeatures MaxMetersFromXY(double distance, int x, int y) => FeaturesSupport.MaxMetersFromXY(this, distance, x, y);
+    IFeatureQuery MaxMetersFromXY(double distance, int x, int y) => FeaturesSupport.MaxMetersFromXY(this, distance, x, y);
 
     /// <summary>Returns all features whose closest point lies within a given radius (meters).</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.maxMetersFromLonLat(double, double, double)</c>.</remarks>
-    IFeatures MaxMetersFromLonLat(double distance, double lon, double lat) => FeaturesSupport.MaxMetersFromLonLat(this, distance, lon, lat);
+    IFeatureQuery MaxMetersFromLonLat(double distance, double lon, double lat) => FeaturesSupport.MaxMetersFromLonLat(this, distance, lon, lat);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.maxMetersFrom(double, Geometry)</c>.</remarks>
-    IFeatures MaxMetersFrom(double distance, Geometry geom) => FeaturesSupport.MaxMetersFrom(this, distance, geom);
+    IFeatureQuery MaxMetersFrom(double distance, Geometry geom) => FeaturesSupport.MaxMetersFrom(this, distance, geom);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.maxMetersFrom(double, Feature)</c>.</remarks>
-    IFeatures MaxMetersFrom(double distance, IFeature feature) => FeaturesSupport.MaxMetersFrom(this, distance, feature);
+    IFeatureQuery MaxMetersFrom(double distance, IFeature feature) => FeaturesSupport.MaxMetersFrom(this, distance, feature);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.overlapping(Feature)</c>.</remarks>
-    IFeatures Overlapping(IFeature feature) => FeaturesSupport.Overlapping(this, feature);
+    IFeatureQuery Overlapping(IFeature feature) => FeaturesSupport.Overlapping(this, feature);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.overlapping(Geometry)</c>.</remarks>
-    IFeatures Overlapping(Geometry geom) => FeaturesSupport.Overlapping(this, geom);
+    IFeatureQuery Overlapping(Geometry geom) => FeaturesSupport.Overlapping(this, geom);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.overlapping(PreparedGeometry)</c>.</remarks>
-    IFeatures Overlapping(IPreparedGeometry prepared) => FeaturesSupport.Overlapping(this, prepared);
+    IFeatureQuery Overlapping(IPreparedGeometry prepared) => FeaturesSupport.Overlapping(this, prepared);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.touching(Feature)</c>.</remarks>
-    IFeatures Touching(IFeature feature) => FeaturesSupport.Touching(this, feature);
+    IFeatureQuery Touching(IFeature feature) => FeaturesSupport.Touching(this, feature);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.touching(Geometry)</c>.</remarks>
-    IFeatures Touching(Geometry geom) => FeaturesSupport.Touching(this, geom);
+    IFeatureQuery Touching(Geometry geom) => FeaturesSupport.Touching(this, geom);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.touching(PreparedGeometry)</c>.</remarks>
-    IFeatures Touching(IPreparedGeometry prepared) => FeaturesSupport.Touching(this, prepared);
+    IFeatureQuery Touching(IPreparedGeometry prepared) => FeaturesSupport.Touching(this, prepared);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.within(Feature)</c>.</remarks>
-    IFeatures Within(IFeature feature) => FeaturesSupport.Within(this, feature);
+    IFeatureQuery Within(IFeature feature) => FeaturesSupport.Within(this, feature);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.within(Geometry)</c>.</remarks>
-    IFeatures Within(Geometry geom) => FeaturesSupport.Within(this, geom);
+    IFeatureQuery Within(Geometry geom) => FeaturesSupport.Within(this, geom);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.within(PreparedGeometry)</c>.</remarks>
-    IFeatures Within(IPreparedGeometry prepared) => FeaturesSupport.Within(this, prepared);
-
-    // PORT: Java's node()/way()/relation() are renamed GetNode()/GetWay()/GetRelation() to avoid
-    // colliding with the Node/Way/Relation types (C# is case-insensitive across method/type names).
+    IFeatureQuery Within(IPreparedGeometry prepared) => FeaturesSupport.Within(this, prepared);
 
     /// <summary>Returns the node with the given ID (or null).</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Features.node(long)</c>.</remarks>

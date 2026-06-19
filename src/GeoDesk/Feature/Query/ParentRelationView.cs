@@ -29,7 +29,7 @@ internal class ParentRelationView : TableView
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.ParentRelationView.newWith(int, Matcher, Filter)</c>.</remarks>
-    internal override IFeatures NewWith(int types, Matcher matcher, IFilter? filter)
+    internal override IFeatureQuery NewWith(int types, Matcher matcher, IFilter? filter)
     {
         return new ParentRelationView(store, buf, ptr, types, matcher, filter);
     }

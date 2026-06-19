@@ -21,8 +21,8 @@ internal class AndFilter : IFilter
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.AndFilter.create(Filter, Filter)</c>.</remarks>
     public static IFilter Create(IFilter left, IFilter right)
     {
-        var leftStrategy = left.Strategy();
-        var rightStrategy = right.Strategy();
+        var leftStrategy = left.Strategy;
+        var rightStrategy = right.Strategy;
         var leftStrictBounds = leftStrategy & FilterStrategy.StrictBbox;
         var rightStrictBounds = rightStrategy & FilterStrategy.StrictBbox;
 
@@ -32,7 +32,7 @@ internal class AndFilter : IFilter
         var combinedStrategy = ((leftStrategy | rightStrategy) & ~FilterStrategy.StrictBbox) |
             (leftStrictBounds & rightStrictBounds);
 
-        var acceptedTypes = left.AcceptedTypes() & right.AcceptedTypes();
+        var acceptedTypes = left.AcceptedTypes & right.AcceptedTypes;
         if (acceptedTypes == 0) return FalseFilter.Instance;
 
         IBounds bounds;
@@ -40,8 +40,8 @@ internal class AndFilter : IFilter
         {
             // TODO: check for null bbox or enforce filter.bounds() returning World bbox if bbox
             //  not in use
-            var leftBounds = left.Bounds();
-            var rightBounds = right.Bounds();
+            var leftBounds = left.Bounds;
+            var rightBounds = right.Bounds;
 
             if ((leftStrictBounds | rightStrictBounds) != 0)
             {
@@ -90,22 +90,13 @@ internal class AndFilter : IFilter
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.AndFilter.strategy()</c>.</remarks>
-    public int Strategy()
-    {
-        return _strategy;
-    }
+    public int Strategy => _strategy;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.AndFilter.acceptedTypes()</c>.</remarks>
-    public int AcceptedTypes()
-    {
-        return _acceptedTypes;
-    }
+    public int AcceptedTypes => _acceptedTypes;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.AndFilter.bounds()</c>.</remarks>
-    public IBounds Bounds()
-    {
-        return _bounds;
-    }
+    public IBounds Bounds => _bounds;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.AndFilter.filterForTile(int, Polygon)</c>.</remarks>
     public IFilter? FilterForTile(int tile, Polygon tileGeometry)

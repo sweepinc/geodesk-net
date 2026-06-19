@@ -18,7 +18,7 @@ internal class AndMatcher : Matcher
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.AndMatcher(Matcher, Matcher)</c>.</remarks>
     public AndMatcher(Matcher a, Matcher b) :
-        base(a.AcceptedTypes() & b.AcceptedTypes())
+        base(a.AcceptedTypes & b.AcceptedTypes)
     {
         _a = a;
         _b = b;
