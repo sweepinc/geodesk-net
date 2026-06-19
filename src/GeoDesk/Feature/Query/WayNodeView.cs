@@ -55,7 +55,7 @@ internal class WayNodeView : TableView
     public override IEnumerator<IFeature> GetEnumerator()
     {
         if ((_flags & IncludeGeometryNodes) == 0)
-            return new StoredWay.Iter(store, buf, BodyPtr() - 4 - (_flags & IFeatureFlags.RELATION_MEMBER_FLAG), matcher);
+            return new StoredWay.Iter(store, buf, BodyPtr() - 4 - (_flags & FeatureFlags.RELATION_MEMBER_FLAG), matcher);
 
         return new AllNodesIter(this, BodyPtr());
     }
@@ -76,9 +76,9 @@ internal class WayNodeView : TableView
             : base(owner.buf, pBody, owner.buf.GetInt(owner.ptr - 16), owner.buf.GetInt(owner.ptr - 12), owner._flags)
         {
             _owner = owner;
-            if ((owner._flags & IFeatureFlags.WAYNODE_FLAG) != 0)
+            if ((owner._flags & FeatureFlags.WAYNODE_FLAG) != 0)
             {
-                _featureNodeIter = new StoredWay.Iter(owner.store, owner.buf, pBody - 4 - (owner._flags & IFeatureFlags.RELATION_MEMBER_FLAG), Matcher.ALL);
+                _featureNodeIter = new StoredWay.Iter(owner.store, owner.buf, pBody - 4 - (owner._flags & FeatureFlags.RELATION_MEMBER_FLAG), Matcher.ALL);
                 // TODO: filters must apply to anonymous nodes as well!
                 if (_featureNodeIter.HasNext())
                     _nextFeatureNode = _featureNodeIter.Next();

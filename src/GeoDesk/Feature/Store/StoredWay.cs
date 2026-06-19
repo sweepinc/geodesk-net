@@ -58,7 +58,7 @@ internal class StoredWay : StoredFeature, IWay
             _y = prevY;
             _flags = flags;
             remaining = (int)ReadVarint();
-            if ((flags & IFeatureFlags.AREA_FLAG) != 0)
+            if ((flags & FeatureFlags.AREA_FLAG) != 0)
             {
                 remaining++;
                 _duplicatedLastCoord = 0;
@@ -177,7 +177,7 @@ internal class StoredWay : StoredFeature, IWay
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.nodes(String)</c>.</remarks>
     public IFeatureQuery Nodes(string query)
     {
-        if ((buf.Get(ptr) & IFeatureFlags.WAYNODE_FLAG) == 0)
+        if ((buf.Get(ptr) & FeatureFlags.WAYNODE_FLAG) == 0)
             return EmptyView.Any;
         Matcher matcher = store.GetMatcher(query);
         if ((matcher.AcceptedTypes & TypeBits.NODES) == 0)
@@ -189,23 +189,23 @@ internal class StoredWay : StoredFeature, IWay
     public override IEnumerator<IFeature> GetEnumerator()
     {
         int flags = buf.GetInt(ptr);
-        if ((flags & IFeatureFlags.WAYNODE_FLAG) == 0)
+        if ((flags & FeatureFlags.WAYNODE_FLAG) == 0)
             return Enumerable.Empty<IFeature>().GetEnumerator();
         int ppBody = ptr + 12;
         int pBody = buf.GetInt(ppBody) + ppBody;
         return new Iter(store, buf, pBody - 4 -
-            (flags & IFeatureFlags.RELATION_MEMBER_FLAG), Matcher.ALL);
+            (flags & FeatureFlags.RELATION_MEMBER_FLAG), Matcher.ALL);
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.fastFeatureNodeIterator(Matcher)</c>.</remarks>
     internal FeatureIterator FastFeatureNodeIterator(Matcher matcher)
     {
         int flags = buf.GetInt(ptr);
-        System.Diagnostics.Debug.Assert((flags & IFeatureFlags.WAYNODE_FLAG) != 0);
+        System.Diagnostics.Debug.Assert((flags & FeatureFlags.WAYNODE_FLAG) != 0);
         int ppBody = ptr + 12;
         int pBody = buf.GetInt(ppBody) + ppBody;
         return new Iter(store, buf, pBody - 4 -
-            (flags & IFeatureFlags.RELATION_MEMBER_FLAG), matcher);
+            (flags & FeatureFlags.RELATION_MEMBER_FLAG), matcher);
     }
 
     // TODO: matcher vs filter!

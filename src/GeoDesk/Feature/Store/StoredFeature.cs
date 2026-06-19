@@ -333,7 +333,7 @@ internal abstract class StoredFeature : IFeature
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.isArea()</c>.</remarks>
-    public bool IsArea => (buf.GetInt(ptr) & IFeatureFlags.AREA_FLAG) != 0;
+    public bool IsArea => (buf.GetInt(ptr) & FeatureFlags.AREA_FLAG) != 0;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.bounds()</c>.</remarks>
     public virtual Box Bounds => new Box(
@@ -408,7 +408,7 @@ internal abstract class StoredFeature : IFeature
     internal double DecodeTagDouble(long value) => ValueAsDouble(value);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.belongsToRelation()</c>.</remarks>
-    public bool BelongsToRelation => (buf.GetInt(ptr) & IFeatureFlags.RELATION_MEMBER_FLAG) != 0;
+    public bool BelongsToRelation => (buf.GetInt(ptr) & FeatureFlags.RELATION_MEMBER_FLAG) != 0;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.parents()</c>.</remarks>
     public virtual IFeatureQuery Parents()

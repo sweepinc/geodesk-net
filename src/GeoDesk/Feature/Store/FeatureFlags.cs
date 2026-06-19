@@ -7,24 +7,26 @@
 
 namespace GeoDesk.Feature.Store;
 
-/// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureFlags</c>.</remarks>
-internal interface IFeatureFlags
+/// <summary>The bit layout of a feature's flags word (the low bits of its anchor; the id occupies bits 12+).</summary>
+/// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureFlags</c> (a constants interface there;
+/// a static class here, since nothing implements it).</remarks>
+internal static class FeatureFlags
 {
 
-    const int LAST_SPATIAL_ITEM_FLAG = 1;
-    const int AREA_FLAG = 1 << 1;
-    const int RELATION_MEMBER_FLAG = 1 << 2;
-    const int FEATURE_TYPE_BITS = 3; // Bit 3 & 4
-    const int WAYNODE_FLAG = 1 << 5;
-    const int MULTITILE_BITS = 6;
-    const int MULTITILE_WEST_BIT = 6;
-    const int MULTITILE_NORTH_BIT = 7;
-    const int MULTITILE_WEST = 1 << MULTITILE_WEST_BIT;
-    const int MULTITILE_NORTH = 1 << MULTITILE_NORTH_BIT;
-    const int MULTITILE_FLAGS = MULTITILE_WEST | MULTITILE_NORTH;
-    const int SHARED_LOCATION_FLAG = 1 << 8;
-    const int EXCEPTION_NODE_FLAG = 1 << 9;
-    const int UNMODIFIED_FLAG = 1 << 10;
-    const int DELETED_FLAG = 1 << 11;
+    public const int LAST_SPATIAL_ITEM_FLAG = 1;
+    public const int AREA_FLAG = 1 << 1;
+    public const int RELATION_MEMBER_FLAG = 1 << 2;
+    public const int FEATURE_TYPE_BITS = 3; // Bit 3 & 4
+    public const int WAYNODE_FLAG = 1 << 5;
+    public const int MULTITILE_BITS = 6;
+    public const int MULTITILE_WEST_BIT = 6;
+    public const int MULTITILE_NORTH_BIT = 7;
+    public const int MULTITILE_WEST = 1 << MULTITILE_WEST_BIT;
+    public const int MULTITILE_NORTH = 1 << MULTITILE_NORTH_BIT;
+    public const int MULTITILE_FLAGS = MULTITILE_WEST | MULTITILE_NORTH;
+    public const int SHARED_LOCATION_FLAG = 1 << 8;
+    public const int EXCEPTION_NODE_FLAG = 1 << 9;
+    public const int UNMODIFIED_FLAG = 1 << 10;
+    public const int DELETED_FLAG = 1 << 11;
 
 }

@@ -5,13 +5,16 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-using GeoDesk.Common.Store;
+using System;
+
+using GeoDesk.Buffers;
 
 namespace GeoDesk.Feature.Store.Format;
 
-// Strong typed cursors over the on-disk tile / spatial-index layout. Each is a readonly struct over
-// a (buffer, offset) pair — the buffer is one mapped segment, the offset locates the record within
-// it. These replace the raw magic-offset buffer reads the query engine used to inline.
+// Strong typed cursors over the on-disk tile / spatial-index layout. Each is a readonly struct over a
+// ReadOnlyMemory<byte> already sliced to the record's start — the memory carries the position, so the
+// fields read at fixed relative offsets and navigation is just a further Slice. These replace the raw
+// magic-offset buffer reads the query engine used to inline.
 //
 // PORT: the field offsets encapsulated here are the ones the Java query engine read inline in
 // TileQueryTask and RTreeQueryTask; no single Java struct exists, so each cursor cites the Java
@@ -22,22 +25,25 @@ namespace GeoDesk.Feature.Store.Format;
 internal readonly struct Bounds
 {
 
-    readonly Segment _buf;
-    readonly int _p;
+    const int MinXOfs = 0;
+    const int MinYOfs = 4;
+    const int MaxXOfs = 8;
+    const int MaxYOfs = 12;
 
-    public Bounds(Segment buf, int p)
+    readonly ReadOnlyMemory<byte> _buf; // sliced to the start of the 4-int bbox
+
+    public Bounds(ReadOnlyMemory<byte> buf)
     {
         _buf = buf;
-        _p = p;
     }
 
-    public int MinX => _buf.GetInt(_p);
+    public int MinX => _buf.Span.GetIntLE(MinXOfs);
 
-    public int MinY => _buf.GetInt(_p + 4);
+    public int MinY => _buf.Span.GetIntLE(MinYOfs);
 
-    public int MaxX => _buf.GetInt(_p + 8);
+    public int MaxX => _buf.Span.GetIntLE(MaxXOfs);
 
-    public int MaxY => _buf.GetInt(_p + 12);
+    public int MaxY => _buf.Span.GetIntLE(MaxYOfs);
 
     /// <summary>
     /// Returns true if this box intersects the given query box.

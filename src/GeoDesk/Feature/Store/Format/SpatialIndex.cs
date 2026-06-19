@@ -5,7 +5,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-using GeoDesk.Common.Store;
+using System;
+
+using GeoDesk.Buffers;
 
 namespace GeoDesk.Feature.Store.Format;
 
@@ -18,18 +20,19 @@ namespace GeoDesk.Feature.Store.Format;
 internal readonly struct SpatialIndex
 {
 
-    readonly Segment _buf;
-    readonly int _pp;
+    // Relative pointer to the first bucket; a value of 0 means the index is empty.
+    const int FirstBucketPtrOfs = 0;
 
-    public SpatialIndex(Segment buf, int pp)
+    readonly ReadOnlyMemory<byte> _buf; // sliced to the index's root pointer
+
+    public SpatialIndex(ReadOnlyMemory<byte> buf)
     {
         _buf = buf;
-        _pp = pp;
     }
 
-    public bool IsEmpty => _buf.GetInt(_pp) == 0;
+    public bool IsEmpty => _buf.Span.GetIntLE(FirstBucketPtrOfs) == 0;
 
-    /// <summary>Pointer to the first 8-byte bucket entry. Only valid when <see cref="IsEmpty"/> is false.</summary>
-    public int FirstBucketPtr => _pp + _buf.GetInt(_pp);
+    /// <summary>The first bucket. Only valid when <see cref="IsEmpty"/> is false.</summary>
+    public IndexBucket FirstBucket => new IndexBucket(_buf.Slice(_buf.Span.GetIntLE(FirstBucketPtrOfs)));
 
 }

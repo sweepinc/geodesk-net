@@ -5,14 +5,16 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using GeoDesk.Feature.Filters;
 using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Query;
 using GeoDesk.Geom;
+
 using NetTopologySuite.Geometries;
+
 using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace GeoDesk.Feature.Store;
@@ -87,21 +89,21 @@ internal class StoredNode : StoredFeature, INode
     public IFeatureQuery Parents(int types, Matcher matcher, IFilter? filter)
     {
         int acceptedFlags = ((types & TypeBits.RELATIONS) != 0) ?
-            IFeatureFlags.RELATION_MEMBER_FLAG : 0;
+            FeatureFlags.RELATION_MEMBER_FLAG : 0;
         acceptedFlags |= ((types & TypeBits.WAYS) != 0) ?
-            IFeatureFlags.WAYNODE_FLAG : 0;
+            FeatureFlags.WAYNODE_FLAG : 0;
         int flags = buf.GetInt(ptr) & acceptedFlags;
 
-        if (flags == IFeatureFlags.WAYNODE_FLAG)
+        if (flags == FeatureFlags.WAYNODE_FLAG)
         {
             return ParentWays(types, matcher, filter);
         }
-        if (flags == IFeatureFlags.RELATION_MEMBER_FLAG)
+        if (flags == FeatureFlags.RELATION_MEMBER_FLAG)
         {
             return new ParentRelationView(store, buf, GetRelationTablePtr(),
                 types & TypeBits.RELATIONS, matcher, filter);
         }
-        if (flags == (IFeatureFlags.WAYNODE_FLAG | IFeatureFlags.RELATION_MEMBER_FLAG))
+        if (flags == (FeatureFlags.WAYNODE_FLAG | FeatureFlags.RELATION_MEMBER_FLAG))
         {
             return new NodeParentView(store, buf, this,
                 GetRelationTablePtr(), types, matcher, filter);

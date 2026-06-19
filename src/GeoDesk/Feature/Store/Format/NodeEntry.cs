@@ -5,7 +5,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-using GeoDesk.Common.Store;
+using System;
+
+using GeoDesk.Buffers;
 
 namespace GeoDesk.Feature.Store.Format;
 
@@ -18,28 +20,37 @@ namespace GeoDesk.Feature.Store.Format;
 internal readonly struct NodeEntry
 {
 
-    readonly Segment _buf;
-    readonly int _p;
+    // Layout: x at 0, y at 4; the embedded node feature starts at +8, its first word being the flags.
+    const int XOfs = 0;
+    const int YOfs = 4;
+    const int FeatureOfs = 8;
+    const int LastFlag = 1;
+    const int BaseSize = 20;
 
-    public NodeEntry(Segment buf, int p)
+    readonly ReadOnlyMemory<byte> _buf; // sliced to the start of the node entry
+
+    public NodeEntry(ReadOnlyMemory<byte> buf)
     {
         _buf = buf;
-        _p = p;
     }
 
-    public int Flags => _buf.GetInt(_p + 8);
+    public int Flags => _buf.Span.GetIntLE(FeatureOfs);
 
-    public bool IsLast => (Flags & 1) != 0;
+    public bool IsLast => (Flags & LastFlag) != 0;
 
-    public int X => _buf.GetInt(_p);
+    public int X => _buf.Span.GetIntLE(XOfs);
 
-    public int Y => _buf.GetInt(_p + 4);
+    public int Y => _buf.Span.GetIntLE(YOfs);
 
-    /// <summary>Pointer to the node feature body.</summary>
-    public int FeaturePtr => _p + 8;
+    /// <summary>The embedded node feature, anchored at its flags word.</summary>
+    public Node Feature => new Node(_buf.Slice(FeatureOfs));
 
-    /// <summary>Stride to the next entry: 20 bytes, plus 4 if the node carries a relation-table pointer.</summary>
-    public int Stride => 20 + (Flags & 4);
+    /// <summary>
+    /// The number of bytes this entry occupies — the base size, plus the relation-table pointer when
+    /// the node is a relation member. A consumer advances by this to reach the next entry. (The flag's
+    /// value, 4, is also the size in bytes of that extra pointer.)
+    /// </summary>
+    public int Size => BaseSize + (Flags & FeatureFlags.RELATION_MEMBER_FLAG);
 
     public bool InBounds(int minX, int minY, int maxX, int maxY)
     {

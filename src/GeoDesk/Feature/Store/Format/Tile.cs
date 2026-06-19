@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-using GeoDesk.Common.Store;
+using System;
 
 namespace GeoDesk.Feature.Store.Format;
 
@@ -14,21 +14,25 @@ namespace GeoDesk.Feature.Store.Format;
 internal readonly struct Tile
 {
 
-    readonly Segment _buf;
-    readonly int _p;
+    // Tile-header layout: the four spatial-index root pointers, after the leading header words.
+    const int NodeIndexOfs = 8;
+    const int WayIndexOfs = 12;
+    const int AreaIndexOfs = 16;
+    const int RelationIndexOfs = 20;
 
-    public Tile(Segment buf, int pTile)
+    readonly ReadOnlyMemory<byte> _buf; // sliced to the start of the tile
+
+    public Tile(ReadOnlyMemory<byte> buf)
     {
         _buf = buf;
-        _p = pTile;
     }
 
-    public SpatialIndex NodeIndex => new SpatialIndex(_buf, _p + 8);
+    public SpatialIndex NodeIndex => new SpatialIndex(_buf.Slice(NodeIndexOfs));
 
-    public SpatialIndex WayIndex => new SpatialIndex(_buf, _p + 12);
+    public SpatialIndex WayIndex => new SpatialIndex(_buf.Slice(WayIndexOfs));
 
-    public SpatialIndex AreaIndex => new SpatialIndex(_buf, _p + 16);
+    public SpatialIndex AreaIndex => new SpatialIndex(_buf.Slice(AreaIndexOfs));
 
-    public SpatialIndex RelationIndex => new SpatialIndex(_buf, _p + 20);
+    public SpatialIndex RelationIndex => new SpatialIndex(_buf.Slice(RelationIndexOfs));
 
 }

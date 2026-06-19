@@ -5,7 +5,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-using GeoDesk.Common.Store;
+using System;
+
+using GeoDesk.Buffers;
 
 namespace GeoDesk.Feature.Store.Format;
 
@@ -14,26 +16,32 @@ namespace GeoDesk.Feature.Store.Format;
 internal readonly struct TrunkEntry
 {
 
-    readonly Segment _buf;
-    readonly int _p;
+    // Layout: word 0 = child pointer (high 30 bits) + last/leaf flags; bytes 4..19 = child bbox.
+    const int ChildAndFlagsOfs = 0;
+    const int BoundsOfs = 4;
+    const int LastFlag = 1;
+    const int LeafFlag = 2;
+    const uint ChildPtrMask = 0xffff_fffc; // clears the 2 low flag bits to leave the pointer
 
-    public TrunkEntry(Segment buf, int p)
+    /// <summary>The number of bytes a trunk entry occupies; a consumer advances by this to reach the next.</summary>
+    public const int Size = 20;
+
+    readonly ReadOnlyMemory<byte> _buf; // sliced to the start of the trunk entry
+
+    public TrunkEntry(ReadOnlyMemory<byte> buf)
     {
         _buf = buf;
-        _p = p;
     }
 
-    int Word => _buf.GetInt(_p);
+    int Word => _buf.Span.GetIntLE(ChildAndFlagsOfs);
 
-    public bool IsLast => (Word & 1) != 0;
+    public bool IsLast => (Word & LastFlag) != 0;
 
-    public bool IsLeaf => (Word & 2) != 0;
+    public bool IsLeaf => (Word & LeafFlag) != 0;
 
-    public Bounds Bounds => new Bounds(_buf, _p + 4);
+    public Bounds Bounds => new Bounds(_buf.Slice(BoundsOfs));
 
-    /// <summary>Pointer to the child node (trunk or leaf), with the flag bits cleared.</summary>
-    public int ChildPtr => _p + (int)((uint)Word & 0xffff_fffc);
-
-    public const int Stride = 20;
+    /// <summary>The child node, with the flag bits cleared: a trunk if <see cref="IsLeaf"/> is false, else a leaf.</summary>
+    public ReadOnlyMemory<byte> Child => _buf.Slice((int)((uint)Word & ChildPtrMask));
 
 }

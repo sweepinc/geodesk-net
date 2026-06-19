@@ -5,7 +5,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-using GeoDesk.Common.Store;
+using System;
+
+using GeoDesk.Buffers;
 
 namespace GeoDesk.Feature.Store.Format;
 
@@ -14,22 +16,27 @@ namespace GeoDesk.Feature.Store.Format;
 internal readonly struct IndexBucket
 {
 
-    readonly Segment _buf;
-    readonly int _p;
+    // Layout: word 0 = R-tree root pointer (high 30 bits) + last-bucket flag; word 1 = key bits.
+    const int RootAndFlagsOfs = 0;
+    const int KeyBitsOfs = 4;
+    const int LastFlag = 1;
+    const uint RootPtrMask = 0xffff_fffc; // clears the 2 low flag bits to leave the pointer
 
-    public IndexBucket(Segment buf, int p)
+    /// <summary>The number of bytes a bucket occupies; a consumer advances by this to reach the next.</summary>
+    public const int Size = 8;
+
+    readonly ReadOnlyMemory<byte> _buf; // sliced to the start of the bucket entry
+
+    public IndexBucket(ReadOnlyMemory<byte> buf)
     {
         _buf = buf;
-        _p = p;
     }
 
-    public int KeyBits => _buf.GetInt(_p + 4);
+    public int KeyBits => _buf.Span.GetIntLE(KeyBitsOfs);
 
-    public bool IsLast => (_buf.GetInt(_p) & 1) != 0;
+    public bool IsLast => (_buf.Span.GetIntLE(RootAndFlagsOfs) & LastFlag) != 0;
 
-    /// <summary>Pointer to the bucket's R-tree root trunk node.</summary>
-    public int RootPtr => _p + (int)((uint)_buf.GetInt(_p) & 0xffff_fffc);
-
-    public const int Stride = 8;
+    /// <summary>The bucket's R-tree root trunk node.</summary>
+    public TrunkEntry Root => new TrunkEntry(_buf.Slice((int)((uint)_buf.Span.GetIntLE(RootAndFlagsOfs) & RootPtrMask)));
 
 }

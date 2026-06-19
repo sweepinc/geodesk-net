@@ -5,13 +5,15 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-using Segment = GeoDesk.Common.Store.Segment;
+using System;
+
+using GeoDesk.Buffers;
 
 namespace GeoDesk.Feature.Store.Format;
 
 /// <summary>
-/// A typed handle for a relation's member table: the <c>(store, segment, pointer)</c> triple that
-/// locates the table and lets its (possibly cross-tile) member references be resolved. Replaces the
+/// A typed handle for a relation's member table: the <c>store</c> plus a memory sliced to the table,
+/// which locates it and lets its (possibly cross-tile) member references be resolved. Replaces the
 /// loose <c>(FeatureStore, Segment, int)</c> arguments previously threaded through the member
 /// iterator/view. <c>Store</c> is part of the handle because foreign members resolve via the tile
 /// index into other segments.
@@ -21,30 +23,22 @@ namespace GeoDesk.Feature.Store.Format;
 internal readonly struct MemberTable
 {
 
-    readonly FeatureStore _store;
-    readonly Segment _buf;
-    readonly int _ptr;
+    const int FirstEntryOfs = 0; // the table's first word; 0 ⇒ no entries
 
-    /// <summary>
-    /// Initializes a new instance.
-    /// </summary>
-    /// <param name="store"></param>
-    /// <param name="buf"></param>
-    /// <param name="ptr"></param>
-    public MemberTable(FeatureStore store, Segment buf, int ptr)
+    readonly FeatureStore _store;
+    readonly ReadOnlyMemory<byte> _buf; // sliced to the start of the member table
+
+    public MemberTable(FeatureStore store, ReadOnlyMemory<byte> buf)
     {
         _store = store;
         _buf = buf;
-        _ptr = ptr;
     }
 
     public FeatureStore Store => _store;
 
-    public Segment Buf => _buf;
-
-    public int Ptr => _ptr;
+    public ReadOnlyMemory<byte> Buf => _buf;
 
     /// <summary>True if the table has no entries.</summary>
-    public bool IsEmpty => _buf.GetInt(_ptr) == 0;
+    public bool IsEmpty => _buf.Span.GetIntLE(FirstEntryOfs) == 0;
 
 }

@@ -177,7 +177,7 @@ public abstract class View : IFeatureQuery
         if (parent.IsWay)
         {
             var way = (StoredWay)parent;
-            if (matcher != Matcher.ALL && (way.Flags() & IFeatureFlags.WAYNODE_FLAG) == 0)
+            if (matcher != Matcher.ALL && (way.Flags() & FeatureFlags.WAYNODE_FLAG) == 0)
             {
                 // GOQL queries only return feature nodes; if the Way's waynode_flag is cleared, it
                 // only contains anonymous nodes, so we return an empty set

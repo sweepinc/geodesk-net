@@ -194,16 +194,16 @@ internal class TileIndexWalker
                     {
                         _northwestFlags =
                             (_acceptedTiles.Contains(Tile.Neighbor(_currentTile, Heading.North)) ?
-                                IFeatureFlags.MULTITILE_NORTH : 0) |
+                                FeatureFlags.MULTITILE_NORTH : 0) |
                             (_acceptedTiles.Contains(Tile.Neighbor(_currentTile, Heading.West)) ?
-                                IFeatureFlags.MULTITILE_WEST : 0);
+                                FeatureFlags.MULTITILE_WEST : 0);
                         _acceptedTiles.Add(_currentTile);
                     }
                     else
                     {
                         // If we're not tracking accepted NW tiles (for filters that use a strict
                         // bbox), pretend that NW tiles exist
-                        _northwestFlags = IFeatureFlags.MULTITILE_NORTH | IFeatureFlags.MULTITILE_WEST;
+                        _northwestFlags = FeatureFlags.MULTITILE_NORTH | FeatureFlags.MULTITILE_WEST;
                     }
                 }
                 else
@@ -213,8 +213,8 @@ internal class TileIndexWalker
                     // TODO: There's probably a cheaper way to calculate this
 
                     _northwestFlags =
-                        ((_bounds!.MaxY > Tile.TopY(_currentTile)) ? IFeatureFlags.MULTITILE_NORTH : 0) |
-                        ((_bounds.MinX < Tile.LeftX(_currentTile)) ? IFeatureFlags.MULTITILE_WEST : 0);
+                        ((_bounds!.MaxY > Tile.TopY(_currentTile)) ? FeatureFlags.MULTITILE_NORTH : 0) |
+                        ((_bounds.MinX < Tile.LeftX(_currentTile)) ? FeatureFlags.MULTITILE_WEST : 0);
                 }
                 var pEntry = level.pChildEntries + childEntry * 4;
                 var pageOrPtr = _buf.GetInt(pEntry);

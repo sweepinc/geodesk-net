@@ -48,7 +48,7 @@ internal class FastTileFilter : IFilter
     {
         // TODO: Would be useful if `Feature` implemented `Bounds` for this
         var sf = (StoredFeature)feature;
-        if ((sf.Flags() & IFeatureFlags.MULTITILE_FLAGS) == 0)
+        if ((sf.Flags() & FeatureFlags.MULTITILE_FLAGS) == 0)
         {
             var b = sf.Bounds;
             if (b.MinY >= _tileMinY && b.MaxX <= _tileMaxX) return _fastAccept;

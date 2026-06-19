@@ -63,11 +63,11 @@ internal class PointDistanceFilter : IFilter
     {
         if (way.IsArea)
         {
-            if (SegmentsWithinDistance(way, IFeatureFlags.AREA_FLAG)) return true;
+            if (SegmentsWithinDistance(way, FeatureFlags.AREA_FLAG)) return true;
             // The distance of a point that lies within a polygon is zero; we need to perform p-in-p
             // check because the edges themselves may be far away from the comparison point
             // TODO: check bbox first?
-            return PointInPolygon.TestFast(way.IterXY(IFeatureFlags.AREA_FLAG), _px, _py) != 0;
+            return PointInPolygon.TestFast(way.IterXY(FeatureFlags.AREA_FLAG), _px, _py) != 0;
         }
         return SegmentsWithinDistance(way, 0);
     }

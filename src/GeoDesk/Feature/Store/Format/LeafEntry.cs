@@ -5,7 +5,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-using GeoDesk.Common.Store;
+using System;
+
+using GeoDesk.Buffers;
 
 namespace GeoDesk.Feature.Store.Format;
 
@@ -14,30 +16,37 @@ namespace GeoDesk.Feature.Store.Format;
 internal readonly struct LeafEntry
 {
 
-    readonly Segment _buf;
-    readonly int _p;
+    // Layout: bytes 0..15 = bbox; the embedded feature starts at +16, its first word being the flags.
+    const int BoundsOfs = 0;
+    const int FeatureOfs = 16;
+    const int LastFlag = 1;
+    const int TypeBitShift = 1; // drops the last-item flag to leave the spatial type-bit exponent
+    const int TypeShift = 3;
+    const int TypeMask = 3;
 
-    public LeafEntry(Segment buf, int p)
+    /// <summary>The number of bytes a leaf entry occupies; a consumer advances by this to reach the next.</summary>
+    public const int Size = 32;
+
+    readonly ReadOnlyMemory<byte> _buf; // sliced to the start of the leaf entry (its bbox)
+
+    public LeafEntry(ReadOnlyMemory<byte> buf)
     {
         _buf = buf;
-        _p = p;
     }
 
-    public int Flags => _buf.GetInt(_p + 16);
+    public int Flags => _buf.Span.GetIntLE(FeatureOfs);
 
-    public bool IsLast => (Flags & 1) != 0;
+    public bool IsLast => (Flags & LastFlag) != 0;
 
-    public Bounds Bounds => new Bounds(_buf, _p);
+    public Bounds Bounds => new Bounds(_buf.Slice(BoundsOfs));
 
     /// <summary>This entry's single type bit, to AND against the query's accepted-types mask.</summary>
-    public int TypeBit => 1 << (Flags >> 1);
+    public int TypeBit => 1 << (Flags >> TypeBitShift);
 
-    /// <summary>Pointer to the feature body.</summary>
-    public int FeaturePtr => _p + 16;
+    /// <summary>The feature's type, from the 2-bit tag (folded into the pointer stored in QueryResults).</summary>
+    public FeatureType StoredType => (FeatureType)(((uint)Flags >> TypeShift) & TypeMask);
 
-    /// <summary>Feature pointer with its 2-bit type tag folded in (the value stored in QueryResults).</summary>
-    public int TaggedFeaturePtr => FeaturePtr | (int)(((uint)Flags >> 3) & 3);
-
-    public const int Stride = 32;
+    /// <summary>The embedded feature, anchored at its flags word.</summary>
+    public FeatureHeader Feature => new FeatureHeader(_buf.Slice(FeatureOfs));
 
 }
