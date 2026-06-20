@@ -38,8 +38,18 @@ internal readonly struct Node
 
     /// <summary>
     /// The relation table — the relations this node belongs to. A node has no body; its +12 pointer is
-    /// the relation table directly. Only valid when <see cref="HasRelationTable"/>.
+    /// the relation table directly. Throws <see cref="FeatureException"/> when the node has no
+    /// relation table (see <see cref="HasRelationTable"/>).
     /// </summary>
-    public ReadOnlyMemory<byte> RelationTable => _buf.Slice(RelTablePpOfs + _buf.Span.GetIntLE(RelTablePpOfs));
+    public ReadOnlyMemory<byte> RelationTable
+    {
+        get
+        {
+            if (!HasRelationTable)
+                throw new FeatureException("Node has no relation table (it does not belong to a relation).");
+
+            return _buf.Slice(RelTablePpOfs + _buf.Span.GetIntLE(RelTablePpOfs));
+        }
+    }
 
 }

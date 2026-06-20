@@ -6,244 +6,84 @@
  */
 
 using System;
-using System.Buffers.Binary;
-using System.Runtime.InteropServices;
+using System.Buffers;
+using System.IO.MemoryMappedFiles;
+using System.Runtime.CompilerServices;
 
 namespace GeoDesk.Common.Store;
 
 /// <summary>
-/// A little-endian byte window over a <see cref="System.Memory{Byte}"/> region, addressed by absolute
-/// offset. This is the unit the store maps the file in — one <c>Segment</c> per 1 GB mapped view (the
-/// dominant case) — and also backs heap staging buffers (<see cref="Allocate"/>/<see cref="Wrap"/>)
-/// and slices. Supports absolute get/put of bytes and 16/32/64-bit integers, plus bulk copy and slice.
-///
-/// Store data is always little-endian, so the typed accessors read/write little-endian
-/// unconditionally. (The crash-recovery journal is big-endian, but it never goes through
-/// <c>Segment</c> — see <c>Store.JournalReadInt/JournalWriteInt</c>.)
-///
-/// Backed by <see cref="System.Memory{Byte}"/>: heap buffers wrap a managed <c>byte[]</c>; mapped
-/// segments wrap a memory-mapped file view exposed via a <see cref="System.Buffers.MemoryManager{Byte}"/>.
-/// A mapped segment is given the manager as its <see cref="IDisposable"/> owner (deterministic unmap)
-/// and a flush delegate for <see cref="Force"/>; heap buffers and slices have neither.
+/// One mapped 1 GB file view — the unit the store maps the file in. A <see cref="MemoryManager{Byte}"/>
+/// that owns the <see cref="MemoryMappedFile"/> and its view and exposes them as a single, writable
+/// <see cref="System.Memory{Byte}"/> window via the inherited <see cref="MemoryManager{T}.Memory"/>;
+/// <see cref="Dispose()"/> unmaps. Typed access is the job of the cursor structs / <c>NioBuffer</c> over
+/// that <c>Memory</c> (via <c>BufferExtensions</c>) — there is deliberately no ByteBuffer-shaped get/put
+/// API here. (A read-only consumer such as <c>NioBuffer</c> simply takes the window as
+/// <see cref="System.ReadOnlyMemory{Byte}"/>.)
 /// </summary>
-/// <remarks>Originated as a port of <c>java.nio.ByteBuffer</c> (the store's <c>MappedByteBuffer</c>);
-/// renamed to <c>Segment</c> and reduced to absolute-offset access (the java.nio position/limit cursor
-/// was dropped — the read path never used it, and its few write/export callers were moved to absolute
-/// access). Heap/slice roles are slated to move to <see cref="System.Memory{Byte}"/> as the migration
-/// continues.</remarks>
-internal sealed class Segment : IDisposable
+/// <remarks>Merges the former <c>MappedFileMemoryManager</c> with the store's window type — it both owns
+/// the mapped view and is the unit the store keeps. Store data is little-endian; the cursors decode it.
+/// (The crash-recovery journal is big-endian but never goes through a Segment — see
+/// <c>Store.JournalReadInt/JournalWriteInt</c>.)</remarks>
+sealed unsafe class Segment : MemoryManager<byte>
 {
 
-    public static Segment Allocate(int capacity)
-    {
-        return new Segment(new byte[capacity], null, null);
-    }
-
-    public static Segment Wrap(byte[] array)
-    {
-        return new Segment(array, null, null);
-    }
+    readonly MemoryMappedFile _file;
+    readonly MemoryMappedViewAccessor _view;
+    readonly byte* _addr;
+    readonly int _length; // the logical window length (the view's ByteLength may be rounded up larger)
 
     /// <summary>
-    /// Wraps an arbitrary <see cref="System.Memory{Byte}"/> window. For a mapped backing, pass the
-    /// <paramref name="owner"/> (disposed to unmap) and an <paramref name="onForce"/> delegate
-    /// (the view's flush). Heap buffers pass neither.
+    /// Initializes a new instance
     /// </summary>
-    public static Segment Of(Memory<byte> memory, IDisposable? owner = null, Action? onForce = null)
+    /// <param name="file"></param>
+    /// <param name="view"></param>
+    /// <exception cref="ArgumentNullException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
+    public Segment(MemoryMappedFile file, MemoryMappedViewAccessor view, int length)
     {
-        return new Segment(memory, owner, onForce);
+        _file = file ?? throw new ArgumentNullException(nameof(file));
+        _view = view ?? throw new ArgumentNullException(nameof(view));
+
+        if (_file.SafeMemoryMappedFileHandle.IsClosed || _file.SafeMemoryMappedFileHandle.IsInvalid)
+            throw new InvalidOperationException();
+        if (_view.SafeMemoryMappedViewHandle.IsClosed || _view.SafeMemoryMappedViewHandle.IsInvalid)
+            throw new InvalidOperationException();
+
+        _length = length;
+        _view.SafeMemoryMappedViewHandle.AcquirePointer(ref _addr);
     }
 
-    readonly Memory<byte> _mem;
-    readonly IDisposable? _owner;
-    readonly Action? _onForce;
+    /// <inheritdoc />
+    public override Span<byte> GetSpan() => new Span<byte>(_addr, _length);
 
-    /// <summary>
-    /// Initializes a new instance.
-    /// </summary>
-    /// <param name="mem"></param>
-    /// <param name="owner"></param>
-    /// <param name="onForce"></param>
-    Segment(Memory<byte> mem, IDisposable? owner, Action? onForce)
+    /// <inheritdoc />
+    public override MemoryHandle Pin(int elementIndex = 0)
     {
-        _mem = mem;
-        _owner = owner;
-        _onForce = onForce;
+        if (elementIndex < 0 || elementIndex >= _length)
+            throw new ArgumentOutOfRangeException(nameof(elementIndex));
+
+        return new MemoryHandle(Unsafe.Add<byte>(_addr, elementIndex));
     }
 
-    // --- backing primitives (over the Memory<byte> window) ---
-
-    /// <summary>The underlying memory window, as a read-only view (for generic byte consumers, e.g. PbfDecoder).</summary>
-    public ReadOnlyMemory<byte> Memory => _mem;
-
-    /// <summary>The length of the window, in bytes.</summary>
-    public int Capacity()
+    /// <inheritdoc />
+    public override void Unpin()
     {
-        return _mem.Length;
+
     }
 
-    public byte Get(int index)
+    /// <summary>Flushes pending writes through to the underlying file (Java's <c>MappedByteBuffer.force()</c>).</summary>
+    public void Force() => _view.Flush();
+
+    /// <inheritdoc />
+    protected override void Dispose(bool disposing)
     {
-        return _mem.Span[index];
-    }
-
-    public Segment Put(int index, byte b)
-    {
-        _mem.Span[index] = b;
-        return this;
-    }
-
-    void GetBytes(int index, Span<byte> dst)
-    {
-        _mem.Span.Slice(index, dst.Length).CopyTo(dst);
-    }
-
-    void PutBytes(int index, ReadOnlySpan<byte> src)
-    {
-        src.CopyTo(_mem.Span.Slice(index, src.Length));
-    }
-
-    /// <summary>
-    /// Tells whether this buffer is backed by an accessible byte array.
-    /// </summary>
-    /// <remarks>Mirrors <c>java.nio.ByteBuffer.hasArray()</c>: true for heap buffers, false for mapped.</remarks>
-    public bool HasArray()
-    {
-        return MemoryMarshal.TryGetArray<byte>(_mem, out _);
-    }
-
-    /// <summary>
-    /// Returns the byte array that backs this buffer (heap buffers only).
-    /// </summary>
-    /// <remarks>Mirrors <c>java.nio.ByteBuffer.array()</c>: throws <see cref="NotSupportedException"/>
-    /// (Java's <c>UnsupportedOperationException</c>) if this buffer is not backed by an accessible
-    /// array — e.g. a mapped segment. Guard with <see cref="HasArray"/>.</remarks>
-    public byte[] Array()
-    {
-        if (MemoryMarshal.TryGetArray<byte>(_mem, out var seg))
-            return seg.Array!;
-        throw new NotSupportedException();
-    }
-
-    /// <summary>Absolute slice: a window over [index, index+length).</summary>
-    public Segment Slice(int index, int length)
-    {
-        return new Segment(_mem.Slice(index, length), null, null);
-    }
-
-    // --- absolute typed accessors (little-endian) ---
-
-    public int GetInt(int index)
-    {
-        Span<byte> s = stackalloc byte[4];
-        GetBytes(index, s);
-        return BinaryPrimitives.ReadInt32LittleEndian(s);
-    }
-
-    public Segment PutInt(int index, int value)
-    {
-        Span<byte> s = stackalloc byte[4];
-        BinaryPrimitives.WriteInt32LittleEndian(s, value);
-        PutBytes(index, s);
-        return this;
-    }
-
-    public long GetLong(int index)
-    {
-        Span<byte> s = stackalloc byte[8];
-        GetBytes(index, s);
-        return BinaryPrimitives.ReadInt64LittleEndian(s);
-    }
-
-    public Segment PutLong(int index, long value)
-    {
-        Span<byte> s = stackalloc byte[8];
-        BinaryPrimitives.WriteInt64LittleEndian(s, value);
-        PutBytes(index, s);
-        return this;
-    }
-
-    public short GetShort(int index)
-    {
-        Span<byte> s = stackalloc byte[2];
-        GetBytes(index, s);
-        return BinaryPrimitives.ReadInt16LittleEndian(s);
-    }
-
-    public Segment PutShort(int index, short value)
-    {
-        Span<byte> s = stackalloc byte[2];
-        BinaryPrimitives.WriteInt16LittleEndian(s, value);
-        PutBytes(index, s);
-        return this;
-    }
-
-    public char GetChar(int index)
-    {
-        Span<byte> s = stackalloc byte[2];
-        GetBytes(index, s);
-        return (char)BinaryPrimitives.ReadUInt16LittleEndian(s);
-    }
-
-    public Segment PutChar(int index, char value)
-    {
-        Span<byte> s = stackalloc byte[2];
-        BinaryPrimitives.WriteUInt16LittleEndian(s, value);
-        PutBytes(index, s);
-        return this;
-    }
-
-    // --- absolute bulk copy ---
-
-    /// <summary>Absolute bulk get (Java 13+).</summary>
-    public Segment Get(int index, byte[] dst)
-    {
-        GetBytes(index, dst.AsSpan());
-        return this;
-    }
-
-    /// <summary>Absolute bulk get (Java 13+).</summary>
-    public Segment Get(int index, byte[] dst, int offset, int length)
-    {
-        GetBytes(index, dst.AsSpan(offset, length));
-        return this;
-    }
-
-    /// <summary>Absolute bulk put (Java 13+).</summary>
-    public Segment Put(int index, byte[] src)
-    {
-        PutBytes(index, src.AsSpan());
-        return this;
-    }
-
-    /// <summary>Absolute bulk put (Java 13+).</summary>
-    public Segment Put(int index, byte[] src, int offset, int length)
-    {
-        PutBytes(index, src.AsSpan(offset, length));
-        return this;
-    }
-
-    /// <summary>Absolute bulk put from another segment (Java 16+).</summary>
-    public Segment Put(int index, Segment src, int srcIndex, int length)
-    {
-        byte[] tmp = new byte[length];
-        src.GetBytes(srcIndex, tmp);
-        PutBytes(index, tmp);
-        return this;
-    }
-
-    // --- mapped-backing lifetime (no-op for heap buffers) ---
-
-    /// <summary>Flushes a mapped segment's pending writes to disk (Java's <c>MappedByteBuffer.force()</c>).</summary>
-    public void Force()
-    {
-        _onForce?.Invoke();
-    }
-
-    /// <summary>Releases the mapped backing (view + mapping). No-op for heap buffers and for slices.</summary>
-    public void Dispose()
-    {
-        _owner?.Dispose();
+        if (disposing)
+        {
+            _view.SafeMemoryMappedViewHandle.ReleasePointer();
+            _view.Dispose();
+            _file.Dispose();
+        }
     }
 
 }

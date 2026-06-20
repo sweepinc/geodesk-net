@@ -13,6 +13,8 @@ using System.IO;
 using System.IO.Compression;
 using System.Numerics;
 
+using GeoDesk.Buffers;
+
 using static GeoDesk.Common.Store.BlobStoreConstants;
 
 using ByteOrder = Java.Nio.ByteOrder;
@@ -81,7 +83,7 @@ internal class BlobStore : Store
     protected override void CreateStore()
     {
         // TODO: should this be inside a transaction?
-        var buf = baseMapping!;
+        var buf = new NioBufferWriter(baseMapping!.Memory);
         buf.PutInt(0, MAGIC);
         buf.PutInt(VERSION_OFS, VERSION);
         buf.PutLong(TIMESTAMP_OFS, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
@@ -93,7 +95,7 @@ internal class BlobStore : Store
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.getTimestamp()</c>.</remarks>
     protected override long GetTimestamp()
     {
-        return baseMapping!.GetLong(TIMESTAMP_OFS);
+        return baseMapping!.Memory.Span.GetLongLE(TIMESTAMP_OFS);
     }
 
     // PORT NOTE: .NET Guid byte layout differs from Java UUID(high,low); this reads the
@@ -102,22 +104,21 @@ internal class BlobStore : Store
     public Guid GetGuid()
     {
         var bytes = new byte[GUID_LEN];
-        baseMapping!.Get(GUID_OFS, bytes);
+        baseMapping!.Memory.Span.Slice(GUID_OFS, bytes.Length).CopyTo(bytes);
         return new Guid(bytes);
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.verifyHeader()</c>.</remarks>
     protected override void VerifyHeader()
     {
-        var buf = baseMapping!;
+        var buf = new NioBufferReader(baseMapping!.Memory);
         if (buf.GetInt(0) != MAGIC)
         {
             throw new StoreException("Not a BlobStore file", Path);
         }
         if (buf.GetInt(VERSION_OFS) != VERSION)
         {
-            throw new StoreException(
-                "Wrong BlobStore version (Requires 1.0)", Path);
+            throw new StoreException("Wrong BlobStore version (Requires 1.0)", Path);
         }
         // TODO: page size
     }
@@ -128,7 +129,7 @@ internal class BlobStore : Store
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.isEmpty()</c>.</remarks>
     protected internal bool IsEmpty()
     {
-        return baseMapping!.GetInt(INDEX_PTR_OFS) == 0; // TODO
+        return baseMapping!.Memory.Span.GetIntLE(INDEX_PTR_OFS) == 0; // TODO
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.initialize()</c>.</remarks>
@@ -146,20 +147,22 @@ internal class BlobStore : Store
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.getTrueSize()</c>.</remarks>
     protected override long GetTrueSize()
     {
-        return ((long)baseMapping!.GetInt(TOTAL_PAGES_OFS)) << pageSizeShift;
+        return ((long)baseMapping!.Memory.Span.GetIntLE(TOTAL_PAGES_OFS)) << pageSizeShift;
     }
 
     // TODO: naming
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.baseMapping()</c>.</remarks>
     public NioBuffer BaseMapping()
     {
-        return baseMapping!;
+        // Boundary: still hands a ByteBuffer to the Downloader (not yet migrated).
+        return NioBuffer.Of(baseMapping!.Memory).Order(ByteOrder.LittleEndian);
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.bufferOfPage(int)</c>.</remarks>
     public NioBuffer BufferOfPage(int page)
     {
-        return GetMapping(page >> (30 - pageSizeShift));
+        // Boundary: still hands a ByteBuffer to the (not-yet-migrated) feature read path.
+        return NioBuffer.Of(GetMapping(page >> (30 - pageSizeShift)).Memory).Order(ByteOrder.LittleEndian);
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.offsetOfPage(int)</c>.</remarks>
@@ -190,14 +193,14 @@ internal class BlobStore : Store
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.indexPointer()</c>.</remarks>
     public int IndexPointer()
     {
-        return baseMapping!.GetInt(INDEX_PTR_OFS) + INDEX_PTR_OFS;
+        return baseMapping!.Memory.Span.GetIntLE(INDEX_PTR_OFS) + INDEX_PTR_OFS;
     }
 
     // TODO: should also make sure page does not lie in meta space
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.checkPage(int)</c>.</remarks>
     protected void CheckPage(int page)
     {
-        if (page < 0 || page >= baseMapping!.GetInt(TOTAL_PAGES_OFS))
+        if (page < 0 || page >= baseMapping!.Memory.Span.GetIntLE(TOTAL_PAGES_OFS))
         {
             throw new StoreException("Invalid page: " + page, Path);
         }
@@ -259,7 +262,8 @@ internal class BlobStore : Store
             {
                 if ((trunkRanges & 1) == 0)
                 {
-                    if (trunkRanges == 0) break;
+                    if (trunkRanges == 0)
+                        break;
 
                     var rangesToSkip = BitOperations.TrailingZeroCount((uint)trunkRanges);
                     trunkEnd += rangesToSkip * 64;
@@ -272,7 +276,8 @@ internal class BlobStore : Store
                 for (; trunkOfs < trunkEnd; trunkOfs += 4)
                 {
                     var leafTableBlob = rootBlock.GetInt(trunkOfs);
-                    if (leafTableBlob == 0) continue;
+                    if (leafTableBlob == 0)
+                        continue;
 
                     var leafBlock = GetBlockOfPage(leafTableBlob);
                     var leafRanges = leafBlock.GetInt(LEAF_FT_RANGE_BITS_OFS);
@@ -288,7 +293,8 @@ internal class BlobStore : Store
                     {
                         if ((leafRanges & 1) == 0)
                         {
-                            if (leafRanges == 0) break;
+                            if (leafRanges == 0)
+                                break;
                             var rangesToSkip = BitOperations.TrailingZeroCount((uint)leafRanges);
                             leafEnd += rangesToSkip * 64;
                             leafOfs = leafEnd - 64;
@@ -296,7 +302,8 @@ internal class BlobStore : Store
                         for (; leafOfs < leafEnd; leafOfs += 4)
                         {
                             var freeBlob = leafBlock.GetInt(leafOfs);
-                            if (freeBlob == 0) continue;
+                            if (freeBlob == 0)
+                                continue;
 
                             var freePages = ((trunkOfs - TRUNK_FREE_TABLE_OFS) << 7) +
                                 ((leafOfs - LEAF_FREE_TABLE_OFS) >> 2) + 1;
@@ -477,7 +484,8 @@ internal class BlobStore : Store
                     RelocateFreeTable(prevBlob, prevPages);
                 }
 
-                if (!IsFirstPageOfSegment(totalPages)) break;
+                if (!IsFirstPageOfSegment(totalPages))
+                    break;
                 var prevSizeAndFlags = prevBlock.GetInt(0);
                 precedingBlobFree = prevSizeAndFlags & PRECEDING_BLOB_FREE_FLAG;
             }
@@ -535,7 +543,8 @@ internal class BlobStore : Store
 
         var leafBlock = GetBlockOfPage(leafBlob);
         leafBlock.PutInt(leafOfs, nextBlob);
-        if (nextBlob != 0) return;
+        if (nextBlob != 0)
+            return;
 
         var leafRange = leafSlot / 16;
         Debug.Assert(leafRange >= 0 && leafRange < 32);
@@ -544,13 +553,15 @@ internal class BlobStore : Store
         var leafEnd = leafOfs + 64;
         for (; leafOfs < leafEnd; leafOfs += 4)
         {
-            if (leafBlock.GetInt(leafOfs) != 0) return;
+            if (leafBlock.GetInt(leafOfs) != 0)
+                return;
         }
 
         var leafRangeBits = leafBlock.GetInt(LEAF_FT_RANGE_BITS_OFS);
         leafRangeBits &= ~(1 << leafRange);
         leafBlock.PutInt(LEAF_FT_RANGE_BITS_OFS, leafRangeBits);
-        if (leafRangeBits != 0) return;
+        if (leafRangeBits != 0)
+            return;
 
         rootBlock.PutInt(trunkOfs, 0);
 
@@ -561,7 +572,8 @@ internal class BlobStore : Store
         var trunkEnd = trunkOfs + 64;
         for (; trunkOfs < trunkEnd; trunkOfs += 4)
         {
-            if (rootBlock.GetInt(trunkOfs) != 0) return;
+            if (rootBlock.GetInt(trunkOfs) != 0)
+                return;
         }
 
         var trunkRangeBits = rootBlock.GetInt(TRUNK_FT_RANGE_BITS_OFS);
@@ -711,7 +723,7 @@ internal class BlobStore : Store
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.getIndexEntry(int)</c>.</remarks>
     protected internal int GetIndexEntry(int id)
     {
-        return baseMapping!.GetInt(IndexPointer() + id * 4);
+        return baseMapping!.Memory.Span.GetIntLE(IndexPointer() + id * 4);
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.setIndexEntry(int, int)</c>.</remarks>
@@ -726,7 +738,8 @@ internal class BlobStore : Store
     public int FetchBlob(int id)
     {
         var page = GetIndexEntry(id);
-        if (page != 0) return page;
+        if (page != 0)
+            return page;
         if (downloader == null)
         {
             throw new StoreException(string.Format(CultureInfo.InvariantCulture,
@@ -741,7 +754,8 @@ internal class BlobStore : Store
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.close()</c>.</remarks>
     public new void Close()
     {
-        if (downloader != null) downloader.Shutdown();
+        if (downloader != null)
+            downloader.Shutdown();
         base.Close();
     }
 
@@ -773,17 +787,18 @@ internal class BlobStore : Store
     protected virtual void ResetMetadata(NioBuffer buf)
     {
         buf.PutInt(TRUNK_FT_RANGE_BITS_OFS, 0);
-        for (var i = 0; i < 512; i++) buf.PutInt(TRUNK_FREE_TABLE_OFS + i, 0);
+        for (var i = 0; i < 512; i++)
+            buf.PutInt(TRUNK_FREE_TABLE_OFS + i, 0);
         buf.PutInt(TOTAL_PAGES_OFS, 0);
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.createCopy(Path)</c>.</remarks>
     public void CreateCopy(string newPath)
     {
-        var metadataSize = baseMapping!.GetInt(METADATA_SIZE_OFS);
+        var metadataSize = baseMapping!.Memory.Span.GetIntLE(METADATA_SIZE_OFS);
         using var buf = NioBuffer.Allocate(metadataSize); // pooled — dispose returns the array
         buf.Order(ByteOrder.LittleEndian);
-        buf.Put(0, baseMapping!, 0, metadataSize);
+        buf.Put(0, NioBuffer.Of(baseMapping!.Memory), 0, metadataSize);
         ResetMetadata(buf);
         buf.PutInt(TOTAL_PAGES_OFS, BytesToPages(metadataSize));
 

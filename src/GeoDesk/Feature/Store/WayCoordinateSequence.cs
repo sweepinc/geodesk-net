@@ -22,8 +22,8 @@ internal class WayCoordinateSequence : CoordinateSequence
     readonly int[] _coordinates; // pairs of x/y
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.WayCoordinateSequence(int[])</c>.</remarks>
-    public WayCoordinateSequence(int[] coords)
-        : base(coords.Length / 2, 2, 0)
+    public WayCoordinateSequence(int[] coords) :
+        base(coords.Length / 2, 2, 0)
     {
         _coordinates = coords;
     }

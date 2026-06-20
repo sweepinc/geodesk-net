@@ -9,10 +9,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
+using GeoDesk.Buffers;
 using GeoDesk.Common.Util;
 
 using static GeoDesk.Common.Store.BlobStoreConstants;
 
+using ByteOrder = Java.Nio.ByteOrder;
 using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace GeoDesk.Common.Store;
@@ -52,9 +54,9 @@ internal class BlobStoreChecker
         {
             Error(0, ex.Message);
         }
-        var buf = store.GetMapping(0);
-        _totalPages = buf.GetInt(TOTAL_PAGES_OFS);
-        _metadataSize = buf.GetInt(METADATA_SIZE_OFS);
+        var seg = store.GetMapping(0);
+        _totalPages = seg.Memory.Span.GetIntLE(TOTAL_PAGES_OFS);
+        _metadataSize = seg.Memory.Span.GetIntLE(METADATA_SIZE_OFS);
         _pageSizeShift = 12;
         _pageSize = 1 << _pageSizeShift;
         _pagesPerSegment = (1 << 30) / _pageSize;
@@ -183,7 +185,7 @@ internal class BlobStoreChecker
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.bufferOfPage(int)</c>.</remarks>
     protected NioBuffer BufferOfPage(int page)
     {
-        return store.GetMapping(page / _pagesPerSegment);
+        return NioBuffer.Of(store.GetMapping(page / _pagesPerSegment).Memory).Order(ByteOrder.LittleEndian);
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.offsetOfPage(int)</c>.</remarks>

@@ -22,6 +22,10 @@ internal readonly struct Tile
 
     readonly ReadOnlyMemory<byte> _buf; // sliced to the start of the tile
 
+    /// <summary>
+    /// Initializes a new instance.
+    /// </summary>
+    /// <param name="buf"></param>
     public Tile(ReadOnlyMemory<byte> buf)
     {
         _buf = buf;

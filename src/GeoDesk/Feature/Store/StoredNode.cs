@@ -80,34 +80,28 @@ internal class StoredNode : StoredFeature, INode
     public WorldView ParentWays(int types, Matcher matcher, IFilter? filter)
     {
         IFilter newFilter = new ParentWayFilter(Id);
-        if (filter != null) newFilter = AndFilter.Create(newFilter, filter);
-        return new WorldView(store, types & TypeBits.WAYS &
-            TypeBits.WAYNODE_FLAGGED, Bounds, matcher, newFilter);
+        if (filter != null)
+            newFilter = AndFilter.Create(newFilter, filter);
+
+        return new WorldView(store, types & TypeBits.WAYS & TypeBits.WAYNODE_FLAGGED, Bounds, matcher, newFilter);
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.parents(int, Matcher, Filter)</c>.</remarks>
     public IFeatureQuery Parents(int types, Matcher matcher, IFilter? filter)
     {
-        int acceptedFlags = ((types & TypeBits.RELATIONS) != 0) ?
-            FeatureFlags.RELATION_MEMBER_FLAG : 0;
-        acceptedFlags |= ((types & TypeBits.WAYS) != 0) ?
-            FeatureFlags.WAYNODE_FLAG : 0;
+        int acceptedFlags = ((types & TypeBits.RELATIONS) != 0) ? FeatureFlags.RELATION_MEMBER_FLAG : 0;
+        acceptedFlags |= ((types & TypeBits.WAYS) != 0) ? FeatureFlags.WAYNODE_FLAG : 0;
         int flags = buf.GetInt(ptr) & acceptedFlags;
 
         if (flags == FeatureFlags.WAYNODE_FLAG)
-        {
             return ParentWays(types, matcher, filter);
-        }
+
         if (flags == FeatureFlags.RELATION_MEMBER_FLAG)
-        {
-            return new ParentRelationView(store, buf, GetRelationTablePtr(),
-                types & TypeBits.RELATIONS, matcher, filter);
-        }
+            return new ParentRelationView(store, buf, GetRelationTablePtr(), types & TypeBits.RELATIONS, matcher, filter);
+
         if (flags == (FeatureFlags.WAYNODE_FLAG | FeatureFlags.RELATION_MEMBER_FLAG))
-        {
-            return new NodeParentView(store, buf, this,
-                GetRelationTablePtr(), types, matcher, filter);
-        }
+            return new NodeParentView(store, buf, this, GetRelationTablePtr(), types, matcher, filter);
+
         return EmptyView.Any;
     }
 
@@ -120,7 +114,7 @@ internal class StoredNode : StoredFeature, INode
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.parents(String)</c>.</remarks>
     public override IFeatureQuery Parents(string query)
     {
-        Matcher matcher = store.GetMatcher(query);
+        var matcher = store.GetMatcher(query);
         return Parents(matcher.AcceptedTypes, matcher, null);
     }
 
@@ -131,9 +125,10 @@ internal class StoredNode : StoredFeature, INode
     {
 
         /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.ParentWayFilter(long)</c>.</remarks>
-        public ParentWayFilter(long nodeId)
-            : base(0, nodeId)
+        public ParentWayFilter(long nodeId) :
+            base(0, nodeId)
         {
+
         }
 
         /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.ParentWayFilter.accept(Feature)</c>.</remarks>
@@ -142,5 +137,7 @@ internal class StoredNode : StoredFeature, INode
             StoredWay way = (StoredWay)feature;
             return way.FastFeatureNodeIterator(this).HasNext();
         }
+
     }
+
 }

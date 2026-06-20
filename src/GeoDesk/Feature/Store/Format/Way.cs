@@ -40,13 +40,16 @@ internal readonly struct Way
     public bool HasRelationTable => Header.BelongsToRelation;
 
     /// <summary>
-    /// The relation table — the relations this way belongs to. Stored just before the body; only valid
-    /// when <see cref="HasRelationTable"/>.
+    /// The relation table — the relations this way belongs to. Stored just before the body. Throws
+    /// <see cref="FeatureException"/> when the way has no relation table (see
+    /// <see cref="HasRelationTable"/>).
     /// </summary>
     public ReadOnlyMemory<byte> RelationTable
     {
         get
         {
+            if (!HasRelationTable)
+                throw new FeatureException("Way has no relation table (it does not belong to a relation).");
             var ppRelTable = BodyPpOfs + _buf.Span.GetIntLE(BodyPpOfs) - RelTablePpBackset;
             return _buf.Slice(ppRelTable + _buf.Span.GetIntLE(ppRelTable));
         }

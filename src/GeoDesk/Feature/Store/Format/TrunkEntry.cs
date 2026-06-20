@@ -16,15 +16,15 @@ namespace GeoDesk.Feature.Store.Format;
 internal readonly struct TrunkEntry
 {
 
+    /// <summary>The number of bytes a trunk entry occupies; a consumer advances by this to reach the next.</summary>
+    public const int Size = 20;
+
     // Layout: word 0 = child pointer (high 30 bits) + last/leaf flags; bytes 4..19 = child bbox.
     const int ChildAndFlagsOfs = 0;
     const int BoundsOfs = 4;
     const int LastFlag = 1;
     const int LeafFlag = 2;
     const uint ChildPtrMask = 0xffff_fffc; // clears the 2 low flag bits to leave the pointer
-
-    /// <summary>The number of bytes a trunk entry occupies; a consumer advances by this to reach the next.</summary>
-    public const int Size = 20;
 
     readonly ReadOnlyMemory<byte> _buf; // sliced to the start of the trunk entry
 

@@ -35,6 +35,10 @@ internal readonly struct TileIndexEntry
 
     readonly ReadOnlyMemory<byte> _buf; // sliced to the start of the entry
 
+    /// <summary>
+    /// Initializes a new instance.
+    /// </summary>
+    /// <param name="buf"></param>
     public TileIndexEntry(ReadOnlyMemory<byte> buf)
     {
         _buf = buf;
@@ -42,13 +46,19 @@ internal readonly struct TileIndexEntry
 
     public int Raw => _buf.Span.GetIntLE(EntryOfs);
 
-    /// <summary>True if this entry points to a child level rather than naming a tile page (low bits <c>01</c>).</summary>
+    /// <summary>
+    /// True if this entry points to a child level rather than naming a tile page (low bits <c>01</c>).
+    /// </summary>
     public bool IsChildPointer => (Raw & FlagMask) == ChildPointerFlag;
 
-    /// <summary>The tile's page. Only meaningful when <see cref="IsChildPointer"/> is false.</summary>
+    /// <summary>
+    /// The tile's page. Only meaningful when <see cref="IsChildPointer"/> is false.
+    /// </summary>
     public PageIndex Page => new PageIndex((int)((uint)Raw >> PageShift));
 
-    /// <summary>The child level's entry block. Only valid when <see cref="IsChildPointer"/> is true.</summary>
+    /// <summary>
+    /// The child level's entry block. Only valid when <see cref="IsChildPointer"/> is true.
+    /// </summary>
     public ReadOnlyMemory<byte> ChildLevel => _buf.Slice(Raw ^ ChildPointerFlag);
 
     /// <summary>The 64-bit mask of which cells in the child matrix actually have tiles.</summary>
@@ -58,7 +68,6 @@ internal readonly struct TileIndexEntry
     /// The packed child entries. The mask occupies 4 bytes for a 4×4 matrix and 8 bytes for an 8×8,
     /// so the entries begin at +8 or +12 respectively — hence <paramref name="extent"/>.
     /// </summary>
-    public ReadOnlyMemory<byte> ChildEntries(int extent) =>
-        _buf.Slice(extent == LargeMatrixExtent ? LargeMatrixEntriesOfs : SmallMatrixEntriesOfs);
+    public ReadOnlyMemory<byte> ChildEntries(int extent) => _buf.Slice(extent == LargeMatrixExtent ? LargeMatrixEntriesOfs : SmallMatrixEntriesOfs);
 
 }

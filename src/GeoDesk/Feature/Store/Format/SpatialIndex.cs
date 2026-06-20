@@ -25,14 +25,23 @@ internal readonly struct SpatialIndex
 
     readonly ReadOnlyMemory<byte> _buf; // sliced to the index's root pointer
 
+    /// <summary>
+    /// Initializes a new instance.
+    /// </summary>
+    /// <param name="buf"></param>
     public SpatialIndex(ReadOnlyMemory<byte> buf)
     {
         _buf = buf;
     }
 
-    public bool IsEmpty => _buf.Span.GetIntLE(FirstBucketPtrOfs) == 0;
+    /// <summary>
+    /// True if the index is empty (has no buckets). An empty index is valid but has no contents.
+    /// </summary>
+    public bool IsNil => _buf.Span.GetIntLE(FirstBucketPtrOfs) == 0;
 
-    /// <summary>The first bucket. Only valid when <see cref="IsEmpty"/> is false.</summary>
+    /// <summary>
+    /// The first bucket. Only valid when <see cref="IsNil"/> is false.
+    /// </summary>
     public IndexBucket FirstBucket => new IndexBucket(_buf.Slice(_buf.Span.GetIntLE(FirstBucketPtrOfs)));
 
 }

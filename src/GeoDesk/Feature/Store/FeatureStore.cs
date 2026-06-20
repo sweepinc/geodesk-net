@@ -11,6 +11,7 @@ using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 
+using GeoDesk.Buffers;
 using GeoDesk.Common.Pbf;
 using GeoDesk.Common.Store;
 using GeoDesk.Feature.Match;
@@ -55,9 +56,10 @@ internal class FeatureStore : FreeStore
     readonly HashSet<Task> _producers = new HashSet<Task>();
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore(Path)</c>.</remarks>
-    public FeatureStore(string path)
-        : base(path)
+    public FeatureStore(string path) :
+        base(path)
     {
+
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.initialize()</c>.</remarks>
@@ -69,7 +71,7 @@ internal class FeatureStore : FreeStore
         ReadIndexSchema();
 
         var pSnapshot = 128 + ActiveSnapshot() * 64;
-        var tileIndexPage = baseMapping!.GetInt(pSnapshot + SNAPSHOT_TILE_INDEX_OFS);
+        var tileIndexPage = baseMapping!.Memory.Span.GetIntLE(pSnapshot + SNAPSHOT_TILE_INDEX_OFS);
         _tileIndexBuf = BufferOfPage(tileIndexPage);
         _tileIndexOfs = OffsetOfPage(tileIndexPage);
 
@@ -86,14 +88,14 @@ internal class FeatureStore : FreeStore
     public int TileIndexOfs => _tileIndexOfs;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.zoomLevels()</c>.</remarks>
-    public int ZoomLevels => baseMapping!.GetInt(ZOOM_LEVELS_OFS);
+    public int ZoomLevels => baseMapping!.Memory.Span.GetIntLE(ZOOM_LEVELS_OFS);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.readStringTable()</c>.</remarks>
     void ReadStringTable()
     {
-        var p = baseMapping!.GetInt(STRING_TABLE_PTR_OFS);
-        var count = baseMapping.GetInt(p) & 0xffff;
-        var reader = new PbfDecoder(baseMapping, p + 2);
+        var p = baseMapping!.Memory.Span.GetIntLE(STRING_TABLE_PTR_OFS);
+        var count = baseMapping.Memory.Span.GetIntLE(p) & 0xffff;
+        var reader = new PbfDecoder(NioBuffer.Of(baseMapping!.Memory), p + 2);
         _codesToStrings = new string[count];
         var stringMap = new Dictionary<string, int>(count + (count >> 1));
 
@@ -110,13 +112,13 @@ internal class FeatureStore : FreeStore
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.readIndexSchema()</c>.</remarks>
     void ReadIndexSchema()
     {
-        var p = baseMapping!.GetInt(INDEX_SCHEMA_PTR_OFS);
-        var count = baseMapping.GetInt(p);
+        var p = baseMapping!.Memory.Span.GetIntLE(INDEX_SCHEMA_PTR_OFS);
+        var count = baseMapping.Memory.Span.GetIntLE(p);
         var map = new Dictionary<int, int>(count);
         for (var i = 0; i < count; i++)
         {
             p += 4;
-            var entry = baseMapping.GetInt(p);
+            var entry = baseMapping.Memory.Span.GetIntLE(p);
             map[(char)entry] = entry >> 16;
         }
 

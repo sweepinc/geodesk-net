@@ -149,7 +149,7 @@ namespace GeoDesk.Common.Store;
 /// - <c>FileChannel</c> + <c>MappedByteBuffer[]</c> → a <see cref="FileStream"/> plus one
 ///   <see cref="MemoryMappedFile"/> + view per 1 GB segment, each exposed as a
 ///   <see cref="System.Memory{Byte}"/>-backed <see cref="NioBuffer"/> via a
-///   <c>MappedFileMemoryManager</c>. Mapping a new segment never disturbs existing ones
+///   <c>Segment</c>. Mapping a new segment never disturbs existing ones
 ///   (mirrors Java's independent per-segment <c>map()</c>), so there is no shared mapping to grow.
 /// - Locking: Java uses byte-range file locks (shared for readers, exclusive for writers/append).
 ///   The BCL's <c>FileStream.Lock</c> is exclusive-only, so locking goes through the
@@ -174,8 +174,8 @@ internal abstract class Store
     int _lockLevel;
     bool _lockReadHeld;
     bool _lockWriteHeld;
-    NioBuffer?[] _mappings = new NioBuffer?[0];
-    protected NioBuffer? baseMapping;
+    Segment?[] _mappings = new Segment?[0];
+    protected Segment? baseMapping;
     readonly object _mappingsLock = new object();
     readonly object _transactionLock = new object();
     Dictionary<long, TransactionBlock>? _transactionBlocks;
@@ -255,7 +255,7 @@ internal abstract class Store
     // (protected internal so BlobStoreChecker, in the same assembly, can read segments —
     // Java relied on package-private access here.)
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.getMapping(int)</c>.</remarks>
-    protected internal NioBuffer GetMapping(int n)
+    protected internal Segment GetMapping(int n)
     {
         lock (_mappingsLock)
         {
@@ -265,19 +265,19 @@ internal abstract class Store
             if (n >= _mappings.Length)
                 System.Array.Resize(ref _mappings, n + 1);
 
-            var buf = CreateMapping(n);
-            _mappings[n] = buf;
+            var seg = MapSegment(n);
+            _mappings[n] = seg;
             if (n == 0)
-                baseMapping = buf;
-            return buf;
+                baseMapping = seg;
+            return seg;
         }
     }
 
     // Maps one 1 GB segment as its own MemoryMappedFile + view, wrapped in a Memory&lt;byte&gt;-backed
     // NioBuffer. Each segment is independent: mapping a later segment never invalidates earlier ones
     // (Java's per-segment FileChannel.map() semantics), so there is no shared mapping to grow.
-    /// <remarks>Port-only helper: maps one 1 GB segment via <c>MappedFileMemoryManager</c>.</remarks>
-    NioBuffer CreateMapping(int n)
+    /// <remarks>Port-only helper: maps one 1 GB segment as a <c>Segment</c>.</remarks>
+    Segment MapSegment(int n)
     {
         try
         {
@@ -287,10 +287,7 @@ internal abstract class Store
 
             var mmf = MemoryMappedFile.CreateFromFile(_channel, null, required, MemoryMappedFileAccess.ReadWrite, HandleInheritability.None, leaveOpen: true);
             var view = mmf.CreateViewAccessor((long)n * MAPPING_SIZE, MAPPING_SIZE, MemoryMappedFileAccess.ReadWrite);
-            var manager = new MappedFileMemoryManager(mmf, view);
-            var buf = NioBuffer.Of(manager.Memory[..MAPPING_SIZE], manager, view.Flush);
-            buf.Order(ByteOrder.LittleEndian); // TODO: check!
-            return buf;
+            return new Segment(mmf, view, MAPPING_SIZE);
         }
         catch (IOException ex)
         {
@@ -298,15 +295,16 @@ internal abstract class Store
         }
     }
 
+
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.unmapSegments()</c>.</remarks>
     bool UnmapSegments()
     {
         lock (_mappingsLock)
         {
             foreach (var b in _mappings)
-                b?.Dispose();
+                ((IDisposable?)b)?.Dispose();
 
-            _mappings = new NioBuffer?[0];
+            _mappings = new Segment?[0];
             baseMapping = null;
             return true;
         }
@@ -418,7 +416,7 @@ internal abstract class Store
 
             // Always do this first, even if journal is present
             baseMapping = GetMapping(0);
-            var headerWord = baseMapping.GetInt(0);
+            var headerWord = baseMapping!.Memory.Span.GetIntLE(0);
             if (headerWord == 0)
             {
                 CreateStore();
@@ -560,7 +558,7 @@ internal abstract class Store
             var len = (patchLow & 0x3ff) + 1;
             var segmentNumber = (int)(pos >> 30);
             var ofs = (int)pos & 0x3fff_ffff;
-            var buf = GetMapping(segmentNumber);
+            var buf = new NioBufferWriter(GetMapping(segmentNumber).Memory);
             affectedSegments.Add(segmentNumber);
             for (var i = 0; i < len; i++)
             {
@@ -603,7 +601,7 @@ internal abstract class Store
         foreach (var block in _transactionBlocks!.Values)
         {
             var pCurrent = 0;
-            NioBuffer original = GetMapping(SegmentOfPos(block.pos));
+            var original = new NioBufferReader(GetMapping(SegmentOfPos(block.pos)).Memory);
             NioBuffer current = block.current;
             var originalOfs = (int)(block.pos & 0x3fff_ffff);
             var pOriginal = originalOfs;
@@ -744,7 +742,7 @@ internal abstract class Store
             _lockLevel = LOCK_NONE;
             _lockReadHeld = false;
             _lockWriteHeld = false;
-            _mappings = new NioBuffer?[0];
+            _mappings = new Segment?[0];
             lock (_openStores)
             {
                 _openStores.Remove(_path!);
@@ -834,7 +832,7 @@ internal abstract class Store
             var ofs = (int)block.pos & 0x3fff_ffff;
             System.Diagnostics.Debug.Assert((ofs & 0xfff) == 0);
             System.Diagnostics.Debug.Assert(block.current.Array()!.Length == 4096);
-            GetMapping(segment).Put(ofs, block.current.Array()!);
+            new NioBufferWriter(GetMapping(segment).Memory).Put(ofs, block.current.Array()!);
             affectedSegments.Add(segment);
         }
 
@@ -866,21 +864,21 @@ internal abstract class Store
             {
                 block = new TransactionBlock();
                 block.pos = pos;
-                var original = GetMapping((int)(pos >> 30));
+                var original = new NioBufferReader(GetMapping((int)(pos >> 30)).Memory);
                 var ofs = (int)pos & 0x3fff_ffff;
                 var copy = new byte[4096];
                 original.Get(ofs, copy);
                 block.current = NioBuffer.Wrap(copy);
-                block.current.Order(original.Order()); // TODO
+                block.current.Order(ByteOrder.LittleEndian); // TODO
                 _transactionBlocks[pos] = block;
             }
             return block.current;
         }
 
-        var buf = GetMapping((int)(pos >> 30));
-        var order = buf.Order();
+        // Boundary: GetBlock still returns a ByteBuffer block for the (not-yet-migrated) write path.
+        var buf = NioBuffer.Of(GetMapping((int)(pos >> 30)).Memory);
         buf = buf.Slice((int)pos & 0x3fff_ffff, 4096);
-        buf.Order(order);
+        buf.Order(ByteOrder.LittleEndian);
         return buf;
     }
 

@@ -8,19 +8,30 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Polygons;
 using GeoDesk.Feature.Query;
+
 using NetTopologySuite.Geometries;
+
 using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace GeoDesk.Feature.Store;
 
 internal class StoredRelation : StoredFeature, IRelation
 {
-    public StoredRelation(FeatureStore store, NioBuffer buf, int ptr)
-        : base(store, buf, ptr)
+
+    /// <summary>
+    /// Initializes a new instance.
+    /// </summary>
+    /// <param name="store"></param>
+    /// <param name="buf"></param>
+    /// <param name="ptr"></param>
+    public StoredRelation(FeatureStore store, NioBuffer buf, int ptr) :
+        base(store, buf, ptr)
     {
+
     }
 
     public override FeatureType Type => FeatureType.Relation;
@@ -41,7 +52,7 @@ internal class StoredRelation : StoredFeature, IRelation
     // TODO: Decide what this should return
     public override int[] ToXY()
     {
-        return new int[0];
+        return [];
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredRelation.isEmpty(int)</c>.</remarks>
@@ -55,7 +66,8 @@ internal class StoredRelation : StoredFeature, IRelation
     {
         int ppMembers = ptr + 12;
         int pMembers = ppMembers + buf.GetInt(ppMembers);
-        if (IsEmpty(pMembers)) return Enumerable.Empty<IFeature>().GetEnumerator();
+        if (IsEmpty(pMembers))
+            return Enumerable.Empty<IFeature>().GetEnumerator();
         return new MemberIterator(store, buf, pMembers, TypeBits.ALL, Matcher.ALL, null);
     }
 
@@ -64,14 +76,16 @@ internal class StoredRelation : StoredFeature, IRelation
     {
         int ppMembers = ptr + 12;
         int pMembers = ppMembers + buf.GetInt(ppMembers);
-        if (IsEmpty(pMembers)) return Enumerable.Empty<IFeature>().GetEnumerator();
+        if (IsEmpty(pMembers))
+            return Enumerable.Empty<IFeature>().GetEnumerator();
         return new MemberIterator(store, buf, pMembers, types, matcher, null);
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredRelation.toGeometry()</c>.</remarks>
     public override Geometry ToGeometry()
     {
-        if (IsArea) return PolygonBuilder.Build(store.GeometryFactory(), this);
+        if (IsArea)
+            return PolygonBuilder.Build(store.GeometryFactory(), this);
         return ToGeometryCollection();
     }
 
@@ -110,6 +124,7 @@ internal class StoredRelation : StoredFeature, IRelation
                     // TODO: This won't work if spec changed so Way returns LinearRing as well as
                     //  LineString (but for now, it always returns LineString) See Issue #58
                 }
+
                 geoms.Add(g);
             }
         }
@@ -155,7 +170,8 @@ internal class StoredRelation : StoredFeature, IRelation
     {
         int ppMembers = ptr + 12;
         int pMembers = ppMembers + buf.GetInt(ppMembers);
-        if (IsEmpty(pMembers)) return EmptyView.Any;
+        if (IsEmpty(pMembers))
+            return EmptyView.Any;
         return new MemberView(store, buf, pMembers, types, matcher, filter);
     }
 

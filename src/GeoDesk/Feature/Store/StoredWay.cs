@@ -5,7 +5,6 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -23,9 +22,11 @@ namespace GeoDesk.Feature.Store;
 
 internal class StoredWay : StoredFeature, IWay
 {
-    public StoredWay(FeatureStore store, NioBuffer buf, int ptr)
-        : base(store, buf, ptr)
+
+    public StoredWay(FeatureStore store, NioBuffer buf, int ptr) :
+        base(store, buf, ptr)
     {
+
     }
 
     public override FeatureType Type => FeatureType.Way;

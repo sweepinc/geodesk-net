@@ -30,14 +30,18 @@ internal readonly struct FeatureHeader
 
     // Layout: flags/id word at 0; relative pointer to the tag table at +8.
     const int FlagsOfs = 0;
-    const int IdShift = 12;         // the id occupies the high 52 bits of the flags/id word
-    const int TypeShift = 3;        // the 2-bit feature type code sits at bits 3..4
+    const int IdShift = 12; // the id occupies the high 52 bits of the flags/id word
+    const int TypeShift = 3; // the 2-bit feature type code sits at bits 3..4
     const int TypeMask = 3;
     const int TagTablePpOfs = 8;
     const int UncommonKeysFlag = 1; // low bit of the tag-table pointer
 
     readonly ReadOnlyMemory<byte> _buf; // sliced to the feature anchor (the flags word)
 
+    /// <summary>
+    /// Initializes a new instance.
+    /// </summary>
+    /// <param name="buf"></param>
     public FeatureHeader(ReadOnlyMemory<byte> buf)
     {
         _buf = buf;
