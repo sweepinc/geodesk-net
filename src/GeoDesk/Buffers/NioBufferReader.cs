@@ -50,7 +50,6 @@ internal readonly struct NioBufferReader
     public void Get(int index, byte[] dst) => _mem.Span.Slice(index, dst.Length).CopyTo(dst);
 
     /// <summary>Absolute bulk get (<c>ByteBuffer.get(int, byte[], int, int)</c>).</summary>
-    public void Get(int index, byte[] dst, int offset, int length) =>
-        _mem.Span.Slice(index, length).CopyTo(dst.AsSpan(offset, length));
+    public void Get(int index, byte[] dst, int offset, int length) => _mem.Span.Slice(index, length).CopyTo(dst.AsSpan(offset, length));
 
 }
