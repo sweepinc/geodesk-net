@@ -319,18 +319,10 @@ internal class Downloader
         if (id != METADATA_ID)
         {
             // We don't check GUID for meta-tile because the store will be empty at that point.
-            // Java compares the tile's lower/upper 64 GUID bits against the store UUID; because
-            // .NET's Guid byte layout differs from Java's UUID, we compare the 16 raw GUID bytes
-            // directly (both store and tile were written by the same exporter), which is equivalent.
-            byte[] storeGuid = new byte[GUID_LEN];
-            store.BaseMapping().Get(GUID_OFS, storeGuid);
-            bool mismatch = false;
-            for (int i = 0; i < GUID_LEN; i++)
-            {
-                if (storeGuid[i] != buf[EXPORTED_HEADER_GUID + i])
-                { mismatch = true; break; }
-            }
-            if (mismatch)
+            // The store GUID and the tile header GUID are both stored in Java UUID (big-endian)
+            // layout, so both parse to the same Guid value the exporter assigned.
+            var tileGuid = new Guid(buf.AsSpan(EXPORTED_HEADER_GUID, GUID_LEN), bigEndian: true);
+            if (store.GetGuid() != tileGuid)
             {
                 InvalidTileFile("Incompatible tile: " +
                     Convert.ToHexString(buf, EXPORTED_HEADER_GUID, GUID_LEN));

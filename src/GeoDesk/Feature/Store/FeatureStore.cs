@@ -71,7 +71,7 @@ internal class FeatureStore : FreeStore
         ReadIndexSchema();
 
         var pSnapshot = 128 + ActiveSnapshot() * 64;
-        var tileIndexPage = baseMapping!.Memory.Span.GetIntLE(pSnapshot + SNAPSHOT_TILE_INDEX_OFS);
+        var tileIndexPage = BaseMapping.Memory.Span.GetIntLE(pSnapshot + SNAPSHOT_TILE_INDEX_OFS);
         _tileIndexBuf = new NioBuffer(SegmentOfPage(tileIndexPage).Memory);
         _tileIndexOfs = OffsetOfPage(tileIndexPage);
 
@@ -88,14 +88,14 @@ internal class FeatureStore : FreeStore
     public int TileIndexOfs => _tileIndexOfs;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.zoomLevels()</c>.</remarks>
-    public int ZoomLevels => baseMapping!.Memory.Span.GetIntLE(ZOOM_LEVELS_OFS);
+    public int ZoomLevels => BaseMapping.Memory.Span.GetIntLE(ZOOM_LEVELS_OFS);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.readStringTable()</c>.</remarks>
     void ReadStringTable()
     {
-        var p = baseMapping!.Memory.Span.GetIntLE(STRING_TABLE_PTR_OFS);
-        var count = baseMapping.Memory.Span.GetIntLE(p) & 0xffff;
-        var reader = new PbfDecoder(new NioBuffer(baseMapping!.Memory), p + 2);
+        var p = BaseMapping.Memory.Span.GetIntLE(STRING_TABLE_PTR_OFS);
+        var count = BaseMapping.Memory.Span.GetIntLE(p) & 0xffff;
+        var reader = new PbfDecoder(new NioBuffer(BaseMapping.Memory), p + 2);
         _codesToStrings = new string[count];
         var stringMap = new Dictionary<string, int>(count + (count >> 1));
 
@@ -112,13 +112,13 @@ internal class FeatureStore : FreeStore
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.readIndexSchema()</c>.</remarks>
     void ReadIndexSchema()
     {
-        var p = baseMapping!.Memory.Span.GetIntLE(INDEX_SCHEMA_PTR_OFS);
-        var count = baseMapping.Memory.Span.GetIntLE(p);
+        var p = BaseMapping.Memory.Span.GetIntLE(INDEX_SCHEMA_PTR_OFS);
+        var count = BaseMapping.Memory.Span.GetIntLE(p);
         var map = new Dictionary<int, int>(count);
         for (var i = 0; i < count; i++)
         {
             p += 4;
-            var entry = baseMapping.Memory.Span.GetIntLE(p);
+            var entry = BaseMapping.Memory.Span.GetIntLE(p);
             map[(char)entry] = entry >> 16;
         }
 
@@ -149,10 +149,13 @@ internal class FeatureStore : FreeStore
         }
         producer.ContinueWith(static (t, state) =>
         {
-            var self = (FeatureStore)state!;
-            lock (self._producersLock)
+            // state is the `this` passed below.
+            if (state is FeatureStore self)
             {
-                self._producers.Remove(t);
+                lock (self._producersLock)
+                {
+                    self._producers.Remove(t);
+                }
             }
         }, this, TaskScheduler.Default);
     }
@@ -211,7 +214,7 @@ internal class FeatureStore : FreeStore
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.geometryFactory()</c>.</remarks>
     public GeometryFactory GeometryFactory()
     {
-        return _geometryFactory!;
+        return _geometryFactory ?? throw new InvalidOperationException("Queries are not enabled");
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.getMatcher(String)</c>.</remarks>
@@ -219,7 +222,7 @@ internal class FeatureStore : FreeStore
     {
         lock (_matchersLock)
         {
-            return _matchers!.GetMatcher(query);
+            return (_matchers ?? throw new InvalidOperationException("Queries are not enabled")).GetMatcher(query);
         }
     }
 

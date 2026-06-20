@@ -52,8 +52,8 @@ internal class StoredWay : StoredFeature, IWay
         readonly int _flags;
 
         /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.XYIterator(ByteBuffer, int, int, int, int)</c>.</remarks>
-        public XYIterator(NioBuffer buf, int pos, int prevX, int prevY, int flags)
-            : base(buf, pos)
+        public XYIterator(NioBuffer buf, int pos, int prevX, int prevY, int flags) :
+            base(buf, pos)
         {
             _x = prevX;
             _y = prevY;

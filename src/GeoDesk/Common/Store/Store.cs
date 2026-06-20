@@ -193,15 +193,33 @@ internal abstract class Store
     sealed class TransactionBlock
     {
 
-        public long pos;
-        public byte[] bytes = null!; // the 4 KB working copy
+        public readonly long pos;
+        public readonly byte[] bytes; // the 4 KB working copy
+
+        public TransactionBlock(long pos, byte[] bytes)
+        {
+            this.pos = pos;
+            this.bytes = bytes;
+        }
 
         public NioBufferWriter Current => new NioBufferWriter(bytes);
 
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.path()</c>.</remarks>
-    public string Path => _path!;
+    public string Path => _path ?? throw new InvalidOperationException("Store path has not been set");
+
+    // Non-null accessors that assert the relevant lifecycle invariant (open / in-transaction) rather
+    // than suppressing nullability with `!`. They turn a stale-state bug into a clear exception.
+    FileStream Channel => _channel ?? throw new InvalidOperationException("Store is not open");
+
+    FileStream Journal => _journal ?? throw new InvalidOperationException("Store has no open journal");
+
+    Dictionary<long, TransactionBlock> TransactionBlocks =>
+        _transactionBlocks ?? throw new InvalidOperationException("No transaction is in progress");
+
+    /// <summary>The base segment (mapped at offset 0). Valid once the store is open.</summary>
+    protected Segment BaseSegment => baseSegment ?? throw new InvalidOperationException("Store is not open");
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.setPath(Path)</c>.</remarks>
     public void SetPath(string path)
@@ -264,7 +282,7 @@ internal abstract class Store
                 return _segments[n]!;
 
             if (n >= _segments.Length)
-                System.Array.Resize(ref _segments, n + 1);
+                Array.Resize(ref _segments, n + 1);
 
             var seg = MapSegment(n);
             _segments[n] = seg;
@@ -285,10 +303,10 @@ internal abstract class Store
         try
         {
             var required = (long)(n + 1) * MAPPING_SIZE;
-            if (_channel!.Length < required)
-                _channel.SetLength(required);
+            if (Channel.Length < required)
+                Channel.SetLength(required);
 
-            var mmf = MemoryMappedFile.CreateFromFile(_channel, null, required, MemoryMappedFileAccess.ReadWrite, HandleInheritability.None, leaveOpen: true);
+            var mmf = MemoryMappedFile.CreateFromFile(Channel, null, required, MemoryMappedFileAccess.ReadWrite, HandleInheritability.None, leaveOpen: true);
             var view = mmf.CreateViewAccessor((long)n * MAPPING_SIZE, MAPPING_SIZE, MemoryMappedFileAccess.ReadWrite);
             return new Segment(mmf, view, MAPPING_SIZE);
         }
@@ -327,26 +345,26 @@ internal abstract class Store
             {
                 // Java: lockRead.release(); lockRead = null;
                 if (_lockReadHeld)
-                { _channel!.UnlockRange(0, 4); _lockReadHeld = false; }
+                { Channel.UnlockRange(0, 4); _lockReadHeld = false; }
                 _lockLevel = LOCK_NONE;
             }
             if (_lockLevel == LOCK_NONE && newLevel != LOCK_NONE)
             {
                 // Java: lockRead = channel.lock(0, 4, newLevel != LOCK_EXCLUSIVE) — a *blocking* lock,
                 // shared for READ/APPEND, exclusive for EXCLUSIVE.
-                _channel!.LockRange(0, 4, exclusive: newLevel == LOCK_EXCLUSIVE);
+                Channel.LockRange(0, 4, exclusive: newLevel == LOCK_EXCLUSIVE);
                 _lockReadHeld = true;
             }
             if (oldLevel == LOCK_APPEND)
             {
                 // Java: lockWrite.release(); lockWrite = null;
                 if (_lockWriteHeld)
-                { _channel!.UnlockRange(4, 4); _lockWriteHeld = false; }
+                { Channel.UnlockRange(4, 4); _lockWriteHeld = false; }
             }
             if (newLevel == LOCK_APPEND)
             {
                 // Java: lockWrite = channel.lock(4, 4, false) — a blocking exclusive write lock on [4, 8).
-                _channel!.LockRange(4, 4, exclusive: true);
+                Channel.LockRange(4, 4, exclusive: true);
                 _lockWriteHeld = true;
             }
             _lockLevel = newLevel;
@@ -367,7 +385,7 @@ internal abstract class Store
         bool acquired;
         try
         {
-            acquired = _channel!.TryLockRange(0, 4, exclusive: true);
+            acquired = Channel.TryLockRange(0, 4, exclusive: true);
         }
         catch (IOException)
         {
@@ -398,22 +416,23 @@ internal abstract class Store
     protected void Open(int lockMode)
     {
         if (_channel != null)
-            throw new StoreException("Store is already open", _path!);
+            throw new StoreException("Store is already open", Path);
 
-        var fileName = _path!;
+        var fileName = Path;
         lock (_openStores)
         {
             if (_openStores.Contains(fileName))
-                throw new StoreException("Only one instance may be open within the same process", _path!);
+                throw new StoreException("Only one instance may be open within the same process", Path);
 
             _openStores.Add(fileName);
         }
         try
         {
-            var existed = File.Exists(_path!);
-            _channel = new FileStream(_path!, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
+            var existed = File.Exists(Path);
+            _channel = new FileStream(Path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
             if (!existed)
                 MarkSparse(_channel);
+
             Lock(lockMode);
 
             // Always do this first, even if journal is present
@@ -432,7 +451,7 @@ internal abstract class Store
         catch (IOException ex)
         {
             Close();
-            throw new StoreException("Failed to open store", _path!, ex);
+            throw new StoreException("Failed to open store", Path, ex);
         }
     }
 
@@ -466,7 +485,7 @@ internal abstract class Store
     {
         if (_journal == null)
             OpenJournal(journalFile);
-        _journal!.Seek(0, SeekOrigin.Begin);
+        Journal.Seek(0, SeekOrigin.Begin);
         var instruction = JournalReadInt();
         if (instruction == 0)
             return false;
@@ -475,7 +494,7 @@ internal abstract class Store
 
         // Check header again, because another process may have already
         // processed the journal while we were waiting for the lock
-        _journal.Seek(0, SeekOrigin.Begin);
+        Journal.Seek(0, SeekOrigin.Begin);
         instruction = JournalReadInt();
         if (instruction == 0)
             return false;
@@ -503,7 +522,7 @@ internal abstract class Store
         var crc = new Crc32();
         try
         {
-            _journal!.Seek(4, SeekOrigin.Begin);
+            Journal.Seek(4, SeekOrigin.Begin);
             var timestamp = JournalReadLong();
             if (timestamp != GetTimestamp())
                 return false;
@@ -546,7 +565,7 @@ internal abstract class Store
         Log.Debug("Applying journal...");
 
         var patchCount = 0;
-        _journal!.Seek(12, SeekOrigin.Begin);
+        Journal.Seek(12, SeekOrigin.Begin);
         for (; ; )
         {
             var patchLow = JournalReadInt();
@@ -581,10 +600,10 @@ internal abstract class Store
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.clearJournal()</c>.</remarks>
     void ClearJournal()
     {
-        _journal!.Seek(0, SeekOrigin.Begin);
+        Journal.Seek(0, SeekOrigin.Begin);
         JournalWriteInt(0);
-        _journal.SetLength(4); // TODO: just trim to 0 instead?
-        _journal.Flush(true);
+        Journal.SetLength(4); // TODO: just trim to 0 instead?
+        Journal.Flush(true);
     }
 
     /// <summary>
@@ -595,12 +614,12 @@ internal abstract class Store
     {
         if (_journal == null)
             OpenJournal(GetJournalFile());
-        _journal!.Seek(0, SeekOrigin.Begin);
+        Journal.Seek(0, SeekOrigin.Begin);
         JournalWriteInt(1); // TODO
         JournalWriteLong(GetTimestamp());
         var ba = new byte[4];
         var crc = new Crc32();
-        foreach (var block in _transactionBlocks!.Values)
+        foreach (var block in TransactionBlocks.Values)
         {
             var pCurrent = 0;
             var original = new NioBufferReader(GetSegment(SegmentOfPos(block.pos)).Memory);
@@ -659,7 +678,7 @@ internal abstract class Store
         JournalWriteInt(unchecked((int)0xffff_ffff));
         JournalWriteInt(unchecked((int)0xffff_ffff));
         JournalWriteInt((int)crc.GetCurrentHashAsUInt32());
-        _journal.Flush(true);
+        Journal.Flush(true);
     }
 
     // === Transactions ===
@@ -728,7 +747,7 @@ internal abstract class Store
         }
         catch (IOException ex)
         {
-            throw new StoreException(string.Format(CultureInfo.InvariantCulture, "Error while closing file ({0})", ex.Message), _path!, ex);
+            throw new StoreException(string.Format(CultureInfo.InvariantCulture, "Error while closing file ({0})", ex.Message), Path, ex);
         }
         finally
         {
@@ -739,7 +758,7 @@ internal abstract class Store
             _segments = new Segment?[0];
             lock (_openStores)
             {
-                _openStores.Remove(_path!);
+                _openStores.Remove(Path);
             }
         }
     }
@@ -802,7 +821,7 @@ internal abstract class Store
     protected void Rollback()
     {
         System.Diagnostics.Debug.Assert(System.Threading.Monitor.IsEntered(_transactionLock));
-        _transactionBlocks!.Clear();
+        TransactionBlocks.Clear();
     }
 
     /// <summary>
@@ -823,7 +842,7 @@ internal abstract class Store
         SaveJournal();
 
         var affectedSegments = new HashSet<int>();
-        foreach (var block in _transactionBlocks!.Values)
+        foreach (var block in TransactionBlocks.Values)
         {
             var segment = SegmentOfPos(block.pos);
             var ofs = (int)block.pos & 0x3fff_ffff;
@@ -856,17 +875,15 @@ internal abstract class Store
 
         if (pos < _preTransactionFileSize)
         {
-            _transactionBlocks!.TryGetValue(pos, out var block);
+            TransactionBlocks.TryGetValue(pos, out var block);
             if (block == null)
             {
-                block = new TransactionBlock();
-                block.pos = pos;
                 var original = new NioBufferReader(GetSegment((int)(pos >> 30)).Memory);
                 var ofs = (int)pos & 0x3fff_ffff;
                 var copy = new byte[4096];
                 original.Get(ofs, copy);
-                block.bytes = copy;
-                _transactionBlocks[pos] = block;
+                block = new TransactionBlock(pos, copy);
+                TransactionBlocks[pos] = block;
             }
             return block.Current;
         }
@@ -877,7 +894,7 @@ internal abstract class Store
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.currentFileSize()</c>.</remarks>
     public long CurrentFileSize()
     {
-        return new FileInfo(_path!).Length;
+        return new FileInfo(Path).Length;
     }
 
     // === Journal big-endian primitives (Java RandomAccessFile is big-endian) ===
@@ -887,7 +904,7 @@ internal abstract class Store
     {
         Span<byte> b = stackalloc byte[4];
         BinaryPrimitives.WriteInt32BigEndian(b, v);
-        _journal!.Write(b);
+        Journal.Write(b);
     }
 
     /// <remarks>Port-only helper for Java's <c>RandomAccessFile.writeLong(long)</c> (big-endian).</remarks>
@@ -895,7 +912,7 @@ internal abstract class Store
     {
         Span<byte> b = stackalloc byte[8];
         BinaryPrimitives.WriteInt64BigEndian(b, v);
-        _journal!.Write(b);
+        Journal.Write(b);
     }
 
     /// <remarks>Port-only helper for Java's <c>RandomAccessFile.readInt()</c> (big-endian).</remarks>
@@ -921,7 +938,7 @@ internal abstract class Store
         var read = 0;
         while (read < dst.Length)
         {
-            var n = _journal!.Read(dst.Slice(read));
+            var n = Journal.Read(dst.Slice(read));
             if (n <= 0)
                 throw new EndOfStreamException();
             read += n;

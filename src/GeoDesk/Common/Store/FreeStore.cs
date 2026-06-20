@@ -107,6 +107,12 @@ internal class FreeStore
 
     // === File Mapping ===
 
+    // Non-null accessors that assert the store is open rather than suppressing nullability with `!`.
+    FileStream Channel => _channel ?? throw new InvalidOperationException("Store is not open");
+
+    /// <summary>The base segment carrying the active-snapshot header. Valid once the store is open.</summary>
+    protected Segment BaseMapping => baseMapping ?? throw new InvalidOperationException("Store is not open");
+
     // Maps one segment (read-only) as its own MemoryMappedFile + view, wrapped in a
     // Memory&lt;byte&gt;-backed NioBuffer wrapping a Segment. Segments are independent.
     /// <remarks>Ported from Java <c>com.clarisma.common.store.FreeStore.getMapping(int)</c>.</remarks>
@@ -114,8 +120,8 @@ internal class FreeStore
     {
         lock (_mappingsLock)
         {
-            if (n < _mappings.Length && _mappings[n] != null)
-                return _mappings[n]!;
+            if (n < _mappings.Length && _mappings[n] is { } existing)
+                return existing;
 
             if (n >= _mappings.Length)
             {
@@ -125,7 +131,7 @@ internal class FreeStore
             {
                 var mappingOfs = (long)n * SEGMENT_SIZE;
                 var mappingSize = checked((int)System.Math.Min(_fileSize - mappingOfs, SEGMENT_SIZE));
-                var mmf = MemoryMappedFile.CreateFromFile(_channel!, null, 0, MemoryMappedFileAccess.Read, HandleInheritability.None, leaveOpen: true);
+                var mmf = MemoryMappedFile.CreateFromFile(Channel, null, 0, MemoryMappedFileAccess.Read, HandleInheritability.None, leaveOpen: true);
                 var view = mmf.CreateViewAccessor(mappingOfs, mappingSize, MemoryMappedFileAccess.Read);
                 var seg = new Segment(mmf, view, mappingSize);
                 _mappings[n] = seg;
@@ -172,7 +178,7 @@ internal class FreeStore
     public int ActiveSnapshot()
     {
         // signed byte, matching Java's ByteBuffer.get(int) (see the constructor's lock computation)
-        return (sbyte)baseMapping!.Memory.Span[ACTIVE_SNAPSHOT_OFS];
+        return (sbyte)BaseMapping.Memory.Span[ACTIVE_SNAPSHOT_OFS];
     }
 
 }

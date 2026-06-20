@@ -14,6 +14,7 @@ using System.IO.Compression;
 using System.Numerics;
 
 using GeoDesk.Buffers;
+using GeoDesk.Common.Store.Format;
 
 using static GeoDesk.Common.Store.BlobStoreConstants;
 
@@ -80,7 +81,7 @@ internal class BlobStore : Store
     protected override void CreateStore()
     {
         // TODO: should this be inside a transaction?
-        var buf = new NioBufferWriter(baseSegment!.Memory);
+        var buf = new NioBufferWriter(BaseSegment.Memory);
         buf.PutInt(0, MAGIC);
         buf.PutInt(VERSION_OFS, VERSION);
         buf.PutLong(TIMESTAMP_OFS, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
@@ -89,34 +90,30 @@ internal class BlobStore : Store
         // TODO: page size
     }
 
+    /// <summary>A cursor over the store header at offset 0 of the base segment.</summary>
+    StoreHeader Header => new StoreHeader(BaseSegment.Memory);
+
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.getTimestamp()</c>.</remarks>
     protected override long GetTimestamp()
     {
-        return baseSegment!.Memory.Span.GetLongLE(TIMESTAMP_OFS);
+        return Header.Timestamp;
     }
 
-    // PORT NOTE: .NET Guid byte layout differs from Java UUID(high,low); this reads the
-    // 16 raw GUID bytes. Not exercised by tests.
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.getGuid()</c>.</remarks>
     public Guid GetGuid()
     {
-        var bytes = new byte[GUID_LEN];
-        baseSegment!.Memory.Span.Slice(GUID_OFS, bytes.Length).CopyTo(bytes);
-        return new Guid(bytes);
+        return Header.Guid;
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.verifyHeader()</c>.</remarks>
     protected override void VerifyHeader()
     {
-        var buf = new NioBufferReader(baseSegment!.Memory);
-        if (buf.GetInt(0) != MAGIC)
-        {
+        var header = Header;
+        if (header.Magic != MAGIC)
             throw new StoreException("Not a BlobStore file", Path);
-        }
-        if (buf.GetInt(VERSION_OFS) != VERSION)
-        {
+        if (header.Version != VERSION)
             throw new StoreException("Wrong BlobStore version (Requires 1.0)", Path);
-        }
+
         // TODO: page size
     }
 
@@ -126,7 +123,7 @@ internal class BlobStore : Store
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.isEmpty()</c>.</remarks>
     protected internal bool IsEmpty()
     {
-        return baseSegment!.Memory.Span.GetIntLE(INDEX_PTR_OFS) == 0; // TODO
+        return Header.IsEmpty;
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.initialize()</c>.</remarks>
@@ -144,14 +141,7 @@ internal class BlobStore : Store
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.getTrueSize()</c>.</remarks>
     protected override long GetTrueSize()
     {
-        return ((long)baseSegment!.Memory.Span.GetIntLE(TOTAL_PAGES_OFS)) << pageSizeShift;
-    }
-
-    // TODO: naming
-    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.baseMapping()</c>.</remarks>
-    public NioBufferReader BaseMapping()
-    {
-        return new NioBufferReader(baseSegment!.Memory);
+        return ((long)Header.TotalPages) << pageSizeShift;
     }
 
     /// <summary>The mapped segment containing the given page. The caller wraps its <c>Memory</c> as it needs.</summary>
@@ -188,17 +178,15 @@ internal class BlobStore : Store
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.indexPointer()</c>.</remarks>
     public int IndexPointer()
     {
-        return baseSegment!.Memory.Span.GetIntLE(INDEX_PTR_OFS) + INDEX_PTR_OFS;
+        return BaseSegment.Memory.Span.GetIntLE(INDEX_PTR_OFS) + INDEX_PTR_OFS;
     }
 
     // TODO: should also make sure page does not lie in meta space
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.checkPage(int)</c>.</remarks>
     protected void CheckPage(int page)
     {
-        if (page < 0 || page >= baseSegment!.Memory.Span.GetIntLE(TOTAL_PAGES_OFS))
-        {
+        if (page < 0 || page >= BaseSegment.Memory.Span.GetIntLE(TOTAL_PAGES_OFS))
             throw new StoreException("Invalid page: " + page, Path);
-        }
     }
 
     /// <summary>
@@ -279,8 +267,7 @@ internal class BlobStore : Store
                     var leafOfs = LEAF_FREE_TABLE_OFS + leafSlot * 4;
                     var leafEnd = (leafOfs & unchecked((int)0xffff_ffc0)) + 64;
 
-                    Debug.Assert((leafBlock.GetInt(0) & FREE_BLOB_FLAG) != 0,
-                        string.Format(CultureInfo.InvariantCulture, "Leaf FB blob {0} must be a free blob", leafTableBlob));
+                    Debug.Assert((leafBlock.GetInt(0) & FREE_BLOB_FLAG) != 0, string.Format(CultureInfo.InvariantCulture, "Leaf FB blob {0} must be a free blob", leafTableBlob));
 
                     leafRanges = Ushr(leafRanges, leafSlot / 16);
 
@@ -290,6 +277,7 @@ internal class BlobStore : Store
                         {
                             if (leafRanges == 0)
                                 break;
+
                             var rangesToSkip = BitOperations.TrailingZeroCount((uint)leafRanges);
                             leafEnd += rangesToSkip * 64;
                             leafOfs = leafEnd - 64;
@@ -306,15 +294,12 @@ internal class BlobStore : Store
                             {
                                 var nextFreeBlob = leafBlock.GetInt(NEXT_FREE_BLOB_OFS);
                                 if (nextFreeBlob != 0)
-                                {
                                     freeBlob = nextFreeBlob;
-                                }
                             }
 
                             var freeBlock = GetBlockOfPage(freeBlob);
                             var header = freeBlock.GetInt(0);
-                            Debug.Assert((header & FREE_BLOB_FLAG) != 0,
-                                string.Format(CultureInfo.InvariantCulture, "Blob {0} is not free", freeBlob));
+                            Debug.Assert((header & FREE_BLOB_FLAG) != 0, string.Format(CultureInfo.InvariantCulture, "Blob {0} is not free", freeBlob));
                             var freeBlobPayloadSize = header & PAYLOAD_SIZE_MASK;
                             Debug.Assert((freeBlobPayloadSize + 4) >> pageSizeShift == freePages);
                             Debug.Assert(freePages >= requiredPages);
@@ -406,10 +391,7 @@ internal class BlobStore : Store
         var precedingBlobFree = sizeAndFlags & PRECEDING_BLOB_FREE_FLAG;
 
         if (freeFlag != 0)
-        {
-            throw new StoreException(
-                "Attempt to free blob that is already marked as free", Path);
-        }
+            throw new StoreException("Attempt to free blob that is already marked as free", Path);
 
         var totalPages = rootBlock.GetInt(TOTAL_PAGES_OFS);
 
@@ -718,7 +700,7 @@ internal class BlobStore : Store
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.getIndexEntry(int)</c>.</remarks>
     protected internal int GetIndexEntry(int id)
     {
-        return baseSegment!.Memory.Span.GetIntLE(IndexPointer() + id * 4);
+        return BaseSegment.Memory.Span.GetIntLE(IndexPointer() + id * 4);
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.setIndexEntry(int, int)</c>.</remarks>
@@ -790,9 +772,9 @@ internal class BlobStore : Store
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.createCopy(Path)</c>.</remarks>
     public void CreateCopy(string newPath)
     {
-        var metadataSize = baseSegment!.Memory.Span.GetIntLE(METADATA_SIZE_OFS);
+        var metadataSize = BaseSegment.Memory.Span.GetIntLE(METADATA_SIZE_OFS);
         var bytes = new byte[metadataSize];
-        baseSegment!.Memory.Span.Slice(0, metadataSize).CopyTo(bytes);
+        BaseSegment.Memory.Span.Slice(0, metadataSize).CopyTo(bytes);
         var buf = new NioBufferWriter(bytes);
         ResetMetadata(buf);
         buf.PutInt(TOTAL_PAGES_OFS, BytesToPages(metadataSize));

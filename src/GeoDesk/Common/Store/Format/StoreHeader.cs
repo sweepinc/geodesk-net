@@ -60,4 +60,11 @@ internal readonly struct StoreHeader
     /// <summary>The first page of the free-blob list (leaf free-table) for the given trunk slot, or <see cref="PageIndex.Nil"/>.</summary>
     public PageIndex TrunkFreeTablePage(int slot) => new PageIndex(_buf.Span.GetIntLE(TRUNK_FREE_TABLE_OFS + slot * FreeTableSlotSize));
 
+    /// <summary>
+    /// The store's unique identifier. The 16 bytes are stored in Java <c>UUID</c> layout
+    /// (big-endian most/least-significant halves), so they are parsed as big-endian to yield the
+    /// same value the exporter assigned.
+    /// </summary>
+    public Guid Guid => new Guid(_buf.Span.Slice(GUID_OFS, GUID_LEN), bigEndian: true);
+
 }
