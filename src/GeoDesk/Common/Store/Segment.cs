@@ -38,10 +38,13 @@ sealed unsafe class Segment : MemoryManager<byte>
     /// </summary>
     /// <param name="file"></param>
     /// <param name="view"></param>
+    /// <param name="length"></param>
     /// <exception cref="ArgumentNullException"></exception>
     /// <exception cref="InvalidOperationException"></exception>
     public Segment(MemoryMappedFile file, MemoryMappedViewAccessor view, int length)
     {
+        ArgumentOutOfRangeException.ThrowIfNegative(length);
+
         _file = file ?? throw new ArgumentNullException(nameof(file));
         _view = view ?? throw new ArgumentNullException(nameof(view));
 

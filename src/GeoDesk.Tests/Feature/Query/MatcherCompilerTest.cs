@@ -17,7 +17,7 @@ using GeoDesk.Feature.Query;
 using Xunit;
 using Xunit.Abstractions;
 
-using NioBuffer = Java.Nio.ByteBuffer;
+using NioBuffer = GeoDesk.Buffers.NioBufferReader;
 
 namespace GeoDesk.Tests.Feature.Query;
 

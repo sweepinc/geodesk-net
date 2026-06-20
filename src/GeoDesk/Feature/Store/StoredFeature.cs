@@ -15,7 +15,7 @@ using GeoDesk.Geom;
 
 using NetTopologySuite.Geometries;
 
-using NioBuffer = Java.Nio.ByteBuffer;
+using NioBuffer = GeoDesk.Buffers.NioBufferReader;
 
 namespace GeoDesk.Feature.Store;
 

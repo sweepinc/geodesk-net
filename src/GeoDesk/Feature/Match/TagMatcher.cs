@@ -9,7 +9,7 @@ using System.Globalization;
 
 using GeoDesk.Common.Math;
 
-using NioBuffer = Java.Nio.ByteBuffer;
+using NioBuffer = GeoDesk.Buffers.NioBufferReader;
 
 namespace GeoDesk.Feature.Match;
 

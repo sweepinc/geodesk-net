@@ -7,7 +7,7 @@
 
 using System.Text;
 
-using Java.Nio;
+using GeoDesk.Buffers;
 
 namespace GeoDesk.Common.Util;
 
@@ -115,7 +115,7 @@ internal static class Bytes
     /// string. Note that only string lengths up to 32K are supported.
     /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.util.Bytes.readString(ByteBuffer, int)</c>.</remarks>
-    public static string ReadString(ByteBuffer buf, int p)
+    public static string ReadString(NioBufferReader buf, int p)
     {
         // TODO: This may overrun if string is zero-length
         int len = buf.GetChar(p);
@@ -137,7 +137,7 @@ internal static class Bytes
 
     /// <summary>Compares an ASCII string stored in a buffer to a match string.</summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.util.Bytes.stringEqualsAscii(ByteBuffer, int, String)</c>.</remarks>
-    public static bool StringEqualsAscii(ByteBuffer buf, int p, string s)
+    public static bool StringEqualsAscii(NioBufferReader buf, int p, string s)
     {
         int len = buf.GetChar(p);
         if ((len & 0x80) != 0)
@@ -159,7 +159,7 @@ internal static class Bytes
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.util.Bytes.stringEquals(ByteBuffer, int, String)</c>.</remarks>
-    public static bool StringEquals(ByteBuffer buf, int p, string s)
+    public static bool StringEquals(NioBufferReader buf, int p, string s)
     {
         return ReadString(buf, p).Equals(s);
     }

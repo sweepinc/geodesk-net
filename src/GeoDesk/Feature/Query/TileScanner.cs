@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Store;
 
-using NioBuffer = Java.Nio.ByteBuffer;
+using NioBuffer = GeoDesk.Buffers.NioBufferReader;
 
 namespace GeoDesk.Feature.Query;
 
@@ -46,7 +46,7 @@ internal sealed class TileScanner
     public TileScanner(Query query, int tilePage, int bboxFlags, IFilter? filter)
     {
         _store = query.Store;
-        _buf = NioBuffer.Of(_store.SegmentOfPage(tilePage).Memory);
+        _buf = new NioBuffer(_store.SegmentOfPage(tilePage).Memory);
         _pTile = _store.OffsetOfPage(tilePage);
         _bboxFlags = bboxFlags;
         _types = query.Types;

@@ -9,8 +9,6 @@ using System;
 using System.IO;
 using System.Text;
 
-using Java.Nio;
-
 namespace GeoDesk.Common.Pbf;
 
 // In Java this extends ByteArrayOutputStream; the straight port extends MemoryStream.
@@ -109,12 +107,6 @@ internal class PbfOutputStream : MemoryStream
     public void WriteDouble(double val)
     {
         WriteFixed64(BitConverter.DoubleToInt64Bits(val));
-    }
-
-    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfOutputStream.writeTo(ByteBuffer)</c>.</remarks>
-    public void WriteTo(ByteBuffer @out)
-    {
-        @out.Put(GetBuffer(), 0, (int)Length);
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfOutputStream.buffer()</c>.</remarks>

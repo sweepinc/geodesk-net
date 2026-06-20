@@ -13,9 +13,6 @@ using System.IO.MemoryMappedFiles;
 using GeoDesk.Buffers;
 using GeoDesk.Extensions;
 
-using ByteOrder = Java.Nio.ByteOrder;
-using NioBuffer = Java.Nio.ByteBuffer;
-
 namespace GeoDesk.Common.Store;
 
 /// <remarks>
@@ -49,7 +46,7 @@ internal class FreeStore
             _path = path;
             _channel = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             var header = new byte[24];
-            var buf = NioBuffer.Wrap(header).Order(ByteOrder.LittleEndian);
+            var buf = new NioBufferReader(header);
             for (; ; )
             {
                 var pos = 0;

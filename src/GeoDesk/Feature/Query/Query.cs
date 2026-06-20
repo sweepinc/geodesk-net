@@ -212,7 +212,7 @@ internal class Query : IEnumerator<IFeature>, IBounds
                 continue;   // go back to loop since batch could be empty
             }
 
-            var buf = _currentResults.buf!;
+            var buf = _currentResults.buf;
             var pFeature = _currentResults.pointers[_currentPos];
             var type = pFeature & 3;
             pFeature ^= type;

@@ -12,7 +12,7 @@ using System.Text;
 using GeoDesk.Common.Util;
 using GeoDesk.Feature.Store;
 
-using NioBuffer = Java.Nio.ByteBuffer;
+using NioBuffer = GeoDesk.Buffers.NioBufferReader;
 
 namespace GeoDesk.Feature;
 
@@ -140,7 +140,7 @@ public readonly struct TagCollection : IReadOnlyCollection<Tag>, IReadOnlyDictio
     {
 
         StoredFeature? _feature;
-        NioBuffer? _buf;
+        NioBuffer _buf;
         int _pTagTable;
         int _uncommonKeysFlag;
         int _pNextTag;
@@ -154,7 +154,7 @@ public readonly struct TagCollection : IReadOnlyCollection<Tag>, IReadOnlyDictio
             _rawValue = 0;
             if (feature == null)
             {
-                _buf = null;
+                _buf = default;
                 _pTagTable = 0;
                 _uncommonKeysFlag = 0;
                 _pNextTag = -1;
@@ -183,7 +183,7 @@ public readonly struct TagCollection : IReadOnlyCollection<Tag>, IReadOnlyDictio
             if (_pNextTag < 0)
                 return false;
 
-            var buf = _buf!;
+            var buf = _buf;
             if (_pNextTag < _pTagTable)
             {
                 var tag = buf.GetLong(_pNextTag);

@@ -15,8 +15,7 @@ using GeoDesk.Common.Fab;
 using GeoDesk.Common.Parser;
 using GeoDesk.Gol.Compiler;
 
-using NioBuffer = Java.Nio.ByteBuffer;
-using NioOrder = Java.Nio.ByteOrder;
+using NioBuffer = GeoDesk.Buffers.NioBufferReader;
 
 namespace GeoDesk.Feature.Query;
 
@@ -120,9 +119,7 @@ public class TagTableTester
             using var baos = new MemoryStream();
             var @out = new StructOutputStream(baos);
             @out.WriteChain(Header());
-            NioBuffer buf = NioBuffer.Wrap(baos.ToArray());
-            buf.Order(NioOrder.LittleEndian);
-            return buf;
+            return new NioBuffer(baos.ToArray());
         }
 
     }

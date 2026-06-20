@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-using NioBuffer = Java.Nio.ByteBuffer;
+using NioBuffer = GeoDesk.Buffers.NioBufferReader;
 
 namespace GeoDesk.Feature.Query;
 
@@ -15,7 +15,7 @@ internal class QueryResults
 
     const int DefaultBucketSize = 256;
 
-    public static readonly QueryResults Empty = new QueryResults(null, 0);
+    public static readonly QueryResults Empty = new QueryResults(default, 0);
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.QueryResults.merge(QueryResults, QueryResults)</c>.</remarks>
     public static QueryResults Merge(QueryResults a, QueryResults b)
@@ -27,14 +27,14 @@ internal class QueryResults
         return a;
     }
 
-    internal readonly NioBuffer? buf;
+    internal readonly NioBuffer buf;
     internal int[] pointers;
     internal int size;
     internal QueryResults? next;
     QueryResults _last;   // only valid for first QueryResults in a chain
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.QueryResults(ByteBuffer, int)</c>.</remarks>
-    public QueryResults(NioBuffer? buf, int maxSize)
+    public QueryResults(NioBuffer buf, int maxSize)
     {
         this.buf = buf;
         pointers = new int[maxSize];
@@ -42,13 +42,13 @@ internal class QueryResults
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.QueryResults(ByteBuffer)</c>.</remarks>
-    public QueryResults(NioBuffer? buf)
+    public QueryResults(NioBuffer buf)
         : this(buf, DefaultBucketSize)
     {
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.QueryResults(ByteBuffer, int[], int)</c>.</remarks>
-    QueryResults(NioBuffer? buf, int[] pointers, int size)
+    QueryResults(NioBuffer buf, int[] pointers, int size)
     {
         this.buf = buf;
         this.pointers = pointers;

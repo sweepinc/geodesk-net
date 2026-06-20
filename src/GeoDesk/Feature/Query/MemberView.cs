@@ -8,7 +8,7 @@
 using System.Collections.Generic;
 using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Store;
-using NioBuffer = Java.Nio.ByteBuffer;
+using NioBuffer = GeoDesk.Buffers.NioBufferReader;
 
 namespace GeoDesk.Feature.Query;
 

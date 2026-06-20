@@ -6,15 +6,17 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Text.RegularExpressions;
-using GeoDesk.Feature.Store;
-using NioBuffer = Java.Nio.ByteBuffer;
+
 using GeoDesk.Common.Ast;
 using GeoDesk.Common.Math;
 using GeoDesk.Common.Util;
+using GeoDesk.Feature.Store;
+
+using NioBuffer = GeoDesk.Buffers.NioBufferReader;
 
 namespace GeoDesk.Feature.Match;
 
@@ -50,7 +52,8 @@ internal class InterpretedMatcher : TagMatcher
     static int AcceptedTypesOf(Selector first)
     {
         var t = 0;
-        for (Selector? s = first; s != null; s = s.Next()) t |= s.MatchTypes();
+        for (Selector? s = first; s != null; s = s.Next())
+            t |= s.MatchTypes();
         return t;
     }
 
@@ -58,7 +61,9 @@ internal class InterpretedMatcher : TagMatcher
     static int KeyMaskOf(Selector first)
     {
         var m = 0;
-        for (Selector? s = first; s != null; s = s.Next()) m |= s.IndexBitsValue();
+        for (var s = first; s != null; s = s.Next())
+            m |= s.IndexBitsValue();
+
         return m;
     }
 
@@ -66,10 +71,10 @@ internal class InterpretedMatcher : TagMatcher
     static int KeyMinOf(Selector first)
     {
         var min = int.MaxValue;
-        for (Selector? s = first; s != null; s = s.Next())
-        {
-            if (s.IndexBitsValue() < min) min = s.IndexBitsValue();
-        }
+        for (var s = first; s != null; s = s.Next())
+            if (s.IndexBitsValue() < min)
+                min = s.IndexBitsValue();
+
         return min;
     }
 
@@ -77,20 +82,20 @@ internal class InterpretedMatcher : TagMatcher
     public override bool Accept(NioBuffer buf, int pos)
     {
         var tags = ReadTags(buf, pos);
-        for (Selector? sel = _first; sel != null; sel = sel.Next())
-        {
-            if (MatchSelector(sel, tags)) return true;
-        }
+        for (var sel = _first; sel != null; sel = sel.Next())
+            if (MatchSelector(sel, tags))
+                return true;
+
         return false;
     }
 
     /// <remarks>Port-only: a selector matches when all of its clauses match.</remarks>
     bool MatchSelector(Selector sel, List<TagEntry> tags)
     {
-        for (TagClause? clause = sel.FirstClause(); clause != null; clause = clause.Next())
-        {
-            if (!MatchClause(clause, tags)) return false;
-        }
+        for (var clause = sel.FirstClause(); clause != null; clause = clause.Next())
+            if (!MatchClause(clause, tags))
+                return false;
+
         return true;
     }
 
@@ -109,6 +114,7 @@ internal class InterpretedMatcher : TagMatcher
                 // [k]: key present and not "no"
                 return present && !isNo;
             }
+
             // [!k]: key absent or "no"
             return !present || isNo;
         }
@@ -118,14 +124,18 @@ internal class InterpretedMatcher : TagMatcher
             // [k=v], [k>v], lists, etc.
             // If the key is required *explicitly only* (e.g. [k][k!=v]), the value must
             // also not be "no", in addition to the expression holding.
-            var requiredExplicitlyOnly =
-                (clause.Flags() & (TagClause.KEY_REQUIRED_EXPLICITLY | TagClause.KEY_REQUIRED_IMPLICITLY))
-                == TagClause.KEY_REQUIRED_EXPLICITLY;
-            if (requiredExplicitlyOnly) return present && !isNo && EvalExpr(exp, t!);
+            var requiredExplicitlyOnly = (clause.Flags() & (TagClause.KEY_REQUIRED_EXPLICITLY | TagClause.KEY_REQUIRED_IMPLICITLY)) == TagClause.KEY_REQUIRED_EXPLICITLY;
+
+            if (requiredExplicitlyOnly)
+                return present && !isNo && EvalExpr(exp, t!);
+
             return present && EvalExpr(exp, t!);
         }
+
         // [k!=v]: matches if key absent, or expression holds
-        if (!present) return true;
+        if (!present)
+            return true;
+
         return EvalExpr(exp, t!);
     }
 
@@ -136,18 +146,17 @@ internal class InterpretedMatcher : TagMatcher
         {
             var code = clause.KeyCode();
             foreach (var e in tags)
-            {
-                if (e.KeyCode == code) return e;
-            }
+                if (e.KeyCode == code)
+                    return e;
         }
         else
         {
             var name = clause.Name;
             foreach (var e in tags)
-            {
-                if (e.KeyCode == 0 && string.Equals(e.KeyString, name, StringComparison.Ordinal)) return e;
-            }
+                if (e.KeyCode == 0 && string.Equals(e.KeyString, name, StringComparison.Ordinal))
+                    return e;
         }
+
         return null;
     }
 
@@ -159,10 +168,13 @@ internal class InterpretedMatcher : TagMatcher
             // only NOT
             return !EvalExpr(u.Operand, t);
         }
+
         var b = (BinaryExpression)exp;
         var op = b.Operator;
-        if (op == Operator.AND) return EvalExpr(b.Left, t) && EvalExpr(b.Right, t);
-        if (op == Operator.OR) return EvalExpr(b.Left, t) || EvalExpr(b.Right, t);
+        if (op == Operator.AND)
+            return EvalExpr(b.Left, t) && EvalExpr(b.Right, t);
+        if (op == Operator.OR)
+            return EvalExpr(b.Left, t) || EvalExpr(b.Right, t);
 
         var lit = ((Literal)b.Right).Value;
 
@@ -170,9 +182,12 @@ internal class InterpretedMatcher : TagMatcher
         {
             var d = Convert.ToDouble(lit, CultureInfo.InvariantCulture);
             var tv = t.Double();
-            if (op == Operator.LT) return tv < d;
-            if (op == Operator.LE) return tv <= d;
-            if (op == Operator.GT) return tv > d;
+            if (op == Operator.LT)
+                return tv < d;
+            if (op == Operator.LE)
+                return tv <= d;
+            if (op == Operator.GT)
+                return tv > d;
             return tv >= d;
         }
         if (op == Operator.EQ || op == Operator.NE)
@@ -189,11 +204,16 @@ internal class InterpretedMatcher : TagMatcher
             }
             return op == Operator.EQ ? eq : !eq;
         }
-        if (op == Operator.MATCH) return RegexMatches(t.String(), (string)lit!);
-        if (op == Operator.NOT_MATCH) return !RegexMatches(t.String(), (string)lit!);
-        if (op == Operator.IN) return t.String().Contains((string)lit!, StringComparison.Ordinal);
-        if (op == MatcherParser.STARTS_WITH) return t.String().StartsWith((string)lit!, StringComparison.Ordinal);
-        if (op == MatcherParser.ENDS_WITH) return t.String().EndsWith((string)lit!, StringComparison.Ordinal);
+        if (op == Operator.MATCH)
+            return RegexMatches(t.String(), (string)lit!);
+        if (op == Operator.NOT_MATCH)
+            return !RegexMatches(t.String(), (string)lit!);
+        if (op == Operator.IN)
+            return t.String().Contains((string)lit!, StringComparison.Ordinal);
+        if (op == MatcherParser.STARTS_WITH)
+            return t.String().StartsWith((string)lit!, StringComparison.Ordinal);
+        if (op == MatcherParser.ENDS_WITH)
+            return t.String().EndsWith((string)lit!, StringComparison.Ordinal);
         throw new QueryException("Unsupported operator in interpreted matcher: " + op);
     }
 
@@ -223,7 +243,8 @@ internal class InterpretedMatcher : TagMatcher
         {
             int key16 = buf.GetChar(p);
             var keyCode = (key16 >> 2) & 0x1fff;
-            if (keyCode == 0) break; // empty-table marker / no global keys
+            if (keyCode == 0)
+                break; // empty-table marker / no global keys
             var kind = key16 & 3;
             var wide = (kind & 2) != 0;
             var e = new TagEntry(buf, globalStrings) { Kind = kind, KeyCode = keyCode, KeyString = globalStrings[keyCode] };
@@ -231,8 +252,10 @@ internal class InterpretedMatcher : TagMatcher
             if (wide)
             {
                 var w = buf.GetInt(p + 2);
-                if (kind == TagValues.LOCAL_STRING) e.ValueStringLoc = (p + 2) + w;
-                else e.ValueCode = w;
+                if (kind == TagValues.LOCAL_STRING)
+                    e.ValueStringLoc = (p + 2) + w;
+                else
+                    e.ValueCode = w;
                 next = p + 6;
             }
             else
@@ -241,7 +264,8 @@ internal class InterpretedMatcher : TagMatcher
                 next = p + 4;
             }
             entries.Add(e);
-            if ((key16 & 0x8000) != 0) break; // last tag
+            if ((key16 & 0x8000) != 0)
+                break; // last tag
             p = next;
         }
 
@@ -261,8 +285,10 @@ internal class InterpretedMatcher : TagMatcher
                 if (wide)
                 {
                     var w = buf.GetInt(valuePos);
-                    if (kind == TagValues.LOCAL_STRING) e.ValueStringLoc = valuePos + w;
-                    else e.ValueCode = w;
+                    if (kind == TagValues.LOCAL_STRING)
+                        e.ValueStringLoc = valuePos + w;
+                    else
+                        e.ValueCode = w;
                 }
                 else
                 {
@@ -271,7 +297,8 @@ internal class InterpretedMatcher : TagMatcher
                 var relPtr = (keyPtr & ~7) >> 1;
                 e.KeyString = Bytes.ReadString(buf, origin + relPtr);
                 entries.Add(e);
-                if ((keyPtr & 4) != 0) break; // first uncommon key
+                if ((keyPtr & 4) != 0)
+                    break; // first uncommon key
                 p = valuePos - 4;
             }
         }

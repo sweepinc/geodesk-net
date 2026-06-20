@@ -6,7 +6,7 @@
  */
 
 using GeoDesk.Feature.Store;
-using NioBuffer = Java.Nio.ByteBuffer;
+using NioBuffer = GeoDesk.Buffers.NioBufferReader;
 
 namespace GeoDesk.Feature.Query;
 
@@ -24,7 +24,7 @@ internal abstract class TableIterator : FeatureIterator
     protected const int DifferentTileFlag = 4;
 
     protected int tip = FeatureConstants.START_TIP;
-    protected NioBuffer? foreignBuf;
+    protected NioBuffer foreignBuf;
     protected int pForeignTile;
 
 }

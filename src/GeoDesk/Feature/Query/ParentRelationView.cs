@@ -8,7 +8,7 @@
 using System.Collections.Generic;
 using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Store;
-using NioBuffer = Java.Nio.ByteBuffer;
+using NioBuffer = GeoDesk.Buffers.NioBufferReader;
 
 namespace GeoDesk.Feature.Query;
 
@@ -59,7 +59,7 @@ internal class ParentRelationView : TableView
         protected readonly ParentRelationView view;
         protected int tip = FeatureConstants.START_TIP;
         protected int tex = FeatureConstants.RELATIONS_START_TEX;
-        protected NioBuffer? foreignBuf;
+        protected NioBuffer foreignBuf;
         int _pExports;
         int _p;
         int _rel;
@@ -111,13 +111,13 @@ internal class ParentRelationView : TableView
                         var entry = view.store.TileIndexEntry(tip);
                         if (!FeatureStore.IsTileLoadedAndCurrent(entry)) throw new MissingTileException(tip);
                         var tilePage = FeatureStore.PageFromEntry(entry);
-                        foreignBuf = NioBuffer.Of(view.store.SegmentOfPage(tilePage).Memory);
+                        foreignBuf = new NioBuffer(view.store.SegmentOfPage(tilePage).Memory);
                         var ppExports = view.store.OffsetOfPage(tilePage) + 24;
                         _pExports = ppExports + foreignBuf.GetInt(ppExports);
                     }
-                    relBuf = foreignBuf!;
+                    relBuf = foreignBuf;
                     var ppExported = _pExports + (tex << 2);
-                    pRel = ppExported + foreignBuf!.GetInt(ppExported);
+                    pRel = ppExported + foreignBuf.GetInt(ppExported);
                 }
                 else
                 {

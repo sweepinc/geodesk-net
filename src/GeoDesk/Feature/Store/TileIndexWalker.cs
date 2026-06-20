@@ -11,7 +11,7 @@ using System.Numerics;
 using GeoDesk.Feature.Filters;
 using GeoDesk.Geom;
 
-using NioBuffer = Java.Nio.ByteBuffer;
+using NioBuffer = GeoDesk.Buffers.NioBufferReader;
 
 namespace GeoDesk.Feature.Store;
 

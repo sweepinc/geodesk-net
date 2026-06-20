@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-using NioBuffer = Java.Nio.ByteBuffer;
+using NioBuffer = GeoDesk.Buffers.NioBufferReader;
 
 namespace GeoDesk.Feature.Match;
 

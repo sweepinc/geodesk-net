@@ -17,9 +17,6 @@ using GeoDesk.Buffers;
 
 using static GeoDesk.Common.Store.BlobStoreConstants;
 
-using ByteOrder = Java.Nio.ByteOrder;
-using NioBuffer = Java.Nio.ByteBuffer;
-
 namespace GeoDesk.Common.Store;
 
 /// <summary>
@@ -83,7 +80,7 @@ internal class BlobStore : Store
     protected override void CreateStore()
     {
         // TODO: should this be inside a transaction?
-        var buf = new NioBufferWriter(baseMapping!.Memory);
+        var buf = new NioBufferWriter(baseSegment!.Memory);
         buf.PutInt(0, MAGIC);
         buf.PutInt(VERSION_OFS, VERSION);
         buf.PutLong(TIMESTAMP_OFS, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
@@ -95,7 +92,7 @@ internal class BlobStore : Store
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.getTimestamp()</c>.</remarks>
     protected override long GetTimestamp()
     {
-        return baseMapping!.Memory.Span.GetLongLE(TIMESTAMP_OFS);
+        return baseSegment!.Memory.Span.GetLongLE(TIMESTAMP_OFS);
     }
 
     // PORT NOTE: .NET Guid byte layout differs from Java UUID(high,low); this reads the
@@ -104,14 +101,14 @@ internal class BlobStore : Store
     public Guid GetGuid()
     {
         var bytes = new byte[GUID_LEN];
-        baseMapping!.Memory.Span.Slice(GUID_OFS, bytes.Length).CopyTo(bytes);
+        baseSegment!.Memory.Span.Slice(GUID_OFS, bytes.Length).CopyTo(bytes);
         return new Guid(bytes);
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.verifyHeader()</c>.</remarks>
     protected override void VerifyHeader()
     {
-        var buf = new NioBufferReader(baseMapping!.Memory);
+        var buf = new NioBufferReader(baseSegment!.Memory);
         if (buf.GetInt(0) != MAGIC)
         {
             throw new StoreException("Not a BlobStore file", Path);
@@ -129,7 +126,7 @@ internal class BlobStore : Store
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.isEmpty()</c>.</remarks>
     protected internal bool IsEmpty()
     {
-        return baseMapping!.Memory.Span.GetIntLE(INDEX_PTR_OFS) == 0; // TODO
+        return baseSegment!.Memory.Span.GetIntLE(INDEX_PTR_OFS) == 0; // TODO
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.initialize()</c>.</remarks>
@@ -147,21 +144,20 @@ internal class BlobStore : Store
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.getTrueSize()</c>.</remarks>
     protected override long GetTrueSize()
     {
-        return ((long)baseMapping!.Memory.Span.GetIntLE(TOTAL_PAGES_OFS)) << pageSizeShift;
+        return ((long)baseSegment!.Memory.Span.GetIntLE(TOTAL_PAGES_OFS)) << pageSizeShift;
     }
 
     // TODO: naming
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.baseMapping()</c>.</remarks>
-    public NioBuffer BaseMapping()
+    public NioBufferReader BaseMapping()
     {
-        // Boundary: still hands a ByteBuffer to the Downloader (not yet migrated).
-        return NioBuffer.Of(baseMapping!.Memory).Order(ByteOrder.LittleEndian);
+        return new NioBufferReader(baseSegment!.Memory);
     }
 
     /// <summary>The mapped segment containing the given page. The caller wraps its <c>Memory</c> as it needs.</summary>
     protected internal Segment SegmentOfPage(int page)
     {
-        return GetMapping(page >> (30 - pageSizeShift));
+        return GetSegment(page >> (30 - pageSizeShift));
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.offsetOfPage(int)</c>.</remarks>
@@ -192,14 +188,14 @@ internal class BlobStore : Store
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.indexPointer()</c>.</remarks>
     public int IndexPointer()
     {
-        return baseMapping!.Memory.Span.GetIntLE(INDEX_PTR_OFS) + INDEX_PTR_OFS;
+        return baseSegment!.Memory.Span.GetIntLE(INDEX_PTR_OFS) + INDEX_PTR_OFS;
     }
 
     // TODO: should also make sure page does not lie in meta space
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.checkPage(int)</c>.</remarks>
     protected void CheckPage(int page)
     {
-        if (page < 0 || page >= baseMapping!.Memory.Span.GetIntLE(TOTAL_PAGES_OFS))
+        if (page < 0 || page >= baseSegment!.Memory.Span.GetIntLE(TOTAL_PAGES_OFS))
         {
             throw new StoreException("Invalid page: " + page, Path);
         }
@@ -698,7 +694,7 @@ internal class BlobStore : Store
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.export(int, Path)</c>.</remarks>
     public void Export(int page, string path)
     {
-        var buf = NioBuffer.Of(SegmentOfPage(page).Memory);
+        var buf = new NioBufferReader(SegmentOfPage(page).Memory);
         var p = OffsetOfPage(page);
         var len = buf.GetInt(p) & 0x3fff_ffff;
         const int BUF_SIZE = 64 * 1024;
@@ -710,7 +706,7 @@ internal class BlobStore : Store
         while (bytesRemaining > 0)
         {
             var chunkSize = System.Math.Min(bytesRemaining, BUF_SIZE);
-            buf.Get(b, 0, chunkSize);
+            buf.Get(p, b, 0, chunkSize);
             b[3] &= flagMask;
             flagMask = 0xff;
             @out.Write(b, 0, chunkSize);
@@ -722,7 +718,7 @@ internal class BlobStore : Store
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.getIndexEntry(int)</c>.</remarks>
     protected internal int GetIndexEntry(int id)
     {
-        return baseMapping!.Memory.Span.GetIntLE(IndexPointer() + id * 4);
+        return baseSegment!.Memory.Span.GetIntLE(IndexPointer() + id * 4);
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.setIndexEntry(int, int)</c>.</remarks>
@@ -794,9 +790,9 @@ internal class BlobStore : Store
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.createCopy(Path)</c>.</remarks>
     public void CreateCopy(string newPath)
     {
-        var metadataSize = baseMapping!.Memory.Span.GetIntLE(METADATA_SIZE_OFS);
+        var metadataSize = baseSegment!.Memory.Span.GetIntLE(METADATA_SIZE_OFS);
         var bytes = new byte[metadataSize];
-        baseMapping!.Memory.Span.Slice(0, metadataSize).CopyTo(bytes);
+        baseSegment!.Memory.Span.Slice(0, metadataSize).CopyTo(bytes);
         var buf = new NioBufferWriter(bytes);
         ResetMetadata(buf);
         buf.PutInt(TOTAL_PAGES_OFS, BytesToPages(metadataSize));

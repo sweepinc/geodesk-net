@@ -18,7 +18,7 @@ using GeoDesk.Feature.Match;
 
 using NetTopologySuite.Geometries;
 
-using NioBuffer = Java.Nio.ByteBuffer;
+using NioBuffer = GeoDesk.Buffers.NioBufferReader;
 using ZoomLevelsUtil = GeoDesk.Feature.Store.ZoomLevels;
 
 namespace GeoDesk.Feature.Store;
@@ -39,7 +39,7 @@ internal class FeatureStore : FreeStore
 
     int _minZoom;
     int _zoomSteps;
-    NioBuffer? _tileIndexBuf;
+    NioBuffer _tileIndexBuf;
     int _tileIndexOfs;
     Dictionary<string, int> _stringsToCodes = new Dictionary<string, int>();
     string[] _codesToStrings = Array.Empty<string>();
@@ -72,7 +72,7 @@ internal class FeatureStore : FreeStore
 
         var pSnapshot = 128 + ActiveSnapshot() * 64;
         var tileIndexPage = baseMapping!.Memory.Span.GetIntLE(pSnapshot + SNAPSHOT_TILE_INDEX_OFS);
-        _tileIndexBuf = NioBuffer.Of(SegmentOfPage(tileIndexPage).Memory);
+        _tileIndexBuf = new NioBuffer(SegmentOfPage(tileIndexPage).Memory);
         _tileIndexOfs = OffsetOfPage(tileIndexPage);
 
         EnableQueries();
@@ -82,7 +82,7 @@ internal class FeatureStore : FreeStore
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.tileIndexBuf()</c>.</remarks>
-    public NioBuffer TileIndexBuf => _tileIndexBuf!;
+    public NioBuffer TileIndexBuf => _tileIndexBuf;
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.tileIndexOfs()</c>.</remarks>
     public int TileIndexOfs => _tileIndexOfs;
@@ -95,7 +95,7 @@ internal class FeatureStore : FreeStore
     {
         var p = baseMapping!.Memory.Span.GetIntLE(STRING_TABLE_PTR_OFS);
         var count = baseMapping.Memory.Span.GetIntLE(p) & 0xffff;
-        var reader = new PbfDecoder(NioBuffer.Of(baseMapping!.Memory), p + 2);
+        var reader = new PbfDecoder(new NioBuffer(baseMapping!.Memory), p + 2);
         _codesToStrings = new string[count];
         var stringMap = new Dictionary<string, int>(count + (count >> 1));
 
@@ -160,7 +160,7 @@ internal class FeatureStore : FreeStore
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.tileIndexEntry(int)</c>.</remarks>
     public int TileIndexEntry(int tip)
     {
-        return _tileIndexBuf!.GetInt(_tileIndexOfs + tip * 4);
+        return _tileIndexBuf.GetInt(_tileIndexOfs + tip * 4);
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.pageFromEntry(int)</c>.</remarks>
@@ -178,13 +178,13 @@ internal class FeatureStore : FreeStore
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.tilePage(int)</c>.</remarks>
     public int TilePage(int tip)
     {
-        return (int)((uint)_tileIndexBuf!.GetInt(_tileIndexOfs + tip * 4) >> 2);
+        return (int)((uint)_tileIndexBuf.GetInt(_tileIndexOfs + tip * 4) >> 2);
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.isTileReady(int)</c>.</remarks>
     public bool IsTileReady(int tip)
     {
-        return (_tileIndexBuf!.GetInt(_tileIndexOfs + tip * 4) & 2) != 0;
+        return (_tileIndexBuf.GetInt(_tileIndexOfs + tip * 4) & 2) != 0;
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.stringFromCode(int)</c>.</remarks>

@@ -9,23 +9,23 @@ using System;
 using System.IO;
 using System.Text;
 
-using Java.Nio;
+using GeoDesk.Buffers;
 
 namespace GeoDesk.Common.Pbf;
 
 // static methods are not threadsafe
 
-// TODO: unify these under an interface, so we can read ByteBuffer, byte array
+// TODO: unify these under an interface, so we can read NioBufferReader, byte array
 //  and InputStream the same way
 /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfDecoder</c>.</remarks>
 internal class PbfDecoder
 {
 
-    readonly ByteBuffer _buf;
+    readonly NioBufferReader _buf;
     int _pos;
 
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfDecoder(ByteBuffer, int)</c>.</remarks>
-    public PbfDecoder(ByteBuffer buf, int pos)
+    public PbfDecoder(NioBufferReader buf, int pos)
     {
         _buf = buf;
         _pos = pos;
@@ -83,51 +83,6 @@ internal class PbfDecoder
         }
     }
 
-    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfDecoder.readVarint(ByteBuffer)</c>.</remarks>
-    public static long ReadVarint(ByteBuffer buf)
-    {
-        sbyte b;
-        long val;
-        try
-        {
-            b = (sbyte)buf.Get();
-            val = b & 0x7f;
-            if (b >= 0) return val;
-            b = (sbyte)buf.Get();
-            val |= (long)(b & 0x7f) << 7;
-            if (b >= 0) return val;
-            b = (sbyte)buf.Get();
-            val |= (long)(b & 0x7f) << 14;
-            if (b >= 0) return val;
-            b = (sbyte)buf.Get();
-            val |= (long)(b & 0x7f) << 21;
-            if (b >= 0) return val;
-            b = (sbyte)buf.Get();
-            val |= (long)(b & 0x7f) << 28;
-            if (b >= 0) return val;
-            b = (sbyte)buf.Get();
-            val |= (long)(b & 0x7f) << 35;
-            if (b >= 0) return val;
-            b = (sbyte)buf.Get();
-            val |= (long)(b & 0x7f) << 42;
-            if (b >= 0) return val;
-            b = (sbyte)buf.Get();
-            val |= (long)(b & 0x7f) << 49;
-            if (b >= 0) return val;
-            b = (sbyte)buf.Get();
-            val |= (long)(b & 0x7f) << 56;
-            if (b >= 0) return val;
-            b = (sbyte)buf.Get();
-            val |= (long)(b & 0x7f) << 63;
-            if (b >= 0) return val;
-            throw new PbfException("Bad VarInt format.");
-        }
-        catch (ArgumentOutOfRangeException)
-        {
-            throw new PbfException("Attempt to read past end of buffer.");
-        }
-    }
-
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfDecoder.readVarint(InputStream)</c>.</remarks>
     public static long ReadVarint(Stream @in)
     {
@@ -173,36 +128,6 @@ internal class PbfDecoder
         return (val >> 1) ^ -(val & 1);
     }
 
-    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfDecoder.readVarintSmall(ByteBuffer)</c>.</remarks>
-    public static int ReadVarintSmall(ByteBuffer buf)
-    {
-        sbyte b;
-        int val;
-        try
-        {
-            b = (sbyte)buf.Get();
-            val = b & 0x7f;
-            if (b >= 0) return val;
-            b = (sbyte)buf.Get();
-            val |= (b & 0x7f) << 7;
-            if (b >= 0) return val;
-            b = (sbyte)buf.Get();
-            val |= (b & 0x7f) << 14;
-            if (b >= 0) return val;
-            b = (sbyte)buf.Get();
-            val |= (b & 0x7f) << 21;
-            if (b >= 0) return val;
-            b = (sbyte)buf.Get();
-            val |= (b & 0x7f) << 28;
-            if (b >= 0) return val;
-            throw new PbfException("Bad VarInt format.");
-        }
-        catch (ArgumentOutOfRangeException)
-        {
-            throw new PbfException("Attempt to read past end of buffer.");
-        }
-    }
-
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfDecoder.readSignedVarint()</c>.</remarks>
     public long ReadSignedVarint()
     {
@@ -210,19 +135,11 @@ internal class PbfDecoder
         return (val >> 1) ^ -(val & 1);
     }
 
-    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfDecoder.readSignedVarint(ByteBuffer)</c>.</remarks>
-    public static long ReadSignedVarint(ByteBuffer buf)
-    {
-        var val = ReadVarint(buf);
-        return (val >> 1) ^ -(val & 1);
-    }
-
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfDecoder.readRawString(int)</c>.</remarks>
     public string ReadRawString(int len)
     {
-        _buf.Position(_pos);
         var bytes = new byte[len];
-        _buf.Get(bytes);
+        _buf.Get(_pos, bytes);
         _pos += len;
         return Encoding.UTF8.GetString(bytes);
     }
@@ -255,15 +172,6 @@ internal class PbfDecoder
         return b;
     }
 
-    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfDecoder.readString(ByteBuffer)</c>.</remarks>
-    public static string ReadString(ByteBuffer buf)
-    {
-        var len = (int)ReadVarint(buf);
-        var bytes = new byte[len];
-        buf.Get(bytes);
-        return Encoding.UTF8.GetString(bytes);
-    }
-
     // TODO: improve
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfDecoder.equalsString(String)</c>.</remarks>
     public bool EqualsString(string s)
@@ -286,11 +194,11 @@ internal class PbfDecoder
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfDecoder.hasMore()</c>.</remarks>
     public bool HasMore()
     {
-        return _pos < _buf.Limit();
+        return _pos < _buf.Length;
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfDecoder.buf()</c>.</remarks>
-    public ByteBuffer Buf()
+    public NioBufferReader Buf()
     {
         return _buf;
     }

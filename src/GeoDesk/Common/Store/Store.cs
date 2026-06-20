@@ -13,13 +13,12 @@ using System.IO;
 using System.IO.Hashing;
 using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 using GeoDesk.Buffers;
 using GeoDesk.Common.Util;
 using GeoDesk.Extensions;
 
-using ByteOrder = Java.Nio.ByteOrder;
-using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace GeoDesk.Common.Store;
 
@@ -148,8 +147,7 @@ namespace GeoDesk.Common.Store;
 /// PORT NOTES vs. the Java original:
 /// - <c>FileChannel</c> + <c>MappedByteBuffer[]</c> → a <see cref="FileStream"/> plus one
 ///   <see cref="MemoryMappedFile"/> + view per 1 GB segment, each exposed as a
-///   <see cref="System.Memory{Byte}"/>-backed <see cref="NioBuffer"/> via a
-///   <c>Segment</c>. Mapping a new segment never disturbs existing ones
+///   <see cref="System.Memory{Byte}"/>-backed <c>Segment</c>. Mapping a new segment never disturbs existing ones
 ///   (mirrors Java's independent per-segment <c>map()</c>), so there is no shared mapping to grow.
 /// - Locking: Java uses byte-range file locks (shared for readers, exclusive for writers/append).
 ///   The BCL's <c>FileStream.Lock</c> is exclusive-only, so locking goes through the
@@ -174,10 +172,10 @@ internal abstract class Store
     int _lockLevel;
     bool _lockReadHeld;
     bool _lockWriteHeld;
-    Segment?[] _mappings = new Segment?[0];
-    protected Segment? baseMapping;
-    readonly object _mappingsLock = new object();
-    readonly object _transactionLock = new object();
+    Segment?[] _segments = [];
+    protected Segment? baseSegment;
+    readonly object _segmentsLock = new();
+    readonly object _transactionLock = new();
     Dictionary<long, TransactionBlock>? _transactionBlocks;
     long _preTransactionFileSize;
 
@@ -258,29 +256,30 @@ internal abstract class Store
     // (protected internal so BlobStoreChecker, in the same assembly, can read segments —
     // Java relied on package-private access here.)
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.getMapping(int)</c>.</remarks>
-    protected internal Segment GetMapping(int n)
+    protected internal Segment GetSegment(int n)
     {
-        lock (_mappingsLock)
+        lock (_segmentsLock)
         {
-            if (n < _mappings.Length && _mappings[n] != null)
-                return _mappings[n]!;
+            if (n < _segments.Length && _segments[n] != null)
+                return _segments[n]!;
 
-            if (n >= _mappings.Length)
-                System.Array.Resize(ref _mappings, n + 1);
+            if (n >= _segments.Length)
+                System.Array.Resize(ref _segments, n + 1);
 
             var seg = MapSegment(n);
-            _mappings[n] = seg;
+            _segments[n] = seg;
             if (n == 0)
-                baseMapping = seg;
+                baseSegment = seg;
 
             return seg;
         }
     }
 
-    // Maps one 1 GB segment as its own MemoryMappedFile + view, wrapped in a Memory&lt;byte&gt;-backed
-    // NioBuffer. Each segment is independent: mapping a later segment never invalidates earlier ones
-    // (Java's per-segment FileChannel.map() semantics), so there is no shared mapping to grow.
-    /// <remarks>Port-only helper: maps one 1 GB segment as a <c>Segment</c>.</remarks>
+    /// <summary>
+    /// Maps one 1 GB segment as its own MemoryMappedFile + view, exposed as a Memory&lt;byte&gt;-backed
+    /// Segment. Each segment is independent: mapping a later segment never invalidates earlier ones
+    /// (Java's per-segment FileChannel.map() semantics), so there is no shared mapping to grow.
+    /// </summary>
     Segment MapSegment(int n)
     {
         try
@@ -303,13 +302,13 @@ internal abstract class Store
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.unmapSegments()</c>.</remarks>
     bool UnmapSegments()
     {
-        lock (_mappingsLock)
+        lock (_segmentsLock)
         {
-            foreach (var b in _mappings)
+            foreach (var b in _segments)
                 ((IDisposable?)b)?.Dispose();
 
-            _mappings = new Segment?[0];
-            baseMapping = null;
+            _segments = [];
+            baseSegment = null;
             return true;
         }
     }
@@ -364,6 +363,7 @@ internal abstract class Store
     protected bool TryExclusiveLock()
     {
         System.Diagnostics.Debug.Assert(_lockLevel == LOCK_NONE);
+
         bool acquired;
         try
         {
@@ -373,8 +373,10 @@ internal abstract class Store
         {
             return false;
         }
+
         if (!acquired)
             return false;
+
         _lockReadHeld = true;
         _lockLevel = LOCK_EXCLUSIVE;
         return true;
@@ -396,41 +398,34 @@ internal abstract class Store
     protected void Open(int lockMode)
     {
         if (_channel != null)
-        {
             throw new StoreException("Store is already open", _path!);
-        }
+
         var fileName = _path!;
         lock (_openStores)
         {
             if (_openStores.Contains(fileName))
-            {
-                throw new StoreException(
-                    "Only one instance may be open within the same process", _path!);
-            }
+                throw new StoreException("Only one instance may be open within the same process", _path!);
+
             _openStores.Add(fileName);
         }
         try
         {
             var existed = File.Exists(_path!);
-            _channel = new FileStream(_path!, FileMode.OpenOrCreate, FileAccess.ReadWrite,
-                FileShare.ReadWrite);
+            _channel = new FileStream(_path!, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
             if (!existed)
                 MarkSparse(_channel);
             Lock(lockMode);
 
             // Always do this first, even if journal is present
-            baseMapping = GetMapping(0);
-            var headerWord = baseMapping!.Memory.Span.GetIntLE(0);
+            baseSegment = GetSegment(0);
+            var headerWord = baseSegment.Memory.Span.GetIntLE(0);
             if (headerWord == 0)
-            {
                 CreateStore();
-            }
 
             var journalFile = GetJournalFile();
             if (File.Exists(journalFile))
-            {
                 ProcessJournal(journalFile);
-            }
+
             VerifyHeader(); // TODO: when to do this?
             Initialize();
         }
@@ -463,8 +458,7 @@ internal abstract class Store
     void OpenJournal(string journalFile)
     {
         System.Diagnostics.Debug.Assert(_journal == null);
-        _journal = new FileStream(journalFile, FileMode.OpenOrCreate, FileAccess.ReadWrite,
-            FileShare.ReadWrite);
+        _journal = new FileStream(journalFile, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.processJournal(File)</c>.</remarks>
@@ -519,6 +513,7 @@ internal abstract class Store
                 var patchHigh = JournalReadInt();
                 if (patchHigh == unchecked((int)0xffff_ffff) && patchLow == unchecked((int)0xffff_ffff))
                     break;
+
                 var len = (patchLow & 0x3ff) + 1;
                 IntToBytes(ba, patchLow);
                 crc.Append(ba);
@@ -530,6 +525,7 @@ internal abstract class Store
                     crc.Append(ba);
                 }
             }
+
             return JournalReadInt() == (int)crc.GetCurrentHashAsUInt32();
         }
         catch (EndOfStreamException)
@@ -557,12 +553,13 @@ internal abstract class Store
             var patchHigh = JournalReadInt();
             if (patchHigh == unchecked((int)0xffff_ffff) && patchLow == unchecked((int)0xffff_ffff))
                 break;
+
             var pos = ((long)patchHigh << 32) | ((long)patchLow & 0xffff_ffffL);
             pos = (pos >> 10) << 2; // TODO: careful of sign
             var len = (patchLow & 0x3ff) + 1;
             var segmentNumber = (int)(pos >> 30);
             var ofs = (int)pos & 0x3fff_ffff;
-            var buf = new NioBufferWriter(GetMapping(segmentNumber).Memory);
+            var buf = new NioBufferWriter(GetSegment(segmentNumber).Memory);
             affectedSegments.Add(segmentNumber);
             for (var i = 0; i < len; i++)
             {
@@ -572,6 +569,7 @@ internal abstract class Store
                 patchCount++;
             }
         }
+
         Log.Debug("Syncing patches...");
         SyncSegments(affectedSegments);
         Log.Debug("Patched %d words in %d segments.", patchCount, affectedSegments.Count);
@@ -605,7 +603,7 @@ internal abstract class Store
         foreach (var block in _transactionBlocks!.Values)
         {
             var pCurrent = 0;
-            var original = new NioBufferReader(GetMapping(SegmentOfPos(block.pos)).Memory);
+            var original = new NioBufferReader(GetSegment(SegmentOfPos(block.pos)).Memory);
             var current = block.Current;
             var originalOfs = (int)(block.pos & 0x3fff_ffff);
             var pOriginal = originalOfs;
@@ -674,9 +672,7 @@ internal abstract class Store
     void SyncSegments(HashSet<int> affectedSegments)
     {
         foreach (var segment in affectedSegments)
-        {
-            GetMapping(segment).Force();
-        }
+            GetSegment(segment).Force();
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.close()</c>.</remarks>
@@ -691,13 +687,9 @@ internal abstract class Store
             var journalPresent = false;
             var journalFile = GetJournalFile();
             if (_journal != null)
-            {
                 journalPresent = true;
-            }
             if (!journalPresent)
-            {
                 journalPresent = File.Exists(journalFile);
-            }
 
             Lock(LOCK_NONE);
             var segmentUnmapAttempted = false;
@@ -709,36 +701,34 @@ internal abstract class Store
                     if (journalPresent)
                     {
                         if (ProcessJournal(journalFile))
-                        {
                             trueSize = GetTrueSize();
-                        }
+
                         if (_journal != null)
                         {
                             _journal.Dispose();
                             _journal = null;
                         }
+
                         File.Delete(journalFile);
                     }
                     if (trueSize > 0)
                     {
                         segmentUnmapAttempted = true;
                         if (UnmapSegments())
-                        {
                             _channel.SetLength(trueSize);
-                        }
                     }
                     Lock(LOCK_NONE);
                 }
             }
+
             if (!segmentUnmapAttempted)
                 UnmapSegments();
+
             _channel.Dispose();
         }
         catch (IOException ex)
         {
-            throw new StoreException(
-                string.Format(CultureInfo.InvariantCulture, "Error while closing file ({0})", ex.Message),
-                _path!, ex);
+            throw new StoreException(string.Format(CultureInfo.InvariantCulture, "Error while closing file ({0})", ex.Message), _path!, ex);
         }
         finally
         {
@@ -746,7 +736,7 @@ internal abstract class Store
             _lockLevel = LOCK_NONE;
             _lockReadHeld = false;
             _lockWriteHeld = false;
-            _mappings = new Segment?[0];
+            _segments = new Segment?[0];
             lock (_openStores)
             {
                 _openStores.Remove(_path!);
@@ -759,6 +749,7 @@ internal abstract class Store
     {
         System.Diagnostics.Debug.Assert(transactionLockLevel == LOCK_APPEND || transactionLockLevel == LOCK_EXCLUSIVE);
         System.Threading.Monitor.Enter(_transactionLock);
+
         try
         {
             Lock(transactionLockLevel);
@@ -767,6 +758,7 @@ internal abstract class Store
                 var journalFile = GetJournalFile();
                 if (File.Exists(journalFile))
                     ProcessJournal(journalFile);
+
                 _preTransactionFileSize = GetTrueSize();
             }
             catch (Exception)
@@ -780,6 +772,7 @@ internal abstract class Store
             System.Threading.Monitor.Exit(_transactionLock);
             throw;
         }
+
         _transactionBlocks = new Dictionary<long, TransactionBlock>();
     }
 
@@ -836,7 +829,7 @@ internal abstract class Store
             var ofs = (int)block.pos & 0x3fff_ffff;
             System.Diagnostics.Debug.Assert((ofs & 0xfff) == 0);
             System.Diagnostics.Debug.Assert(block.bytes.Length == 4096);
-            new NioBufferWriter(GetMapping(segment).Memory).Put(ofs, block.bytes);
+            new NioBufferWriter(GetSegment(segment).Memory).Put(ofs, block.bytes);
             affectedSegments.Add(segment);
         }
 
@@ -868,7 +861,7 @@ internal abstract class Store
             {
                 block = new TransactionBlock();
                 block.pos = pos;
-                var original = new NioBufferReader(GetMapping((int)(pos >> 30)).Memory);
+                var original = new NioBufferReader(GetSegment((int)(pos >> 30)).Memory);
                 var ofs = (int)pos & 0x3fff_ffff;
                 var copy = new byte[4096];
                 original.Get(ofs, copy);
@@ -878,7 +871,7 @@ internal abstract class Store
             return block.Current;
         }
 
-        return new NioBufferWriter(GetMapping((int)(pos >> 30)).Memory).Slice((int)pos & 0x3fff_ffff, 4096);
+        return new NioBufferWriter(GetSegment((int)(pos >> 30)).Memory).Slice((int)pos & 0x3fff_ffff, 4096);
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.currentFileSize()</c>.</remarks>

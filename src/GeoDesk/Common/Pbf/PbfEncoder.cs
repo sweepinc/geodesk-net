@@ -7,24 +7,11 @@
 
 using System.Numerics;
 
-using Java.Nio;
-
 namespace GeoDesk.Common.Pbf;
 
 /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfEncoder</c>.</remarks>
 internal static class PbfEncoder
 {
-
-    /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfEncoder.writeVarint(ByteBuffer, long)</c>.</remarks>
-    public static void WriteVarint(ByteBuffer buf, long val)
-    {
-        while (val >= 0x80 || val < 0)
-        {
-            buf.Put((byte)((val & 0x7f) | 0x80));
-            val = (long)((ulong)val >> 7);
-        }
-        buf.Put((byte)val);
-    }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfEncoder.writeVarint(byte[], int, long)</c>.</remarks>
     public static int WriteVarint(byte[] buf, int pos, long val)

@@ -9,7 +9,7 @@ using GeoDesk.Common.Util;
 using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Store;
 
-using NioBuffer = Java.Nio.ByteBuffer;
+using NioBuffer = GeoDesk.Buffers.NioBufferReader;
 
 namespace GeoDesk.Feature.Query;
 
@@ -38,7 +38,7 @@ internal class MemberIterator : FeatureIterator
     string? _roleString;
     int _tip = FeatureConstants.START_TIP;
     int _tex = FeatureConstants.MEMBERS_START_TEX;
-    NioBuffer? _foreignBuf;
+    NioBuffer _foreignBuf;
     int _pExports;
     int _member;
     IFeature? _memberFeature;
@@ -138,13 +138,13 @@ internal class MemberIterator : FeatureIterator
                     var entry = _store.TileIndexEntry(_tip);
                     if (!FeatureStore.IsTileLoadedAndCurrent(entry)) throw new MissingTileException(_tip);
                     var tilePage = FeatureStore.PageFromEntry(entry);
-                    _foreignBuf = NioBuffer.Of(_store.SegmentOfPage(tilePage).Memory);
+                    _foreignBuf = new NioBuffer(_store.SegmentOfPage(tilePage).Memory);
                     var ppExports = _store.OffsetOfPage(tilePage) + 24;
                     _pExports = ppExports + _foreignBuf.GetInt(ppExports);
                 }
-                featureBuf = _foreignBuf!;
+                featureBuf = _foreignBuf;
                 var ppExported = _pExports + (_tex << 2);
-                pFeature = ppExported + _foreignBuf!.GetInt(ppExported);
+                pFeature = ppExported + _foreignBuf.GetInt(ppExported);
             }
             else
             {
