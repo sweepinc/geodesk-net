@@ -46,7 +46,7 @@ internal sealed class TileScanner
     public TileScanner(Query query, int tilePage, int bboxFlags, IFilter? filter)
     {
         _store = query.Store;
-        _buf = _store.BufferOfPage(tilePage);
+        _buf = NioBuffer.Of(_store.SegmentOfPage(tilePage).Memory);
         _pTile = _store.OffsetOfPage(tilePage);
         _bboxFlags = bboxFlags;
         _types = query.Types;

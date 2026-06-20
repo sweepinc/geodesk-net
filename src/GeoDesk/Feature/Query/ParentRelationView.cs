@@ -111,7 +111,7 @@ internal class ParentRelationView : TableView
                         var entry = view.store.TileIndexEntry(tip);
                         if (!FeatureStore.IsTileLoadedAndCurrent(entry)) throw new MissingTileException(tip);
                         var tilePage = FeatureStore.PageFromEntry(entry);
-                        foreignBuf = view.store.BufferOfPage(tilePage);
+                        foreignBuf = NioBuffer.Of(view.store.SegmentOfPage(tilePage).Memory);
                         var ppExports = view.store.OffsetOfPage(tilePage) + 24;
                         _pExports = ppExports + foreignBuf.GetInt(ppExports);
                     }

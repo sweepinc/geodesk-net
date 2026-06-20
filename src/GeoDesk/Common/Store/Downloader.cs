@@ -15,11 +15,10 @@ using System.IO.Compression;
 using System.Net.Http;
 using System.Threading;
 
+using GeoDesk.Buffers;
 using GeoDesk.Common.Util;
 
 using static GeoDesk.Common.Store.BlobStoreConstants;
-
-using NioBuffer = Java.Nio.ByteBuffer;
 
 namespace GeoDesk.Common.Store;
 
@@ -105,7 +104,8 @@ internal class Downloader
                 _page = page;
                 _error = error;
                 _completed = true;
-                foreach (var c in Consumers) c(this);
+                foreach (var c in Consumers)
+                    c(this);
                 Monitor.PulseAll(_mutex);
             }
         }
@@ -117,7 +117,8 @@ internal class Downloader
             {
                 for (; ; )
                 {
-                    if (_completed) return;
+                    if (_completed)
+                        return;
                     Monitor.Wait(_mutex);
                 }
             }
@@ -134,7 +135,8 @@ internal class Downloader
                     // Java rethrows RuntimeExceptions directly and wraps everything else in a
                     // StoreException; here a StoreException (the unchecked-equivalent we raise) is
                     // rethrown directly, and other exceptions (e.g. IOException) are wrapped.
-                    if (_error is StoreException) throw _error;
+                    if (_error is StoreException)
+                        throw _error;
                     throw new StoreException("Download failed: " + _error.Message, _error);
                 }
             }
@@ -148,7 +150,8 @@ internal class Downloader
         {
             if (!_ticketMap.TryGetValue(id, out Ticket? ticket))
             {
-                while (_ticketMap.Count == _maxPendingTickets) Monitor.Wait(_mutex);
+                while (_ticketMap.Count == _maxPendingTickets)
+                    Monitor.Wait(_mutex);
 
                 ticket = new Ticket(id);
                 if (_status == SHUTDOWN)
@@ -162,7 +165,8 @@ internal class Downloader
                 _ticketQueue.Enqueue(ticket);
                 Monitor.PulseAll(_mutex);
             }
-            if (consumer != null) ticket.Consumers.Add(consumer);
+            if (consumer != null)
+                ticket.Consumers.Add(consumer);
             if (_thread == null)
             {
                 _thread = new Thread(DownloadThreadRun) { IsBackground = true, Name = "Downloader" };
@@ -222,7 +226,8 @@ internal class Downloader
         {
             // make a copy because Complete() modifies ticketMap
             var remainingTickets = new List<Ticket>(_ticketMap.Values);
-            foreach (var ticket in remainingTickets) TicketCompleted(ticket, 0, ex);
+            foreach (var ticket in remainingTickets)
+                TicketCompleted(ticket, 0, ex);
             Debug.Assert(_ticketMap.Count == 0);
             _ticketQueue.Clear();
             _thread = null;      // TODO: this may be problematic!
@@ -236,11 +241,14 @@ internal class Downloader
         lock (_mutex)
         {
             Ticket? ticket = _ticketQueue.Count > 0 ? _ticketQueue.Dequeue() : null;
-            if (ticket != null) return ticket;
-            if (!wait) return null;
+            if (ticket != null)
+                return ticket;
+            if (!wait)
+                return null;
             Monitor.Wait(_mutex, _maxKeepAlive);
             ticket = _ticketQueue.Count > 0 ? _ticketQueue.Dequeue() : null;
-            if (ticket == null) _thread = null;
+            if (ticket == null)
+                _thread = null;
             return ticket;
         }
     }
@@ -248,7 +256,8 @@ internal class Downloader
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Downloader.urlOf(int)</c>.</remarks>
     protected Uri UrlOf(int id)
     {
-        if (id == METADATA_ID) return new Uri(_baseUrl + "meta.tile");
+        if (id == METADATA_ID)
+            return new Uri(_baseUrl + "meta.tile");
         return new Uri(string.Format(CultureInfo.InvariantCulture, "{0}{1:X3}/{2:X3}.tile",
             _baseUrl, (int)((uint)id >> 12), id & 0xfff));
     }
@@ -260,12 +269,14 @@ internal class Downloader
         int id = ticket.Id;
         if (id == METADATA_ID)
         {
-            if (!store.IsEmpty()) return 0;
+            if (!store.IsEmpty())
+                return 0;
         }
         else
         {
             int existingPage = store.GetIndexEntry(id);
-            if (existingPage != 0) return existingPage;
+            if (existingPage != 0)
+                return existingPage;
         }
 
         Uri url = UrlOf(id);
@@ -273,7 +284,8 @@ internal class Downloader
         // TODO: retry
 
         int page = Download(id, url);
-        if (id != METADATA_ID) store.SetIndexEntry(id, page);
+        if (id != METADATA_ID)
+            store.SetIndexEntry(id, page);
         return page;
     }
 
@@ -315,7 +327,8 @@ internal class Downloader
             bool mismatch = false;
             for (int i = 0; i < GUID_LEN; i++)
             {
-                if (storeGuid[i] != buf[EXPORTED_HEADER_GUID + i]) { mismatch = true; break; }
+                if (storeGuid[i] != buf[EXPORTED_HEADER_GUID + i])
+                { mismatch = true; break; }
             }
             if (mismatch)
             {
@@ -341,13 +354,10 @@ internal class Downloader
 
             firstPage = 0;
             int firstBlockLen = System.Math.Min(uncompressedSize, BLOCK_LEN);
-            NioBuffer rootBlock = store.GetBlockOfPage(0);
+            var rootBlock = store.GetBlockOfPage(0);
             Read(zipIn, buf, rootBlock, 0, firstBlockLen, checksum);
             if (uncompressedSize > BLOCK_LEN)
-            {
-                Read(zipIn, buf, store.BaseMapping(), BLOCK_LEN,
-                    uncompressedSize - BLOCK_LEN, checksum);
-            }
+                Read(zipIn, buf, new NioBufferWriter(store.SegmentOfPage(0).Memory), BLOCK_LEN, uncompressedSize - BLOCK_LEN, checksum);
 
             // TODO: adjust page size
 
@@ -382,7 +392,7 @@ internal class Downloader
                 // sits at end of 1-GB segment; that's why we calculate explicitly
                 int pTail = p + (pages << store.pageSizeShift) - FREE_BLOB_TRAILER_LEN;
                 int pPayloadEnd = p + uncompressedSize + headerLen;
-                NioBuffer blobBuf = store.BufferOfPage(firstPage);
+                var blobBuf = new NioBufferWriter(store.SegmentOfPage(firstPage).Memory);
                 int pUnprotectedStart = p + BLOCK_LEN;
                 if (pPayloadEnd > pTail)
                 {
@@ -394,7 +404,7 @@ internal class Downloader
                     }
                     long absoluteTailBlockPos = store.AbsoluteOffsetOfPage(firstPage)
                         + pUnprotectedEnd - p;
-                    NioBuffer tailBlock = store.GetBlock(absoluteTailBlockPos);
+                    var tailBlock = store.GetBlock(absoluteTailBlockPos);
                     int tailBlockLen = pPayloadEnd - pUnprotectedEnd;
                     Debug.Assert(tailBlockLen > 0);
                     Debug.Assert(tailBlockLen <= 4096);
@@ -423,13 +433,14 @@ internal class Downloader
     /// ByteBuffer, int, int, Checksum)</c>. Note .NET <see cref="Stream.Read(byte[], int, int)"/>
     /// returns 0 (not -1) at end of stream.
     /// </remarks>
-    void Read(Stream zipIn, byte[] buf, NioBuffer target, int p, int len, Crc32 checksum)
+    void Read(Stream zipIn, byte[] buf, NioBufferWriter target, int p, int len, Crc32 checksum)
     {
         while (len > 0)
         {
             int chunkLen = System.Math.Min(len, buf.Length);
             int bytesRead = zipIn.Read(buf, 0, chunkLen);
-            if (bytesRead <= 0) throw new IOException("Unexpected end of compressed data");
+            if (bytesRead <= 0)
+                throw new IOException("Unexpected end of compressed data");
             target.Put(p, buf, 0, bytesRead);
             checksum.Update(buf, 0, bytesRead);
             p += bytesRead;
@@ -445,7 +456,8 @@ internal class Downloader
         while (total < len)
         {
             int n = s.Read(buf, off + total, len - total);
-            if (n <= 0) break;
+            if (n <= 0)
+                break;
             total += n;
         }
         return total;
@@ -459,7 +471,8 @@ internal class Downloader
             for (; ; )
             {
                 Ticket? ticket = TakeTicket(true);
-                if (ticket == null) break;
+                if (ticket == null)
+                    break;
                 store.BeginTransaction(Store.LOCK_APPEND);
                 for (; ; )
                 {
@@ -480,7 +493,8 @@ internal class Downloader
 
                     TicketCompleted(ticket, page, error);
                     ticket = TakeTicket(false);
-                    if (ticket == null) break;
+                    if (ticket == null)
+                        break;
                 }
                 store.EndTransaction();
             }
@@ -516,7 +530,8 @@ internal class Downloader
             for (uint n = 0; n < 256; n++)
             {
                 uint c = n;
-                for (int k = 0; k < 8; k++) c = (c & 1) != 0 ? 0xedb8_8320 ^ (c >> 1) : c >> 1;
+                for (int k = 0; k < 8; k++)
+                    c = (c & 1) != 0 ? 0xedb8_8320 ^ (c >> 1) : c >> 1;
                 table[n] = c;
             }
             return table;
@@ -525,7 +540,8 @@ internal class Downloader
         public void Update(byte[] buf, int offset, int length)
         {
             uint c = _crc;
-            for (int i = 0; i < length; i++) c = Table[(c ^ buf[offset + i]) & 0xff] ^ (c >> 8);
+            for (int i = 0; i < length; i++)
+                c = Table[(c ^ buf[offset + i]) & 0xff] ^ (c >> 8);
             _crc = c;
         }
 

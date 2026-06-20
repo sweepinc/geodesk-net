@@ -196,7 +196,9 @@ internal abstract class Store
     {
 
         public long pos;
-        public NioBuffer current = null!;
+        public byte[] bytes = null!; // the 4 KB working copy
+
+        public NioBufferWriter Current => new NioBufferWriter(bytes);
 
     }
 
@@ -208,6 +210,7 @@ internal abstract class Store
     {
         if (_channel != null)
             throw new StoreException("Store is already open", path);
+
         _path = path;
     }
 
@@ -269,6 +272,7 @@ internal abstract class Store
             _mappings[n] = seg;
             if (n == 0)
                 baseMapping = seg;
+
             return seg;
         }
     }
@@ -602,7 +606,7 @@ internal abstract class Store
         {
             var pCurrent = 0;
             var original = new NioBufferReader(GetMapping(SegmentOfPos(block.pos)).Memory);
-            NioBuffer current = block.current;
+            var current = block.Current;
             var originalOfs = (int)(block.pos & 0x3fff_ffff);
             var pOriginal = originalOfs;
             for (; ; )
@@ -831,8 +835,8 @@ internal abstract class Store
             var segment = SegmentOfPos(block.pos);
             var ofs = (int)block.pos & 0x3fff_ffff;
             System.Diagnostics.Debug.Assert((ofs & 0xfff) == 0);
-            System.Diagnostics.Debug.Assert(block.current.Array()!.Length == 4096);
-            new NioBufferWriter(GetMapping(segment).Memory).Put(ofs, block.current.Array()!);
+            System.Diagnostics.Debug.Assert(block.bytes.Length == 4096);
+            new NioBufferWriter(GetMapping(segment).Memory).Put(ofs, block.bytes);
             affectedSegments.Add(segment);
         }
 
@@ -853,7 +857,7 @@ internal abstract class Store
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.getBlock(long)</c>.</remarks>
-    protected internal NioBuffer GetBlock(long pos)
+    protected internal NioBufferWriter GetBlock(long pos)
     {
         System.Diagnostics.Debug.Assert((pos & 0xfff) == 0, string.Format(CultureInfo.InvariantCulture, "{0}: Block must start at 4KB-aligned position", pos));
 
@@ -868,18 +872,13 @@ internal abstract class Store
                 var ofs = (int)pos & 0x3fff_ffff;
                 var copy = new byte[4096];
                 original.Get(ofs, copy);
-                block.current = NioBuffer.Wrap(copy);
-                block.current.Order(ByteOrder.LittleEndian); // TODO
+                block.bytes = copy;
                 _transactionBlocks[pos] = block;
             }
-            return block.current;
+            return block.Current;
         }
 
-        // Boundary: GetBlock still returns a ByteBuffer block for the (not-yet-migrated) write path.
-        var buf = NioBuffer.Of(GetMapping((int)(pos >> 30)).Memory);
-        buf = buf.Slice((int)pos & 0x3fff_ffff, 4096);
-        buf.Order(ByteOrder.LittleEndian);
-        return buf;
+        return new NioBufferWriter(GetMapping((int)(pos >> 30)).Memory).Slice((int)pos & 0x3fff_ffff, 4096);
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.currentFileSize()</c>.</remarks>

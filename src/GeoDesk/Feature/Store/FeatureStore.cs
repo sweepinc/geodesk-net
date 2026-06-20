@@ -72,7 +72,7 @@ internal class FeatureStore : FreeStore
 
         var pSnapshot = 128 + ActiveSnapshot() * 64;
         var tileIndexPage = baseMapping!.Memory.Span.GetIntLE(pSnapshot + SNAPSHOT_TILE_INDEX_OFS);
-        _tileIndexBuf = BufferOfPage(tileIndexPage);
+        _tileIndexBuf = NioBuffer.Of(SegmentOfPage(tileIndexPage).Memory);
         _tileIndexOfs = OffsetOfPage(tileIndexPage);
 
         EnableQueries();

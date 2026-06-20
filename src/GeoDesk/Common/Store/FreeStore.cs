@@ -160,10 +160,9 @@ internal class FreeStore
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.FreeStore.bufferOfPage(int)</c>.</remarks>
-    public NioBuffer BufferOfPage(int page)
+    internal Segment SegmentOfPage(int page)
     {
-        // Boundary: still hands a ByteBuffer to the (not-yet-migrated) feature read path.
-        return NioBuffer.Of(GetMapping(page >> (30 - _pageSizeShift)).Memory).Order(ByteOrder.LittleEndian);
+        return GetMapping(page >> (30 - _pageSizeShift));
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.FreeStore.offsetOfPage(int)</c>.</remarks>

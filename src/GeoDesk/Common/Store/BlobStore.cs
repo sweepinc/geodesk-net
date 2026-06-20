@@ -158,11 +158,10 @@ internal class BlobStore : Store
         return NioBuffer.Of(baseMapping!.Memory).Order(ByteOrder.LittleEndian);
     }
 
-    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.bufferOfPage(int)</c>.</remarks>
-    public NioBuffer BufferOfPage(int page)
+    /// <summary>The mapped segment containing the given page. The caller wraps its <c>Memory</c> as it needs.</summary>
+    protected internal Segment SegmentOfPage(int page)
     {
-        // Boundary: still hands a ByteBuffer to the (not-yet-migrated) feature read path.
-        return NioBuffer.Of(GetMapping(page >> (30 - pageSizeShift)).Memory).Order(ByteOrder.LittleEndian);
+        return GetMapping(page >> (30 - pageSizeShift));
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.offsetOfPage(int)</c>.</remarks>
@@ -178,7 +177,7 @@ internal class BlobStore : Store
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.getBlockOfPage(int)</c>.</remarks>
-    protected internal NioBuffer GetBlockOfPage(int page)
+    protected internal NioBufferWriter GetBlockOfPage(int page)
     {
         Debug.Assert(page >= 0); // TODO: treat page as unsigned int?
         return GetBlock(((long)page) << pageSizeShift);
@@ -390,7 +389,7 @@ internal class BlobStore : Store
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.getFreeTableBlob(ByteBuffer, int)</c>.</remarks>
-    static int GetFreeTableBlob(NioBuffer rootBlock, int pages)
+    static int GetFreeTableBlob(NioBufferWriter rootBlock, int pages)
     {
         var trunkSlot = (pages - 1) / 512;
         return rootBlock.GetInt(TRUNK_FREE_TABLE_OFS + trunkSlot * 4);
@@ -510,7 +509,7 @@ internal class BlobStore : Store
     /// responsibility of the caller to clear the flag, if necessary.
     /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.removeFreeBlob(ByteBuffer)</c>.</remarks>
-    void RemoveFreeBlob(NioBuffer freeBlock)
+    void RemoveFreeBlob(NioBufferWriter freeBlock)
     {
         var prevBlob = freeBlock.GetInt(PREV_FREE_BLOB_OFS);
         var nextBlob = freeBlock.GetInt(NEXT_FREE_BLOB_OFS);
@@ -603,7 +602,7 @@ internal class BlobStore : Store
         var rootBlock = GetBlock(0);
         var trunkSlot = (pages - 1) / 512;
         var leafBlob = rootBlock.GetInt(TRUNK_FREE_TABLE_OFS + trunkSlot * 4);
-        NioBuffer leafBlock;
+        NioBufferWriter leafBlock;
         if (leafBlob == 0)
         {
             firstBlock.PutInt(LEAF_FT_RANGE_BITS_OFS, 0);
@@ -699,7 +698,7 @@ internal class BlobStore : Store
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.export(int, Path)</c>.</remarks>
     public void Export(int page, string path)
     {
-        var buf = BufferOfPage(page);
+        var buf = NioBuffer.Of(SegmentOfPage(page).Memory);
         var p = OffsetOfPage(page);
         var len = buf.GetInt(p) & 0x3fff_ffff;
         const int BUF_SIZE = 64 * 1024;
@@ -784,7 +783,7 @@ internal class BlobStore : Store
     /// </summary>
     /// <param name="buf">the buffer containing a copy of the BlobStore's metadata</param>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.resetMetadata(ByteBuffer)</c>.</remarks>
-    protected virtual void ResetMetadata(NioBuffer buf)
+    protected virtual void ResetMetadata(NioBufferWriter buf)
     {
         buf.PutInt(TRUNK_FT_RANGE_BITS_OFS, 0);
         for (var i = 0; i < 512; i++)
@@ -796,14 +795,14 @@ internal class BlobStore : Store
     public void CreateCopy(string newPath)
     {
         var metadataSize = baseMapping!.Memory.Span.GetIntLE(METADATA_SIZE_OFS);
-        using var buf = NioBuffer.Allocate(metadataSize); // pooled — dispose returns the array
-        buf.Order(ByteOrder.LittleEndian);
-        buf.Put(0, NioBuffer.Of(baseMapping!.Memory), 0, metadataSize);
+        var bytes = new byte[metadataSize];
+        baseMapping!.Memory.Span.Slice(0, metadataSize).CopyTo(bytes);
+        var buf = new NioBufferWriter(bytes);
         ResetMetadata(buf);
         buf.PutInt(TOTAL_PAGES_OFS, BytesToPages(metadataSize));
 
         using FileStream channel = new FileStream(newPath, FileMode.Create, FileAccess.Write);
-        channel.Write(buf.Array(), 0, metadataSize);
+        channel.Write(bytes, 0, metadataSize);
     }
 
 }

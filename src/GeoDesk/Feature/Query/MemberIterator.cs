@@ -138,7 +138,7 @@ internal class MemberIterator : FeatureIterator
                     var entry = _store.TileIndexEntry(_tip);
                     if (!FeatureStore.IsTileLoadedAndCurrent(entry)) throw new MissingTileException(_tip);
                     var tilePage = FeatureStore.PageFromEntry(entry);
-                    _foreignBuf = _store.BufferOfPage(tilePage);
+                    _foreignBuf = NioBuffer.Of(_store.SegmentOfPage(tilePage).Memory);
                     var ppExports = _store.OffsetOfPage(tilePage) + 24;
                     _pExports = ppExports + _foreignBuf.GetInt(ppExports);
                 }
