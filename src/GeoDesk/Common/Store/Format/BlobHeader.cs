@@ -24,20 +24,38 @@ internal readonly struct BlobHeader
 
     const int HeaderWordOfs = 0;
 
-    readonly ReadOnlyMemory<byte> _buf; // sliced to the start of the blob (its header word)
+    readonly ReadOnlyMemory<byte> _buf;
 
     public BlobHeader(ReadOnlyMemory<byte> buf)
     {
         _buf = buf;
     }
 
-    public int Raw => _buf.Span.GetIntLE(HeaderWordOfs);
+    /// <summary>
+    /// The raw 32-bit header word, exactly as stored: payload size in the low 30 bits, the
+    /// preceding-free and free marker flags in bits 30 and 31.
+    /// </summary>
+    public int Word => _buf.Span.GetIntLE(HeaderWordOfs);
 
-    /// <summary>The blob's payload size in bytes (excludes the 4-byte header).</summary>
-    public int PayloadSize => Raw & PAYLOAD_SIZE_MASK;
+    /// <summary>
+    /// The blob's payload size in bytes (excludes the 4-byte header).
+    /// </summary>
+    public int PayloadSize => Word & PAYLOAD_SIZE_MASK;
 
-    public bool IsFree => (Raw & FREE_BLOB_FLAG) != 0;
+    /// <summary>
+    /// The marker bits above the payload size (the free / preceding-free flags), as stored.
+    /// </summary>
+    public int Flags => Word & ~PAYLOAD_SIZE_MASK;
 
-    public bool IsPrecedingFree => (Raw & PRECEDING_BLOB_FREE_FLAG) != 0;
+    /// <summary>
+    /// True if this blob is on the free list (the free marker, bit 31).
+    /// </summary>
+    public bool IsFree => (Word & FREE_BLOB_FLAG) != 0;
+
+    /// <summary>
+    /// True if the blob immediately preceding this one in the file is free (the preceding-free
+    /// marker, bit 30). Used to coalesce adjacent free blobs.
+    /// </summary>
+    public bool IsPrecedingFree => (Word & PRECEDING_BLOB_FREE_FLAG) != 0;
 
 }

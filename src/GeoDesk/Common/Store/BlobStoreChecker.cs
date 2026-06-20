@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.IO;
 
 using GeoDesk.Buffers;
+using GeoDesk.Common.Store.Format;
 using GeoDesk.Common.Util;
 
 using static GeoDesk.Common.Store.BlobStoreConstants;
@@ -23,6 +24,71 @@ namespace GeoDesk.Common.Store;
 internal class BlobStoreChecker
 {
 
+    /// <summary>
+    /// The bits tracked in <see cref="Blob.flags"/> during a check: the checker's own progress flags
+    /// (low bits) plus the on-disk free markers carried over from <see cref="BlobHeader.Flags"/>
+    /// (bits 30-31). The two groups occupy disjoint bit ranges, so they coexist in one value.
+    /// </summary>
+    [Flags]
+    internal enum BlobFlags
+    {
+        None = 0,
+
+        /// <summary>A live blob was seen referencing this one (so it must not be free).</summary>
+        Referenced = 1,
+
+        /// <summary>This free blob has already been visited in a free-list chain (cycle detection).</summary>
+        FreeReferenced = 2,
+
+        /// <summary>The free blob's payload size is page-aligned, as required.</summary>
+        ValidFreeSize = 4,
+
+        /// <summary>The free blob's trailer (its last word) holds the correct page count.</summary>
+        ValidFreeTrailer = 8,
+
+        /// <summary>On-disk marker: the preceding blob in the file is free (bit 30).</summary>
+        PrecedingFree = PRECEDING_BLOB_FREE_FLAG,
+
+        /// <summary>On-disk marker: this blob is free (bit 31).</summary>
+        Free = FREE_BLOB_FLAG,
+    }
+
+    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.Blob</c>.</remarks>
+    public class Blob : IComparable<Blob>
+    {
+
+        internal int firstPage;
+        internal int pages;
+        internal BlobFlags flags;
+
+        /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.Blob(int, int, int)</c>.</remarks>
+        internal Blob(int firstPage, int pages, BlobFlags flags)
+        {
+            this.firstPage = firstPage;
+            this.pages = pages;
+            this.flags = flags;
+        }
+
+        /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.Blob.isReferenced()</c>.</remarks>
+        internal bool IsReferenced => (flags & BlobFlags.Referenced) != 0;
+
+        /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.Blob.isFree()</c>.</remarks>
+        internal bool IsFree => (flags & BlobFlags.Free) != 0;
+
+        /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.Blob.hasFlags(int)</c>.</remarks>
+        internal bool HasFlags(BlobFlags flags)
+        {
+            return (this.flags & flags) == flags;
+        }
+
+        /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.Blob.compareTo(Blob)</c>.</remarks>
+        public int CompareTo(Blob? other)
+        {
+            return firstPage.CompareTo(other!.firstPage);
+        }
+
+    }
+
     protected readonly BlobStore store;
 
     long _fileSize;
@@ -33,11 +99,6 @@ internal class BlobStoreChecker
     int _metadataSize;
     readonly Dictionary<int, Blob> _blobs = new Dictionary<int, Blob>();
     readonly List<ErrorEntry> _errors = new List<ErrorEntry>();
-
-    protected const int BLOB_REFERENCED_FLAG = 1;
-    protected const int FREE_BLOB_REFERENCED_FLAG = 2;
-    protected const int VALID_FREE_BLOB_SIZE = 4;
-    protected const int VALID_FREE_BLOB_TRAILER = 8;
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker(BlobStore)</c>.</remarks>
     public BlobStoreChecker(BlobStore store)
@@ -51,6 +112,7 @@ internal class BlobStoreChecker
         {
             Error(0, ex.Message);
         }
+
         var seg = store.GetSegment(0);
         _totalPages = seg.Memory.Span.GetIntLE(TOTAL_PAGES_OFS);
         _metadataSize = seg.Memory.Span.GetIntLE(METADATA_SIZE_OFS);
@@ -113,19 +175,19 @@ internal class BlobStoreChecker
                     gapsOrOverlaps = true;
                 }
             }
-            if (blob.IsFree())
+            if (blob.IsFree)
             {
-                if (blob.HasFlags(BLOB_REFERENCED_FLAG))
+                if (blob.HasFlags(BlobFlags.Referenced))
                 {
                     Error(blob, " is marked free but is still in use");
                 }
                 else
                 {
-                    if (!blob.HasFlags(VALID_FREE_BLOB_SIZE))
+                    if (!blob.HasFlags(BlobFlags.ValidFreeSize))
                     {
                         Error(blob, ": Invalid size for free blob");
                     }
-                    if (!blob.HasFlags(VALID_FREE_BLOB_TRAILER))
+                    if (!blob.HasFlags(BlobFlags.ValidFreeTrailer))
                     {
                         Error(blob, ": Invalid free-blob trailer");
                     }
@@ -134,20 +196,20 @@ internal class BlobStoreChecker
             var blobStartsAtSegment = AbsPosOfPage(blob.firstPage) % (1 << 30) == 0;
             if (prevBlob != null && !gapsOrOverlaps)
             {
-                if (prevBlob.IsFree())
+                if (prevBlob.IsFree)
                 {
-                    if (blob.IsFree() && !blobStartsAtSegment)
+                    if (blob.IsFree && !blobStartsAtSegment)
                     {
                         Error(blob, " should have been consolidated with " + "previous free blob");
                     }
-                    if (!blob.HasFlags(PRECEDING_BLOB_FREE_FLAG))
+                    if (!blob.HasFlags(BlobFlags.PrecedingFree))
                     {
                         Error(blob, ": Preceding blob is free, " + "but prev_blob_free flag not set");
                     }
                 }
                 else
                 {
-                    if (blob.HasFlags(PRECEDING_BLOB_FREE_FLAG))
+                    if (blob.HasFlags(BlobFlags.PrecedingFree))
                     {
                         Error(blob, ": Preceding blob in use, " + "but prev_blob_free flag set");
                     }
@@ -163,7 +225,6 @@ internal class BlobStoreChecker
         if (nextPage > _totalPages)
         {
             Error(TOTAL_PAGES_OFS, "total_pages should be %d instead of %d", nextPage, _totalPages);
-
             return;
         }
 
@@ -173,16 +234,15 @@ internal class BlobStoreChecker
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.checkUnreferenced(int, int)</c>.</remarks>
     void CheckUnreferenced(int start, int end)
     {
-        Error(AbsPosOfPage(start), "%d page%s of unreferenced data",
-            end - start, end - start == 1 ? "" : "s");
+        Error(AbsPosOfPage(start), "%d page%s of unreferenced data", end - start, end - start == 1 ? "" : "s");
     }
 
-    // We wrap these BlobStore methods to give us more flexibility later
-    // in addressing corrupt page size settings
+    // We compute the segment ourselves (rather than delegating to BlobStore) to give us more
+    // flexibility later in addressing corrupt page size settings. The caller wraps its Memory as needed.
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.bufferOfPage(int)</c>.</remarks>
-    protected NioBufferReader BufferOfPage(int page)
+    protected Segment SegmentOfPage(int page)
     {
-        return new NioBufferReader(store.GetSegment(page / _pagesPerSegment).Memory);
+        return store.GetSegment(page / _pagesPerSegment);
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.offsetOfPage(int)</c>.</remarks>
@@ -200,41 +260,44 @@ internal class BlobStoreChecker
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.checkFreeTables()</c>.</remarks>
     void CheckFreeTables()
     {
-        var buf = BufferOfPage(0);
+        var header = new StoreHeader(SegmentOfPage(0).Memory);
         var rangesUsed = 0;
-        var p = TRUNK_FREE_TABLE_OFS;
-        for (var slot = 0; slot < 512; slot++, p += 4)
+
+        for (var slot = 0; slot < 512; slot++)
         {
-            var freePage = buf.GetInt(p);
-            if (freePage == 0)
+            var freePage = header.TrunkFreeTablePage(slot);
+            if (freePage.IsNil)
                 continue;
+
             rangesUsed |= 1 << (slot >> 4);
-            var freeBlob = GetValidBlob(p, freePage);
+
+            var freeBlob = GetValidBlob(TRUNK_FREE_TABLE_OFS + slot * 4, freePage.Value);
             if (freeBlob == null)
                 continue;
+
             if (!CheckBlobIsFree(freeBlob))
                 continue;
-            if (!freeBlob.HasFlags(VALID_FREE_BLOB_SIZE | VALID_FREE_BLOB_TRAILER))
+
+            if (!freeBlob.HasFlags(BlobFlags.ValidFreeSize | BlobFlags.ValidFreeTrailer))
                 continue;
+
             CheckLeafFreeTable(slot, freeBlob);
         }
-        CheckExpectedVsActual(TRUNK_FT_RANGE_BITS_OFS, "trunk_free_range_mask",
-            rangesUsed, buf.GetInt(TRUNK_FT_RANGE_BITS_OFS));
+
+        CheckExpectedVsActual(TRUNK_FT_RANGE_BITS_OFS, "trunk_free_range_mask", rangesUsed, header.TrunkRangeBits);
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.checkExpectedVsActual(long, String, int, int)</c>.</remarks>
     void CheckExpectedVsActual(long ofs, string what, int expected, int actual)
     {
         if (expected != actual)
-        {
             Error(ofs, "%s should be %08X instead of %08X", what, expected, actual);
-        }
     }
 
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.checkBlobIsFree(Blob)</c>.</remarks>
     bool CheckBlobIsFree(Blob blob)
     {
-        if (!blob.HasFlags(FREE_BLOB_FLAG))
+        if (!blob.HasFlags(BlobFlags.Free))
         {
             Error(blob, " should be free");
             return false;
@@ -257,18 +320,17 @@ internal class BlobStoreChecker
             return;
         }
 
-        var buf = BufferOfPage(page);
-        var p = OffsetOfPage(page);
-        var rangeMask = buf.GetInt(p + LEAF_FT_RANGE_BITS_OFS);
+        var pageOfs = OffsetOfPage(page);
+        var freeBlobCursor = new FreeBlob(SegmentOfPage(page).Memory.Slice(pageOfs));
+        var rangeMask = freeBlobCursor.LeafRangeBits;
         var rangesUsed = 0;
-        p += LEAF_FREE_TABLE_OFS;
-        for (var leafSlot = 0; leafSlot < 512; leafSlot++, p += 4)
+        for (var leafSlot = 0; leafSlot < 512; leafSlot++)
         {
-            var freePage = buf.GetInt(p);
-            if (freePage == 0)
+            var freePage = freeBlobCursor.LeafFreeTablePage(leafSlot);
+            if (freePage.IsNil)
                 continue;
             rangesUsed |= 1 << (leafSlot >> 4);
-            var freeBlob = GetValidBlob(ofs + p, freePage);
+            var freeBlob = GetValidBlob(ofs + pageOfs + LEAF_FREE_TABLE_OFS + leafSlot * 4, freePage.Value);
             if (freeBlob != null)
                 CheckFreeBlobChain(trunkSlot, leafSlot, freeBlob);
         }
@@ -288,41 +350,42 @@ internal class BlobStoreChecker
 
         for (; ; )
         {
-            blob.flags |= FREE_BLOB_REFERENCED_FLAG;
+            blob.flags |= BlobFlags.FreeReferenced;
             if (!CheckBlobIsFree(blob))
                 return;
+
             var ofs = AbsPosOfPage(blob.firstPage);
             if (blob.pages != len)
-            {
-                Error(ofs, "Blob with %d pages listed in freetable for page size %d",
-                    blob.pages, len);
-            }
-            var buf = BufferOfPage(blob.firstPage);
-            var p = OffsetOfPage(blob.firstPage);
-            var pPrev = p + PREV_FREE_BLOB_OFS;
-            var pNext = p + NEXT_FREE_BLOB_OFS;
-            var ofsPrev = ofs + pPrev;
-            var ofsNext = ofs + pNext;
-            var prev = buf.GetInt(pPrev);
-            var next = buf.GetInt(pNext);
+                Error(ofs, "Blob with %d pages listed in freetable for page size %d", blob.pages, len);
 
-            if (prev != prevFreePage)
-            {
-                Error(ofsPrev, "prev_free_blob should be %d, not %d", prevFreePage, prev);
-            }
-            if (next == 0)
+            var pageOfs = OffsetOfPage(blob.firstPage);
+            var freeBlobCursor = new FreeBlob(SegmentOfPage(blob.firstPage).Memory.Slice(pageOfs));
+            var ofsPrev = ofs + pageOfs + PREV_FREE_BLOB_OFS;
+            var ofsNext = ofs + pageOfs + NEXT_FREE_BLOB_OFS;
+            var prev = freeBlobCursor.PrevPage;
+            var next = freeBlobCursor.NextPage;
+
+            if (prev.Value != prevFreePage)
+                Error(ofsPrev, "prev_free_blob should be %d, not %d", prevFreePage, prev.Value);
+
+            if (next.IsNil)
                 return;
+
             prevFreePage = blob.firstPage;
-            var nextBlob = GetValidBlob(ofsNext, next);
+
+            var nextBlob = GetValidBlob(ofsNext, next.Value);
             if (nextBlob == null)
                 return;
+
             if (!CheckBlobIsFree(nextBlob))
                 return;
-            if (nextBlob.HasFlags(FREE_BLOB_REFERENCED_FLAG))
+
+            if (nextBlob.HasFlags(BlobFlags.FreeReferenced))
             {
                 Error(ofsNext, "Circular reference in free-blob list (to %d)", next);
                 return;
             }
+
             blob = nextBlob;
         }
     }
@@ -367,48 +430,6 @@ internal class BlobStoreChecker
         _errors.Add(new ErrorEntry(AbsPosOfPage(blob.firstPage), JavaFormat.Format("Blob " + blob.firstPage + msg, args)));
     }
 
-    /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.Blob</c>.</remarks>
-    public class Blob : IComparable<Blob>
-    {
-
-        internal int firstPage;
-        internal int pages;
-        internal int flags;
-
-        /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.Blob(int, int, int)</c>.</remarks>
-        internal Blob(int firstPage, int pages, int flags)
-        {
-            this.firstPage = firstPage;
-            this.pages = pages;
-            this.flags = flags;
-        }
-
-        /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.Blob.isReferenced()</c>.</remarks>
-        internal bool IsReferenced()
-        {
-            return (flags & BLOB_REFERENCED_FLAG) != 0;
-        }
-
-        /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.Blob.isFree()</c>.</remarks>
-        internal bool IsFree()
-        {
-            return (flags & FREE_BLOB_FLAG) != 0;
-        }
-
-        /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.Blob.hasFlags(int)</c>.</remarks>
-        internal bool HasFlags(int flags)
-        {
-            return (this.flags & flags) == flags;
-        }
-
-        /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.Blob.compareTo(Blob)</c>.</remarks>
-        public int CompareTo(Blob? other)
-        {
-            return firstPage.CompareTo(other!.firstPage);
-        }
-
-    }
-
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.getValidBlob(long, int)</c>.</remarks>
     Blob? GetValidBlob(long ofs, int page)
     {
@@ -424,7 +445,7 @@ internal class BlobStoreChecker
     {
         var blob = GetValidBlob(ofs, page);
         if (blob != null)
-            blob.flags |= BLOB_REFERENCED_FLAG;
+            blob.flags |= BlobFlags.Referenced;
 
         return blob;
     }
@@ -441,28 +462,25 @@ internal class BlobStoreChecker
         if ((page << _pageSizeShift) >= _fileSize)
             return null;
 
-        var buf = BufferOfPage(page);
-        var p = OffsetOfPage(page);
-        var header = buf.GetInt(p);
-        var len = header & PAYLOAD_SIZE_MASK;
-        var flags = header & ~PAYLOAD_SIZE_MASK;
+        var header = new BlobHeader(SegmentOfPage(page).Memory.Slice(OffsetOfPage(page)));
+        var len = header.PayloadSize;
+        var flags = (BlobFlags)header.Flags;
         if (len == 0 || len > (1 << 30) - 4)
         {
-            Error(AbsPosOfPage(page),
-                "Blob at page %d has illegal payload length (%d)", page, len);
+            Error(AbsPosOfPage(page), "Blob at page %d has illegal payload length (%d)", page, len);
             return null;
         }
 
         var lenPages = (len + _pageSize + 3) / _pageSize;
-        if ((header & FREE_BLOB_FLAG) != 0)
+        if (header.IsFree)
         {
             if ((len + 4) % _pageSize == 0)
-                flags |= VALID_FREE_BLOB_SIZE;
+                flags |= BlobFlags.ValidFreeSize;
+
             var lastPage = page + lenPages - 1;
-            var lastBuf = BufferOfPage(lastPage);
             var pTrailer = OffsetOfPage(lastPage) + _pageSize - 4;
-            if (lastBuf.GetInt(pTrailer) == lenPages)
-                flags |= VALID_FREE_BLOB_TRAILER;
+            if (SegmentOfPage(lastPage).Memory.Span.GetIntLE(pTrailer) == lenPages)
+                flags |= BlobFlags.ValidFreeTrailer;
         }
 
         var blob = new Blob(page, lenPages, flags);

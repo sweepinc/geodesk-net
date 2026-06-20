@@ -485,6 +485,7 @@ internal abstract class Store
     {
         if (_journal == null)
             OpenJournal(journalFile);
+
         Journal.Seek(0, SeekOrigin.Begin);
         var instruction = JournalReadInt();
         if (instruction == 0)

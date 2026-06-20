@@ -126,10 +126,11 @@ public class BlobStoreTest : IDisposable
 
     private void Check(params int[] inUse)
     {
-        BlobStoreChecker checker = new BlobStoreChecker(store);
+        var checker = new BlobStoreChecker(store);
         foreach (int b in inUse) checker.UseBlob(0, b);
         checker.Check();
         checker.ReportErrors(Console.Out);
         Assert.False(checker.HasErrors());
     }
+
 }
