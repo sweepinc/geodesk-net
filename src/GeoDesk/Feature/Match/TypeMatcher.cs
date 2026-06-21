@@ -9,12 +9,20 @@ using NioBuffer = GeoDesk.Buffers.NioBufferReader;
 
 namespace GeoDesk.Feature.Match;
 
+/// <summary>
+/// A matcher that first restricts candidates to an accepted set of feature types (read from the
+/// feature flags) and then delegates the remaining test to a wrapped inner matcher.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.match.TypeMatcher</c>.</remarks>
 internal class TypeMatcher : Matcher
 {
 
     readonly Matcher _matcher;
 
+    /// <summary>
+    /// Creates a type matcher restricting to <paramref name="acceptedTypes"/> and delegating to the
+    /// inner <paramref name="matcher"/>.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.TypeMatcher(int, Matcher)</c>.</remarks>
     public TypeMatcher(int acceptedTypes, Matcher matcher)
         : base(acceptedTypes)
@@ -22,6 +30,9 @@ internal class TypeMatcher : Matcher
         _matcher = matcher;
     }
 
+    /// <summary>
+    /// Rejects the feature if its type is not in the accepted set, otherwise defers to the inner matcher.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.TypeMatcher.accept(ByteBuffer, int)</c>.</remarks>
     public override bool Accept(NioBuffer buf, int pos)
     {
@@ -31,12 +42,19 @@ internal class TypeMatcher : Matcher
         return _matcher.Accept(buf, pos);
     }
 
+    /// <summary>
+    /// Intersects the caller's types with the accepted set and delegates the typed test to the inner
+    /// matcher.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.TypeMatcher.acceptTyped(int, ByteBuffer, int)</c>.</remarks>
     public override bool AcceptTyped(int types, NioBuffer buf, int pos)
     {
         return _matcher.AcceptTyped(types & acceptedTypes, buf, pos);
     }
 
+    /// <summary>
+    /// Delegates the index-key acceptance test to the inner matcher.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.TypeMatcher.acceptIndex(int)</c>.</remarks>
     public override bool AcceptIndex(int keys)
     {

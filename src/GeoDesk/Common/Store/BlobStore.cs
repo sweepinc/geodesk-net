@@ -64,12 +64,20 @@ internal class BlobStore : Store
 
     static int Ushr(int v, int n) => (int)((uint)v >> n);
 
+    /// <summary>
+    /// Downloads the blob identified by the given URL into the store and returns its
+    /// first page. Not yet implemented.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.downloadBlob(URL)</c>.</remarks>
     protected int DownloadBlob(Uri url)
     {
         return 0; // TODO
     }
 
+    /// <summary>
+    /// Configures the remote repository this store fetches missing blobs from by
+    /// creating its downloader.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.setRepository(String)</c>.</remarks>
     public void SetRepository(string url)
     {
@@ -77,6 +85,10 @@ internal class BlobStore : Store
         downloader = new Downloader(this, url);
     }
 
+    /// <summary>
+    /// Initializes a freshly created store file by writing the magic number, version,
+    /// timestamp, metadata size, and initial page count into the header.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.createStore()</c>.</remarks>
     protected override void CreateStore()
     {
@@ -93,18 +105,28 @@ internal class BlobStore : Store
     /// <summary>A cursor over the store header at offset 0 of the base segment.</summary>
     StoreHeader Header => new StoreHeader(BaseSegment.Memory);
 
+    /// <summary>
+    /// Returns the store's creation/modification timestamp read from the header.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.getTimestamp()</c>.</remarks>
     protected override long GetTimestamp()
     {
         return Header.Timestamp;
     }
 
+    /// <summary>
+    /// Returns the store's globally unique identifier read from the header.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.getGuid()</c>.</remarks>
     public Guid GetGuid()
     {
         return Header.Guid;
     }
 
+    /// <summary>
+    /// Validates the store header's magic number and version, throwing a
+    /// <see cref="StoreException"/> if the file is not a compatible BlobStore.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.verifyHeader()</c>.</remarks>
     protected override void VerifyHeader()
     {
@@ -126,6 +148,10 @@ internal class BlobStore : Store
         return Header.IsEmpty;
     }
 
+    /// <summary>
+    /// Initializes the store after opening; if the store is empty and a downloader is
+    /// configured, fetches the metadata blob before use.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.initialize()</c>.</remarks>
     protected override void Initialize()
     {
@@ -138,6 +164,10 @@ internal class BlobStore : Store
         }
     }
 
+    /// <summary>
+    /// Returns the logical size of the store in bytes, computed from the total page
+    /// count in the header and the page size.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.getTrueSize()</c>.</remarks>
     protected override long GetTrueSize()
     {
@@ -150,18 +180,29 @@ internal class BlobStore : Store
         return GetSegment(page >> (30 - pageSizeShift));
     }
 
+    /// <summary>
+    /// Returns the byte offset of the given page within its containing 1&#160;GB
+    /// segment.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.offsetOfPage(int)</c>.</remarks>
     public int OffsetOfPage(int page)
     {
         return (page << pageSizeShift) & 0x3fff_ffff;
     }
 
+    /// <summary>
+    /// Returns the absolute byte offset of the given page from the start of the store
+    /// file.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.absoluteOffsetOfPage(int)</c>.</remarks>
     public long AbsoluteOffsetOfPage(int page)
     {
         return ((long)page) << pageSizeShift;
     }
 
+    /// <summary>
+    /// Returns a writable block view positioned at the start of the given page.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.getBlockOfPage(int)</c>.</remarks>
     protected internal NioBufferWriter GetBlockOfPage(int page)
     {
@@ -169,12 +210,19 @@ internal class BlobStore : Store
         return GetBlock(((long)page) << pageSizeShift);
     }
 
+    /// <summary>
+    /// Returns the store's page size in bytes.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.pageSize()</c>.</remarks>
     public int PageSize()
     {
         return 1 << pageSizeShift;
     }
 
+    /// <summary>
+    /// Returns the absolute offset of the blob index, resolved from the relative
+    /// pointer stored in the header.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.indexPointer()</c>.</remarks>
     public int IndexPointer()
     {
@@ -182,6 +230,10 @@ internal class BlobStore : Store
     }
 
     // TODO: should also make sure page does not lie in meta space
+    /// <summary>
+    /// Validates that the given page number lies within the store's allocated pages,
+    /// throwing a <see cref="StoreException"/> otherwise.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.checkPage(int)</c>.</remarks>
     protected void CheckPage(int page)
     {
@@ -363,12 +415,20 @@ internal class BlobStore : Store
         return totalPages;
     }
 
+    /// <summary>
+    /// Returns true if the given page is the first page of its 1&#160;GB segment, used
+    /// to prevent coalescing free blobs across segment boundaries.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.isFirstPageOfSegment(int)</c>.</remarks>
     bool IsFirstPageOfSegment(int page)
     {
         return (page & ((0x3fff_ffff) >> pageSizeShift)) == 0;
     }
 
+    /// <summary>
+    /// Returns the first free blob of the trunk free-table slot covering the given
+    /// page count, or zero if none.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.getFreeTableBlob(ByteBuffer, int)</c>.</remarks>
     static int GetFreeTableBlob(NioBufferWriter rootBlock, int pages)
     {
@@ -673,6 +733,10 @@ internal class BlobStore : Store
     }
 
     // TODO: remove
+    /// <summary>
+    /// Exports the blob starting at the given page to a gzip-compressed file, masking
+    /// the store-internal flag bits out of its header.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.export(int, Path)</c>.</remarks>
     public void Export(int page, string path)
     {
@@ -697,12 +761,19 @@ internal class BlobStore : Store
         }
     }
 
+    /// <summary>
+    /// Returns the first page of the blob with the given id from the blob index, or
+    /// zero if the blob is not present.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.getIndexEntry(int)</c>.</remarks>
     protected internal int GetIndexEntry(int id)
     {
         return BaseSegment.Memory.Span.GetIntLE(IndexPointer() + id * 4);
     }
 
+    /// <summary>
+    /// Sets the blob index entry for the given id to point at the given first page.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.setIndexEntry(int, int)</c>.</remarks>
     protected internal void SetIndexEntry(int id, int page)
     {
@@ -711,6 +782,11 @@ internal class BlobStore : Store
         indexBlock.PutInt(pIndexEntry % BLOCK_LEN, page);
     }
 
+    /// <summary>
+    /// Returns the first page of the blob with the given id, downloading it from the
+    /// configured repository if it is not already present. Throws when the blob is
+    /// missing and no repository is configured.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.fetchBlob(int)</c>.</remarks>
     public int FetchBlob(int id)
     {
@@ -728,6 +804,9 @@ internal class BlobStore : Store
         return ticket.Page();
     }
 
+    /// <summary>
+    /// Shuts down the downloader if present and closes the underlying store.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.close()</c>.</remarks>
     public new void Close()
     {
@@ -736,6 +815,10 @@ internal class BlobStore : Store
         base.Close();
     }
 
+    /// <summary>
+    /// Frees and unindexes every blob produced by the given iterator within a single
+    /// exclusive transaction.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.removeBlobs(IntIterator)</c>.</remarks>
     public void RemoveBlobs(IEnumerator<int> iter)
     {
@@ -769,6 +852,10 @@ internal class BlobStore : Store
         buf.PutInt(TOTAL_PAGES_OFS, 0);
     }
 
+    /// <summary>
+    /// Creates a new, empty store file at the given path that contains only this
+    /// store's reset metadata section, sized to the pages the metadata occupies.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStore.createCopy(Path)</c>.</remarks>
     public void CreateCopy(string newPath)
     {

@@ -10,18 +10,30 @@ using GeoDesk.Feature.Store;
 
 namespace GeoDesk.Feature.Filters;
 
+/// <summary>
+/// A filter that accepts a way only if one of its nodes lies at a specific encoded
+/// coordinate. Used to find the parent ways that pass through a given node location.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ParentWayFilterXY</c>.</remarks>
 internal class ParentWayFilterXY : IFilter
 {
 
     readonly long _xy;
 
+    /// <summary>
+    /// Creates a filter that matches ways containing a node at the given encoded
+    /// coordinate.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ParentWayFilterXY(long)</c>.</remarks>
     public ParentWayFilterXY(long xy)
     {
         _xy = xy;
     }
 
+    /// <summary>
+    /// Returns true if the given feature is a way that has a node at the target
+    /// encoded coordinate.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ParentWayFilterXY.accept(Feature)</c>.</remarks>
     public bool Accept(IFeature feature)
     {

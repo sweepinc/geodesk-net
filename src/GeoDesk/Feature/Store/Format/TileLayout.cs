@@ -32,17 +32,22 @@ internal readonly struct Bounds
 
     readonly ReadOnlyMemory<byte> _buf; // sliced to the start of the 4-int bbox
 
+    /// <summary>Wraps the given memory window, sliced to the start of the 4-int bbox, as a cursor.</summary>
     public Bounds(ReadOnlyMemory<byte> buf)
     {
         _buf = buf;
     }
 
+    /// <summary>The box's minimum X coordinate.</summary>
     public int MinX => _buf.Span.GetIntLE(MinXOfs);
 
+    /// <summary>The box's minimum Y coordinate.</summary>
     public int MinY => _buf.Span.GetIntLE(MinYOfs);
 
+    /// <summary>The box's maximum X coordinate.</summary>
     public int MaxX => _buf.Span.GetIntLE(MaxXOfs);
 
+    /// <summary>The box's maximum Y coordinate.</summary>
     public int MaxY => _buf.Span.GetIntLE(MaxYOfs);
 
     /// <summary>

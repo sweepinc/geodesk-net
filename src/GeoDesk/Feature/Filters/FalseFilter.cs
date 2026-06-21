@@ -12,6 +12,10 @@ using GeoDesk.Feature;
 // is therefore namespaced as Filters (plural).
 namespace GeoDesk.Feature.Filters;
 
+/// <summary>
+/// A filter that rejects every feature. Exposed as a shared singleton, it is used as the result of a
+/// query that can never match anything.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.filter.FalseFilter</c>.</remarks>
 internal class FalseFilter : IFilter
 {
@@ -19,6 +23,9 @@ internal class FalseFilter : IFilter
     public static readonly IFilter Instance = new FalseFilter();
         // TODO: move to Filters
 
+    /// <summary>
+    /// Always returns false, rejecting the given feature.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.FalseFilter.accept(Feature)</c>.</remarks>
     public bool Accept(IFeature f)
     {

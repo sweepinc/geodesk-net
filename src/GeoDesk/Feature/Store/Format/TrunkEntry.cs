@@ -28,17 +28,22 @@ internal readonly struct TrunkEntry
 
     readonly ReadOnlyMemory<byte> _buf; // sliced to the start of the trunk entry
 
+    /// <summary>Wraps the given memory window, sliced to the start of a trunk entry, as a cursor.</summary>
     public TrunkEntry(ReadOnlyMemory<byte> buf)
     {
         _buf = buf;
     }
 
+    /// <summary>The combined child-pointer-and-flags word.</summary>
     int Word => _buf.Span.GetIntLE(ChildAndFlagsOfs);
 
+    /// <summary>True if this is the last entry in its trunk.</summary>
     public bool IsLast => (Word & LastFlag) != 0;
 
+    /// <summary>True if this entry's child is a leaf rather than another trunk.</summary>
     public bool IsLeaf => (Word & LeafFlag) != 0;
 
+    /// <summary>The child's bounding box.</summary>
     public Bounds Bounds => new Bounds(_buf.Slice(BoundsOfs));
 
     /// <summary>The child node, with the flag bits cleared: a trunk if <see cref="IsLeaf"/> is false, else a leaf.</summary>

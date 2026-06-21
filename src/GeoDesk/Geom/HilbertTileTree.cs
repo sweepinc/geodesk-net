@@ -34,10 +34,20 @@ using System.Collections.Generic;
 
 namespace GeoDesk.Geom;
 
+/// <summary>
+/// Builds a bulk-loaded R-tree by ordering the input bounding boxes along a Hilbert
+/// space-filling curve and packing them bottom-up into fixed-size nodes. The Hilbert
+/// ordering keeps spatially close items adjacent, producing a tree with good query
+/// locality. Based on the flatbush algorithm by Volodymyr Agafonkin.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.geom.HilbertTileTree</c>.</remarks>
 internal class HilbertTileTree : RTree
 {
 
+    /// <summary>
+    /// An item paired with its Hilbert-curve value, used to sort the input bounds
+    /// into Hilbert order before packing.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.HilbertTileTree.Pair</c>.</remarks>
     sealed class Pair : IComparable<Pair>
     {
@@ -45,6 +55,9 @@ internal class HilbertTileTree : RTree
         public int _hilbertValue;
         public IBounds _item = null!;
 
+        /// <summary>
+        /// Orders pairs by ascending Hilbert value.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.geom.HilbertTileTree.Pair.compareTo(Pair)</c>.</remarks>
         public int CompareTo(Pair? o)
         {
@@ -53,6 +66,12 @@ internal class HilbertTileTree : RTree
 
     }
 
+    /// <summary>
+    /// Builds the tree from the given bounding boxes: computes each item's Hilbert
+    /// value at the given zoom, sorts by it, packs items into leaf nodes of at most
+    /// <paramref name="maxEntries"/> entries, then repeatedly packs nodes into parent
+    /// levels until a single root remains.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.HilbertTileTree(List, int, int)</c>.</remarks>
     public HilbertTileTree(List<IBounds> items, int zoom, int maxEntries)
     {

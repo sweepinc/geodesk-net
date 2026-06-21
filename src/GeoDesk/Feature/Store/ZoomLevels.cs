@@ -22,6 +22,10 @@ internal static class ZoomLevels
 
     public const int MAX_LEVEL = 12;
 
+    /// <summary>
+    /// Parses a comma-separated list of zoom levels into a bitmask, validating that
+    /// each level is between 0 and 12 and not repeated.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.ZoomLevels.fromString(String)</c>.</remarks>
     public static int FromString(string s)
     {
@@ -58,30 +62,45 @@ internal static class ZoomLevels
         return zoomLevels;
     }
 
+    /// <summary>
+    /// Returns true if the given zoom level is enabled in the bitmask.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.ZoomLevels.isValidZoomLevel(int, int)</c>.</remarks>
     public static bool IsValidZoomLevel(int zoomLevels, int zoom)
     {
         return (zoomLevels & (1 << zoom)) != 0;
     }
 
+    /// <summary>
+    /// Returns the lowest enabled zoom level in the bitmask.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.ZoomLevels.minZoom(int)</c>.</remarks>
     public static int MinZoom(int zoomLevels)
     {
         return BitOperations.TrailingZeroCount((uint)zoomLevels);
     }
 
+    /// <summary>
+    /// Returns the highest enabled zoom level in the bitmask.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.ZoomLevels.maxZoom(int)</c>.</remarks>
     public static int MaxZoom(int zoomLevels)
     {
         return 31 - BitOperations.LeadingZeroCount((uint)zoomLevels);
     }
 
+    /// <summary>
+    /// Returns the count of enabled zoom levels in the bitmask.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.ZoomLevels.numberOfLevels(int)</c>.</remarks>
     public static int NumberOfLevels(int zoomLevels)
     {
         return BitOperations.PopCount((uint)zoomLevels);
     }
 
+    /// <summary>
+    /// Returns the enabled zoom levels as an ascending array.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.ZoomLevels.toArray(int)</c>.</remarks>
     public static int[] ToArray(int zoomLevels)
     {

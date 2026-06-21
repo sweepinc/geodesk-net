@@ -189,6 +189,11 @@ internal abstract class Store
     // NOTE (port): unlike the Java original, this does NOT cache the mapped "original" buffer;
     // the mapping is re-fetched via GetMapping(SegmentOfPos(pos)) at point of use. (Harmless now
     // that segments are mapped independently and never invalidated; kept as a defensive habit.)
+    /// <summary>
+    /// A modified 4&#160;KB block held in memory during a transaction: its file position
+    /// together with a working copy of its bytes that edits are applied to before
+    /// commit.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.TransactionBlock</c>.</remarks>
     sealed class TransactionBlock
     {
@@ -196,31 +201,54 @@ internal abstract class Store
         public readonly long pos;
         public readonly byte[] bytes; // the 4 KB working copy
 
+        /// <summary>
+        /// Creates a transaction block for the given file position holding the given
+        /// working-copy bytes.
+        /// </summary>
         public TransactionBlock(long pos, byte[] bytes)
         {
             this.pos = pos;
             this.bytes = bytes;
         }
 
+        /// <summary>
+        /// A writable view over this block's working-copy bytes.
+        /// </summary>
         public NioBufferWriter Current => new NioBufferWriter(bytes);
 
     }
 
+    /// <summary>
+    /// The path of the store file. Throws if no path has been set.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.path()</c>.</remarks>
     public string Path => _path ?? throw new InvalidOperationException("Store path has not been set");
 
     // Non-null accessors that assert the relevant lifecycle invariant (open / in-transaction) rather
     // than suppressing nullability with `!`. They turn a stale-state bug into a clear exception.
+    /// <summary>
+    /// The open file channel for the store, asserting the store is open.
+    /// </summary>
     FileStream Channel => _channel ?? throw new InvalidOperationException("Store is not open");
 
+    /// <summary>
+    /// The open journal file, asserting a journal is currently open.
+    /// </summary>
     FileStream Journal => _journal ?? throw new InvalidOperationException("Store has no open journal");
 
+    /// <summary>
+    /// The map of modified blocks in the current transaction, asserting a transaction
+    /// is in progress.
+    /// </summary>
     Dictionary<long, TransactionBlock> TransactionBlocks =>
         _transactionBlocks ?? throw new InvalidOperationException("No transaction is in progress");
 
     /// <summary>The base segment (mapped at offset 0). Valid once the store is open.</summary>
     protected Segment BaseSegment => baseSegment ?? throw new InvalidOperationException("Store is not open");
 
+    /// <summary>
+    /// Sets the store file path; throws if the store is already open.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.setPath(Path)</c>.</remarks>
     public void SetPath(string path)
     {
@@ -245,6 +273,10 @@ internal abstract class Store
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.verifyHeader()</c>.</remarks>
     protected abstract void VerifyHeader();
 
+    /// <summary>
+    /// Performs subclass-specific initialization after the store is opened and its
+    /// header verified. The base implementation does nothing.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.initialize()</c>.</remarks>
     protected virtual void Initialize()
     {
@@ -273,6 +305,10 @@ internal abstract class Store
     // maps segments lazily
     // (protected internal so BlobStoreChecker, in the same assembly, can read segments —
     // Java relied on package-private access here.)
+    /// <summary>
+    /// Returns the n-th 1&#160;GB segment, mapping it lazily and caching it. Mapping is
+    /// guarded by a lock so concurrent callers share a single mapping per segment.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.getMapping(int)</c>.</remarks>
     protected internal Segment GetSegment(int n)
     {
@@ -317,6 +353,10 @@ internal abstract class Store
     }
 
 
+    /// <summary>
+    /// Disposes all mapped segments and clears the segment cache, releasing the
+    /// store's memory mappings.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.unmapSegments()</c>.</remarks>
     bool UnmapSegments()
     {
@@ -400,18 +440,30 @@ internal abstract class Store
         return true;
     }
 
+    /// <summary>
+    /// Opens the store with a shared read lock.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.open()</c>.</remarks>
     public void Open()
     {
         Open(LOCK_READ);
     }
 
+    /// <summary>
+    /// Opens the store with an exclusive lock, preventing other processes from
+    /// accessing it.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.openExclusive()</c>.</remarks>
     public void OpenExclusive()
     {
         Open(LOCK_EXCLUSIVE);
     }
 
+    /// <summary>
+    /// Opens the store file at the requested lock level: enforces single-instance
+    /// access within the process, creates the store if the file is new or empty,
+    /// replays any pending journal, then verifies the header and initializes.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.open(int)</c>.</remarks>
     protected void Open(int lockMode)
     {
@@ -456,6 +508,10 @@ internal abstract class Store
     }
 
     // TODO: use Bytes.putInt
+    /// <summary>
+    /// Writes a 32-bit integer into the first four bytes of the given array in
+    /// little-endian order.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.intToBytes(byte[], int)</c>.</remarks>
     static void IntToBytes(byte[] ba, int v)
     {
@@ -467,12 +523,18 @@ internal abstract class Store
 
     // === Journaling ===
 
+    /// <summary>
+    /// Returns the path of the store's journal file.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.getJournalFile()</c>.</remarks>
     protected string GetJournalFile()
     {
         return _path + "-journal";
     }
 
+    /// <summary>
+    /// Opens (creating if necessary) the journal file for the current transaction.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.openJournal(File)</c>.</remarks>
     void OpenJournal(string journalFile)
     {
@@ -480,6 +542,10 @@ internal abstract class Store
         _journal = new FileStream(journalFile, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
     }
 
+    /// <summary>
+    /// Replays a pending journal left by an interrupted commit, restoring the store to
+    /// a consistent state, and deletes the journal afterward.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.processJournal(File)</c>.</remarks>
     protected bool ProcessJournal(string journalFile)
     {
@@ -695,6 +761,11 @@ internal abstract class Store
             GetSegment(segment).Force();
     }
 
+    /// <summary>
+    /// Closes the store: processes any pending journal, truncates the file to its true
+    /// size, unmaps all segments, releases locks, and removes the store from the
+    /// per-process open set.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.close()</c>.</remarks>
     public void Close()
     {
@@ -764,6 +835,11 @@ internal abstract class Store
         }
     }
 
+    /// <summary>
+    /// Begins a transaction at the given lock level: acquires the transaction monitor
+    /// and file lock, replays any pending journal, records the pre-transaction file
+    /// size, and starts collecting modified blocks.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.beginTransaction(int)</c>.</remarks>
     protected internal void BeginTransaction(int transactionLockLevel)
     {
@@ -796,6 +872,10 @@ internal abstract class Store
         _transactionBlocks = new Dictionary<long, TransactionBlock>();
     }
 
+    /// <summary>
+    /// Ends the current transaction: discards the modified-block map, downgrades to a
+    /// read lock, and releases the transaction monitor.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.endTransaction()</c>.</remarks>
     protected internal void EndTransaction()
     {
@@ -812,12 +892,18 @@ internal abstract class Store
         }
     }
 
+    /// <summary>
+    /// Returns true if a transaction is currently in progress.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.isInTransaction()</c>.</remarks>
     protected bool IsInTransaction()
     {
         return _transactionBlocks != null;
     }
 
+    /// <summary>
+    /// Discards all pending block modifications in the current transaction.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.rollback()</c>.</remarks>
     protected void Rollback()
     {
@@ -834,6 +920,11 @@ internal abstract class Store
         return (int)(pos >> 30);
     }
 
+    /// <summary>
+    /// Commits the current transaction: writes the journal, applies all modified
+    /// blocks to their segments, syncs the affected segments (including any newly
+    /// grown ones) to disk, and clears the journal.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.commit()</c>.</remarks>
     protected internal void Commit()
     {
@@ -869,6 +960,12 @@ internal abstract class Store
         ClearJournal();
     }
 
+    /// <summary>
+    /// Returns a writable view of the 4&#160;KB block at the given aligned file
+    /// position. Within an existing region the block is copied into a transaction
+    /// working copy on first write so it can be journaled; newly appended regions are
+    /// written directly to the segment.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.getBlock(long)</c>.</remarks>
     protected internal NioBufferWriter GetBlock(long pos)
     {
@@ -892,6 +989,9 @@ internal abstract class Store
         return new NioBufferWriter(GetSegment((int)(pos >> 30)).Memory).Slice((int)pos & 0x3fff_ffff, 4096);
     }
 
+    /// <summary>
+    /// Returns the actual on-disk size of the store file as reported by the OS.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Store.currentFileSize()</c>.</remarks>
     public long CurrentFileSize()
     {
@@ -900,6 +1000,9 @@ internal abstract class Store
 
     // === Journal big-endian primitives (Java RandomAccessFile is big-endian) ===
 
+    /// <summary>
+    /// Writes a 32-bit integer to the journal in big-endian byte order.
+    /// </summary>
     /// <remarks>Port-only helper for Java's <c>RandomAccessFile.writeInt(int)</c> (big-endian).</remarks>
     void JournalWriteInt(int v)
     {
@@ -908,6 +1011,9 @@ internal abstract class Store
         Journal.Write(b);
     }
 
+    /// <summary>
+    /// Writes a 64-bit integer to the journal in big-endian byte order.
+    /// </summary>
     /// <remarks>Port-only helper for Java's <c>RandomAccessFile.writeLong(long)</c> (big-endian).</remarks>
     void JournalWriteLong(long v)
     {
@@ -916,6 +1022,9 @@ internal abstract class Store
         Journal.Write(b);
     }
 
+    /// <summary>
+    /// Reads a 32-bit integer from the journal in big-endian byte order.
+    /// </summary>
     /// <remarks>Port-only helper for Java's <c>RandomAccessFile.readInt()</c> (big-endian).</remarks>
     int JournalReadInt()
     {
@@ -924,6 +1033,9 @@ internal abstract class Store
         return BinaryPrimitives.ReadInt32BigEndian(b);
     }
 
+    /// <summary>
+    /// Reads a 64-bit integer from the journal in big-endian byte order.
+    /// </summary>
     /// <remarks>Port-only helper for Java's <c>RandomAccessFile.readLong()</c> (big-endian).</remarks>
     long JournalReadLong()
     {
@@ -932,6 +1044,10 @@ internal abstract class Store
         return BinaryPrimitives.ReadInt64BigEndian(b);
     }
 
+    /// <summary>
+    /// Reads exactly enough bytes to fill the destination span from the journal,
+    /// throwing if the stream ends early.
+    /// </summary>
     /// <remarks>Port-only helper: reads exactly <c>dst.Length</c> bytes or throws (Java's
     /// <c>RandomAccessFile.readXxx</c> throw <c>EOFException</c> on a short read).</remarks>
     void ReadFully(Span<byte> dst)
@@ -948,6 +1064,10 @@ internal abstract class Store
 
     // Marks a file as sparse on Windows so that mapping large segments does not
     // physically allocate them. No-op (and unnecessary) on other platforms.
+    /// <summary>
+    /// Marks the given file as sparse on Windows so that mapping large segments does
+    /// not physically allocate them; a no-op on other platforms.
+    /// </summary>
     /// <remarks>Port-only helper: Windows sparse-file marking (Java requests this via the
     /// <c>SPARSE</c> open option; on Unix files are sparse by default).</remarks>
     static void MarkSparse(FileStream fs)
@@ -966,6 +1086,10 @@ internal abstract class Store
         }
     }
 
+    /// <summary>
+    /// P/Invoke binding to the Win32 <c>DeviceIoControl</c> function, used to issue
+    /// the sparse-file control code in <see cref="MarkSparse"/>.
+    /// </summary>
     /// <remarks>Port-only: P/Invoke for the Windows sparse-file marking in <see cref="MarkSparse"/>.</remarks>
     [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]

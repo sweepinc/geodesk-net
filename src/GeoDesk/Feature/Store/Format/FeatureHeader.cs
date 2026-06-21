@@ -47,18 +47,34 @@ internal readonly struct FeatureHeader
         _buf = buf;
     }
 
+    /// <summary>
+    /// The raw flags word at the feature anchor.
+    /// </summary>
     /// <remarks>Ported from Java <c>StoredFeature.flags()</c>.</remarks>
     public int Flags => _buf.Span.GetIntLE(FlagsOfs);
 
+    /// <summary>
+    /// The feature's OSM identifier, decoded from the high bits of the flags/id word.
+    /// </summary>
     /// <remarks>Ported from Java <c>StoredFeature.id(ByteBuffer, int)</c>.</remarks>
     public long Id => (long)((ulong)_buf.Span.GetLongLE(FlagsOfs) >> IdShift);
 
+    /// <summary>
+    /// The feature's type (node, way, or relation), decoded from the 2-bit type code in
+    /// the flags word.
+    /// </summary>
     /// <remarks>Ported from Java <c>StoredFeature.typeCode(ByteBuffer, int)</c> (the 2-bit code, as the enum).</remarks>
     public FeatureType Type => (FeatureType)((Flags >> TypeShift) & TypeMask);
 
+    /// <summary>
+    /// True if the feature is an area.
+    /// </summary>
     /// <remarks>Ported from Java <c>StoredFeature.isArea()</c>.</remarks>
     public bool IsArea => (Flags & FeatureFlags.AREA_FLAG) != 0;
 
+    /// <summary>
+    /// True if the feature is a member of at least one relation.
+    /// </summary>
     /// <remarks>Ported from Java <c>StoredFeature.belongsToRelation()</c>.</remarks>
     public bool BelongsToRelation => (Flags & FeatureFlags.RELATION_MEMBER_FLAG) != 0;
 

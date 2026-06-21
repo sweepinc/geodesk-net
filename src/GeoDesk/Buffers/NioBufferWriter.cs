@@ -25,6 +25,9 @@ internal readonly struct NioBufferWriter
 
     readonly Memory<byte> _mem;
 
+    /// <summary>
+    /// Wraps the given writable memory window in a buffer writer.
+    /// </summary>
     public NioBufferWriter(Memory<byte> mem)
     {
         _mem = mem;
@@ -38,31 +41,43 @@ internal readonly struct NioBufferWriter
 
     // --- reads ---
 
+    /// <summary>The byte at an absolute index.</summary>
     public byte Get(int index) => _mem.Span[index];
 
+    /// <summary>The little-endian 32-bit integer at an absolute index.</summary>
     public int GetInt(int index) => _mem.Span.GetIntLE(index);
 
+    /// <summary>The little-endian 64-bit integer at an absolute index.</summary>
     public long GetLong(int index) => _mem.Span.GetLongLE(index);
 
+    /// <summary>The little-endian 16-bit integer at an absolute index.</summary>
     public short GetShort(int index) => _mem.Span.GetShortLE(index);
 
+    /// <summary>The little-endian 16-bit character at an absolute index.</summary>
     public char GetChar(int index) => _mem.Span.GetCharLE(index);
 
+    /// <summary>Absolute bulk get into the whole destination array.</summary>
     public void Get(int index, byte[] dst) => _mem.Span.Slice(index, dst.Length).CopyTo(dst);
 
+    /// <summary>Absolute bulk get of <paramref name="length"/> bytes into a region of the destination.</summary>
     public void Get(int index, byte[] dst, int offset, int length) =>
         _mem.Span.Slice(index, length).CopyTo(dst.AsSpan(offset, length));
 
     // --- writes ---
 
+    /// <summary>Writes a byte at an absolute index.</summary>
     public void Put(int index, byte b) => _mem.Span[index] = b;
 
+    /// <summary>Writes a little-endian 32-bit integer at an absolute index.</summary>
     public void PutInt(int index, int value) => _mem.Span.PutIntLE(index, value);
 
+    /// <summary>Writes a little-endian 64-bit integer at an absolute index.</summary>
     public void PutLong(int index, long value) => _mem.Span.PutLongLE(index, value);
 
+    /// <summary>Writes a little-endian 16-bit integer at an absolute index.</summary>
     public void PutShort(int index, short value) => _mem.Span.PutShortLE(index, value);
 
+    /// <summary>Writes a little-endian 16-bit character at an absolute index.</summary>
     public void PutChar(int index, char value) => _mem.Span.PutCharLE(index, value);
 
     /// <summary>Absolute bulk put (<c>ByteBuffer.put(int, byte[])</c>).</summary>

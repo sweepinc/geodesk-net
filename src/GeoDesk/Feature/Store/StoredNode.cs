@@ -19,26 +19,62 @@ using NioBuffer = GeoDesk.Buffers.NioBufferReader;
 
 namespace GeoDesk.Feature.Store;
 
+/// <summary>
+/// A node feature read directly from a feature library tile. Exposes the node's
+/// coordinate, geometry, and its parent ways and relations by decoding the stored
+/// representation on demand.
+/// </summary>
+/// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode</c>.</remarks>
 internal class StoredNode : StoredFeature, INode
 {
+    /// <summary>
+    /// Creates a stored node backed by the given store, buffer, and pointer to the
+    /// node's record.
+    /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode(FeatureStore, ByteBuffer, int)</c>.</remarks>
     public StoredNode(FeatureStore store, NioBuffer buf, int ptr)
         : base(store, buf, ptr)
     {
     }
 
+    /// <summary>
+    /// Returns an empty enumerator; a node has no members.
+    /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.iterator()</c>.</remarks>
     public override IEnumerator<IFeature> GetEnumerator()
     {
         return Enumerable.Empty<IFeature>().GetEnumerator();
     }
 
+    /// <summary>
+    /// The feature type, always <see cref="FeatureType.Node"/>.
+    /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.type()</c>.</remarks>
     public override FeatureType Type => FeatureType.Node;
 
+    /// <summary>
+    /// Always true; this feature is a node.
+    /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.isNode()</c>.</remarks>
     public bool IsNode => true;
 
+    /// <summary>
+    /// The node's X coordinate in the library's projection, read from the record.
+    /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.x()</c>.</remarks>
     public override int X => buf.GetInt(ptr - 8);
 
+    /// <summary>
+    /// The node's Y coordinate in the library's projection, read from the record.
+    /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.y()</c>.</remarks>
     public override int Y => buf.GetInt(ptr - 4);
 
+    /// <summary>
+    /// The bounding box of the node: a degenerate box at its coordinate, or an empty
+    /// box when the coordinate is 0/0 (used to mark missing nodes).
+    /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.bounds()</c>.</remarks>
     public override Box Bounds
     {
         get
@@ -54,21 +90,38 @@ internal class StoredNode : StoredFeature, INode
         }
     }
 
+    /// <summary>
+    /// Returns the node's coordinate as a two-element X/Y array.
+    /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.toXY()</c>.</remarks>
     public override int[] ToXY()
     {
         return new int[] { X, Y };
     }
 
+    /// <summary>
+    /// Returns the node as a JTS/NTS point geometry at its coordinate.
+    /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.toGeometry()</c>.</remarks>
     public override Geometry ToGeometry()
     {
         return store.GeometryFactory().CreatePoint(new Coordinate(X, Y));
     }
 
+    /// <summary>
+    /// Returns a debug string of the form <c>node/{id}</c>.
+    /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.toString()</c>.</remarks>
     public override string ToString()
     {
         return "node/" + Id;
     }
 
+    /// <summary>
+    /// Returns the absolute buffer pointer to the node's relation table. For a node
+    /// the body pointer is itself the pointer to the reltable.
+    /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.getRelationTablePtr()</c>.</remarks>
     public override int GetRelationTablePtr()
     {
         // A Node's body pointer is the pointer to its reltable
@@ -76,6 +129,10 @@ internal class StoredNode : StoredFeature, INode
         return buf.GetInt(ppBody) + ppBody;
     }
 
+    /// <summary>
+    /// Returns a world view over the ways that include this node, combining a
+    /// parent-way filter (matching by this node's id) with any supplied filter.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.parentWays(int, Matcher, Filter)</c>.</remarks>
     public WorldView ParentWays(int types, Matcher matcher, IFilter? filter)
     {
@@ -86,6 +143,11 @@ internal class StoredNode : StoredFeature, INode
         return new WorldView(store, types & TypeBits.WAYS & TypeBits.WAYNODE_FLAGGED, Bounds, matcher, newFilter);
     }
 
+    /// <summary>
+    /// Returns a query over this node's parents (ways, relations, or both) selected by
+    /// the requested types. The node's flags determine which parent kinds exist and
+    /// the appropriate view is constructed; an empty view is returned when none apply.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.parents(int, Matcher, Filter)</c>.</remarks>
     public IFeatureQuery Parents(int types, Matcher matcher, IFilter? filter)
     {
@@ -105,12 +167,19 @@ internal class StoredNode : StoredFeature, INode
         return EmptyView.Any;
     }
 
+    /// <summary>
+    /// Returns a query over all of this node's parent ways and relations.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.parents()</c>.</remarks>
     public override IFeatureQuery Parents()
     {
         return Parents(TypeBits.RELATIONS | TypeBits.WAYS, Matcher.ALL, null);
     }
 
+    /// <summary>
+    /// Returns a query over the parents of this node that satisfy the given GOQL
+    /// query string.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.parents(String)</c>.</remarks>
     public override IFeatureQuery Parents(string query)
     {
@@ -120,10 +189,17 @@ internal class StoredNode : StoredFeature, INode
 
     // TODO: No need to dereference the nodes in a way; we could simply check for
     //  same buffer and pointer (Nodes always live in one tile only)
+    /// <summary>
+    /// A filter that accepts a way only if it has this node among its feature-nodes,
+    /// matching by the node's id rather than by coordinate.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.ParentWayFilter</c>.</remarks>
     class ParentWayFilter : IdMatcher, IFilter
     {
 
+        /// <summary>
+        /// Creates a filter that matches ways containing the node with the given id.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.ParentWayFilter(long)</c>.</remarks>
         public ParentWayFilter(long nodeId) :
             base(0, nodeId)
@@ -131,6 +207,10 @@ internal class StoredNode : StoredFeature, INode
 
         }
 
+        /// <summary>
+        /// Returns true if the given way contains the target node among its
+        /// feature-nodes.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.ParentWayFilter.accept(Feature)</c>.</remarks>
         public bool Accept(IFeature feature)
         {

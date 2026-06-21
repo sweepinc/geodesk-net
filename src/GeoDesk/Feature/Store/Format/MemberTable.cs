@@ -28,14 +28,19 @@ internal readonly struct MemberTable
     readonly FeatureStore _store;
     readonly ReadOnlyMemory<byte> _buf; // sliced to the start of the member table
 
+    /// <summary>
+    /// Creates a member-table handle over the given store and memory sliced to the table.
+    /// </summary>
     public MemberTable(FeatureStore store, ReadOnlyMemory<byte> buf)
     {
         _store = store;
         _buf = buf;
     }
 
+    /// <summary>The store the member table belongs to, needed to resolve foreign members.</summary>
     public FeatureStore Store => _store;
 
+    /// <summary>The memory window sliced to the member table.</summary>
     public ReadOnlyMemory<byte> Buf => _buf;
 
     /// <summary>True if the table has no entries.</summary>

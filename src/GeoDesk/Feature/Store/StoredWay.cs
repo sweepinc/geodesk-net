@@ -20,25 +20,49 @@ using NioBuffer = GeoDesk.Buffers.NioBufferReader;
 
 namespace GeoDesk.Feature.Store;
 
+/// <summary>
+/// A way feature read directly from a feature library tile. Decodes its coordinate
+/// sequence (delta-encoded in the body) on demand and exposes its nodes, geometry,
+/// and length.
+/// </summary>
+/// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay</c>.</remarks>
 internal class StoredWay : StoredFeature, IWay
 {
 
+    /// <summary>
+    /// Creates a stored way backed by the given store, buffer, and pointer to the
+    /// way's record.
+    /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay(FeatureStore, ByteBuffer, int)</c>.</remarks>
     public StoredWay(FeatureStore store, NioBuffer buf, int ptr) :
         base(store, buf, ptr)
     {
 
     }
 
+    /// <summary>
+    /// The feature type, always <see cref="FeatureType.Way"/>.
+    /// </summary>
     public override FeatureType Type => FeatureType.Way;
 
+    /// <summary>
+    /// Always true; this feature is a way.
+    /// </summary>
     public bool IsWay => true;
 
+    /// <summary>
+    /// Returns a debug string of the form <c>way/{id}</c>.
+    /// </summary>
     public override string ToString()
     {
         return "way/" + Id;
     }
 
     // Iterates the way's coordinates as packed long x/y values.
+    /// <summary>
+    /// Iterates a way's coordinates as packed X/Y longs, decoding the delta-encoded
+    /// body. For area ways the first coordinate is repeated as the closing point.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.XYIterator</c>.</remarks>
     public class XYIterator : PbfDecoder
     {
@@ -51,6 +75,10 @@ internal class StoredWay : StoredFeature, IWay
         int _duplicatedLastCoord;
         readonly int _flags;
 
+        /// <summary>
+        /// Creates the coordinate iterator over the way body at the given position,
+        /// seeded with the preceding X/Y and flags, and reads the first coordinate.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.XYIterator(ByteBuffer, int, int, int, int)</c>.</remarks>
         public XYIterator(NioBuffer buf, int pos, int prevX, int prevY, int flags) :
             base(buf, pos)
@@ -73,6 +101,10 @@ internal class StoredWay : StoredFeature, IWay
             _firstY = _y;
         }
 
+        /// <summary>
+        /// Advances to the next coordinate, decoding the next signed delta pair or
+        /// re-emitting the first coordinate to close an area ring.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.XYIterator.readNext()</c>.</remarks>
         void ReadNext()
         {
@@ -88,12 +120,18 @@ internal class StoredWay : StoredFeature, IWay
             _y += (int)ReadSignedVarint();
         }
 
+        /// <summary>
+        /// Returns true while more coordinates remain to be produced.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.XYIterator.hasNext()</c>.</remarks>
         public bool HasNext()
         {
             return remaining >= 0;
         }
 
+        /// <summary>
+        /// Returns the current packed X/Y coordinate and advances to the next.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.XYIterator.nextXY()</c>.</remarks>
         public long NextXY()
         {
@@ -104,6 +142,11 @@ internal class StoredWay : StoredFeature, IWay
 
     }
 
+    /// <summary>
+    /// Returns the way's full coordinate sequence as a flat X/Y array, decoded from the
+    /// delta-encoded body.
+    /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.toXY()</c>.</remarks>
     public override int[] ToXY()
     {
         int flags = buf.GetInt(ptr);
@@ -118,6 +161,10 @@ internal class StoredWay : StoredFeature, IWay
         return coords;
     }
 
+    /// <summary>
+    /// Builds the way's geometry: a polygon when it is an area, otherwise a line string.
+    /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.toGeometry()</c>.</remarks>
     public override Geometry ToGeometry()
     {
         GeometryFactory factory = store.GeometryFactory();
@@ -140,11 +187,20 @@ internal class StoredWay : StoredFeature, IWay
         return new XYIterator(buf, pBody, minX, minY, flags);
     }
 
+    /// <summary>
+    /// Returns an iterator over this way's coordinates using the way's own flags.
+    /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.iterXY()</c>.</remarks>
     public XYIterator IterXY()
     {
         return IterXY(buf.GetInt(ptr));
     }
 
+    /// <summary>
+    /// The length of the way in meters (0 for areas), summed over its segments and
+    /// corrected for Mercator distortion.
+    /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.length()</c>.</remarks>
     public double Length
     {
         get
@@ -169,12 +225,19 @@ internal class StoredWay : StoredFeature, IWay
         }
     }
 
+    /// <summary>
+    /// Returns a query over all of this way's nodes.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.nodes()</c>.</remarks>
     public IFeatureQuery Nodes()
     {
         return new WayNodeView(store, buf, ptr);
     }
 
+    /// <summary>
+    /// Returns a query over this way's nodes that match the given GOQL query string;
+    /// empty when the way has no feature-nodes or the query excludes nodes.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.nodes(String)</c>.</remarks>
     public IFeatureQuery Nodes(string query)
     {
@@ -186,6 +249,9 @@ internal class StoredWay : StoredFeature, IWay
         return new WayNodeView(store, buf, ptr, TypeBits.NODES, matcher, null);
     }
 
+    /// <summary>
+    /// Returns an iterator over this way's feature-nodes; empty when the way has none.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.iterator()</c>.</remarks>
     public override IEnumerator<IFeature> GetEnumerator()
     {
@@ -198,6 +264,10 @@ internal class StoredWay : StoredFeature, IWay
             (flags & FeatureFlags.RELATION_MEMBER_FLAG), Matcher.ALL);
     }
 
+    /// <summary>
+    /// Returns an iterator over this way's feature-nodes filtered by the given matcher.
+    /// The way is assumed to carry feature-nodes.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.fastFeatureNodeIterator(Matcher)</c>.</remarks>
     internal FeatureIterator FastFeatureNodeIterator(Matcher matcher)
     {
@@ -210,6 +280,11 @@ internal class StoredWay : StoredFeature, IWay
     }
 
     // TODO: matcher vs filter!
+    /// <summary>
+    /// Iterates the feature-nodes of a way, decoding the packed node-reference list to
+    /// resolve local and foreign nodes (loading foreign tiles and their exports as
+    /// needed) and yielding those accepted by the matcher.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.Iter</c>.</remarks>
     public class Iter : FeatureIterator
     {
@@ -230,6 +305,10 @@ internal class StoredWay : StoredFeature, IWay
         NioBuffer _foreignBuf;
         int _pExports;
 
+        /// <summary>
+        /// Creates the iterator over the way's node-reference list starting at the given
+        /// position and pre-fetches the first matching feature-node.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.Iter(FeatureStore, ByteBuffer, int, Matcher)</c>.</remarks>
         public Iter(FeatureStore store, NioBuffer buf, int pFirst, Matcher filter)
         {
@@ -240,6 +319,11 @@ internal class StoredWay : StoredFeature, IWay
             FetchNext();
         }
 
+        /// <summary>
+        /// Advances to the next feature-node accepted by the matcher, decoding foreign
+        /// references and TEX/TIP deltas and resolving the node's buffer location.
+        /// Caches the result, or null once the list is exhausted.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.Iter.fetchNext()</c>.</remarks>
         void FetchNext()
         {
@@ -313,12 +397,18 @@ internal class StoredWay : StoredFeature, IWay
             _featureNode = null;
         }
 
+        /// <summary>
+        /// Returns true if a pre-fetched feature-node is available.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.Iter.hasNext()</c>.</remarks>
         public override bool HasNext()
         {
             return _featureNode != null;
         }
 
+        /// <summary>
+        /// Returns the current feature-node and pre-fetches the next one.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.Iter.next()</c>.</remarks>
         public override IFeature? Next()
         {

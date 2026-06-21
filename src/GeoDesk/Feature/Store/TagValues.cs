@@ -11,6 +11,11 @@ using GeoDesk.Common.Math;
 
 namespace GeoDesk.Feature.Store;
 
+/// <summary>
+/// Constants and helpers for the encoding of tag values in a feature library: the
+/// number/string type codes, the narrow/wide number ranges, and conversions between
+/// encoded numbers and their string, int, long, and double forms.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.store.TagValues</c>.</remarks>
 internal static class TagValues
 {
@@ -41,6 +46,10 @@ internal static class TagValues
         return mantissa >= MIN_NUMBER && mantissa <= MAX_NARROW_NUMBER;
     }
 
+    /// <summary>
+    /// Converts an encoded wide number to a double, applying its 0/1/2/3-digit decimal
+    /// scale.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.TagValues.wideNumberToDouble(int)</c>.</remarks>
     public static double WideNumberToDouble(int number)
     {
@@ -54,6 +63,10 @@ internal static class TagValues
         }
     }
 
+    /// <summary>
+    /// Converts an encoded wide number to its string form, formatting it with the
+    /// appropriate number of decimal places for its scale.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.TagValues.wideNumberToString(int)</c>.</remarks>
     public static string? WideNumberToString(int number)
     {
@@ -68,18 +81,27 @@ internal static class TagValues
         return null; // cannot reach this
     }
 
+    /// <summary>
+    /// Parses a tag value string as an int, via its numeric interpretation.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.TagValues.toInt(String)</c>.</remarks>
     public static int ToInt(string s)
     {
         return (int)MathUtils.DoubleFromString(s);
     }
 
+    /// <summary>
+    /// Parses a tag value string as a long, via its numeric interpretation.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.TagValues.toLong(String)</c>.</remarks>
     public static long ToLong(string s)
     {
         return (long)MathUtils.DoubleFromString(s);
     }
 
+    /// <summary>
+    /// Parses a tag value string as a double.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.TagValues.toDouble(String)</c>.</remarks>
     public static double ToDouble(string s)
     {

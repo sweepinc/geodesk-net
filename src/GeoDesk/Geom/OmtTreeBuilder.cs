@@ -41,6 +41,12 @@ namespace GeoDesk.Geom;
 
 // careful when translating code from JavaScript:
 // must cast ints explicitly into doubles
+/// <summary>
+/// Bulk-loads a spatial tree using the Overlap Minimizing Top-down (OMT) algorithm:
+/// items are recursively partitioned into roughly square tiles by alternately
+/// selecting on the X and Y axes, producing a balanced tree with low node overlap.
+/// Based on the rbush implementation by Volodymyr Agafonkin.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.geom.OmtTreeBuilder</c>.</remarks>
 internal class OmtTreeBuilder<B> : ISpatialTreeBuilder<B> where B : IBounds
 {
@@ -51,6 +57,10 @@ internal class OmtTreeBuilder<B> : ISpatialTreeBuilder<B> where B : IBounds
     readonly int _maxEntries;
     readonly ISpatialTreeFactory<B> _factory;
 
+    /// <summary>
+    /// Creates a builder that constructs nodes via the given factory with at most
+    /// <paramref name="maxEntries"/> entries per node.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.OmtTreeBuilder(SpatialTreeFactory, int)</c>.</remarks>
     public OmtTreeBuilder(ISpatialTreeFactory<B> factory, int maxEntries)
     {
@@ -58,6 +68,12 @@ internal class OmtTreeBuilder<B> : ISpatialTreeBuilder<B> where B : IBounds
         _maxEntries = maxEntries;
     }
 
+    /// <summary>
+    /// Recursively builds the subtree covering items in the index range
+    /// [<paramref name="left"/>, <paramref name="right"/>]: returns a leaf when the
+    /// range fits in one node, otherwise partitions the range into mostly-square
+    /// tiles via X/Y quickselect and packs each tile into a child branch.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.OmtTreeBuilder.build(ArrayList, int, int, int, int)</c>.</remarks>
     B Build(IList<IBounds> items, int left, int right, int height, int maxEntries)
     {
@@ -105,19 +121,34 @@ internal class OmtTreeBuilder<B> : ISpatialTreeBuilder<B> where B : IBounds
     }
 
     // Port of Java's method reference OmtTreeBuilder::compareMinX.
+    /// <summary>
+    /// Comparer that orders bounds by ascending minimum X coordinate.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.OmtTreeBuilder.compareMinX(Bounds, Bounds)</c>.</remarks>
     sealed class MinXComparer : IComparer<IBounds>
     {
+        /// <summary>
+        /// Compares two bounds by their minimum X coordinate.
+        /// </summary>
         public int Compare(IBounds? a, IBounds? b) => a!.MinX - b!.MinX;
     }
 
     // Port of Java's method reference OmtTreeBuilder::compareMinY.
+    /// <summary>
+    /// Comparer that orders bounds by ascending minimum Y coordinate.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.OmtTreeBuilder.compareMinY(Bounds, Bounds)</c>.</remarks>
     sealed class MinYComparer : IComparer<IBounds>
     {
+        /// <summary>
+        /// Compares two bounds by their minimum Y coordinate.
+        /// </summary>
         public int Compare(IBounds? a, IBounds? b) => a!.MinY - b!.MinY;
     }
 
+    /// <summary>
+    /// Builds the complete spatial tree over all the given items and returns its root.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.OmtTreeBuilder.build(ArrayList)</c>.</remarks>
     public B Build(IList<IBounds> items)
     {

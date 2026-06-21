@@ -53,6 +53,10 @@ internal class BlobStoreChecker
         Free = FREE_BLOB_FLAG,
     }
 
+    /// <summary>
+    /// A blob discovered during a consistency check, tracking its first page, page
+    /// count, and accumulated validation flags.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.Blob</c>.</remarks>
     public class Blob : IComparable<Blob>
     {
@@ -61,6 +65,9 @@ internal class BlobStoreChecker
         internal int pages;
         internal BlobFlags flags;
 
+        /// <summary>
+        /// Creates a blob record with the given first page, page count, and flags.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.Blob(int, int, int)</c>.</remarks>
         internal Blob(int firstPage, int pages, BlobFlags flags)
         {
@@ -69,18 +76,30 @@ internal class BlobStoreChecker
             this.flags = flags;
         }
 
+        /// <summary>
+        /// True if this blob has been reached from the blob index (it is in use).
+        /// </summary>
         /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.Blob.isReferenced()</c>.</remarks>
         internal bool IsReferenced => (flags & BlobFlags.Referenced) != 0;
 
+        /// <summary>
+        /// True if this blob is marked free on disk.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.Blob.isFree()</c>.</remarks>
         internal bool IsFree => (flags & BlobFlags.Free) != 0;
 
+        /// <summary>
+        /// Returns true if all the given flags are set on this blob.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.Blob.hasFlags(int)</c>.</remarks>
         internal bool HasFlags(BlobFlags flags)
         {
             return (this.flags & flags) == flags;
         }
 
+        /// <summary>
+        /// Orders blobs by ascending first page, so a sorted list reflects file layout.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.Blob.compareTo(Blob)</c>.</remarks>
         public int CompareTo(Blob? other)
         {
@@ -100,6 +119,10 @@ internal class BlobStoreChecker
     readonly Dictionary<int, Blob> _blobs = new Dictionary<int, Blob>();
     readonly List<ErrorEntry> _errors = new List<ErrorEntry>();
 
+    /// <summary>
+    /// Creates a checker for the given store, reading its file size and header
+    /// parameters in preparation for the consistency checks.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker(BlobStore)</c>.</remarks>
     public BlobStoreChecker(BlobStore store)
     {
@@ -121,6 +144,10 @@ internal class BlobStoreChecker
         _pagesPerSegment = (1 << 30) / _pageSize;
     }
 
+    /// <summary>
+    /// Runs the full consistency check: metadata, free tables, blob index, and the
+    /// blob layout itself, accumulating any errors found.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.check()</c>.</remarks>
     public void Check()
     {
@@ -130,6 +157,10 @@ internal class BlobStoreChecker
         CheckBlobs();
     }
 
+    /// <summary>
+    /// Validates that the metadata section size in the header is within the allowed
+    /// range.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.checkMetadata()</c>.</remarks>
     protected void CheckMetadata()
     {
@@ -140,12 +171,21 @@ internal class BlobStoreChecker
         }
     }
 
+    /// <summary>
+    /// Validates the blob index. The base implementation does nothing; subclasses that
+    /// know the index format override it to mark referenced blobs.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.checkIndex()</c>.</remarks>
     protected virtual void CheckIndex()
     {
         // TODO: abstract?
     }
 
+    /// <summary>
+    /// Walks the discovered blobs in file order, detecting gaps, overlaps,
+    /// unreferenced data, mismatched free flags, and missing free-blob consolidation,
+    /// and verifies that the layout reaches exactly the recorded total page count.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.checkBlobs()</c>.</remarks>
     protected void CheckBlobs()
     {
@@ -231,6 +271,10 @@ internal class BlobStoreChecker
         CheckUnreferenced(nextPage, _totalPages);
     }
 
+    /// <summary>
+    /// Reports the page range [<paramref name="start"/>, <paramref name="end"/>) as
+    /// unreferenced data not accounted for by any blob.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.checkUnreferenced(int, int)</c>.</remarks>
     void CheckUnreferenced(int start, int end)
     {
@@ -239,24 +283,39 @@ internal class BlobStoreChecker
 
     // We compute the segment ourselves (rather than delegating to BlobStore) to give us more
     // flexibility later in addressing corrupt page size settings. The caller wraps its Memory as needed.
+    /// <summary>
+    /// Returns the mapped segment containing the given page, computing the segment
+    /// index independently of the store to tolerate corrupt page-size settings.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.bufferOfPage(int)</c>.</remarks>
     protected Segment SegmentOfPage(int page)
     {
         return store.GetSegment(page / _pagesPerSegment);
     }
 
+    /// <summary>
+    /// Returns the byte offset of the given page within its containing segment.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.offsetOfPage(int)</c>.</remarks>
     protected int OffsetOfPage(int page)
     {
         return (page % _pagesPerSegment) * _pageSize;
     }
 
+    /// <summary>
+    /// Returns the absolute byte offset of the given page from the start of the file.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.absPosOfPage(int)</c>.</remarks>
     protected long AbsPosOfPage(int page)
     {
         return (long)page * _pageSize;
     }
 
+    /// <summary>
+    /// Verifies the trunk and leaf free tables: that each referenced free blob exists,
+    /// is actually free, falls in the correct size range, and that the range bitmasks
+    /// match the slots that are populated.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.checkFreeTables()</c>.</remarks>
     void CheckFreeTables()
     {
@@ -287,6 +346,10 @@ internal class BlobStoreChecker
         CheckExpectedVsActual(TRUNK_FT_RANGE_BITS_OFS, "trunk_free_range_mask", rangesUsed, header.TrunkRangeBits);
     }
 
+    /// <summary>
+    /// Reports an error at the given offset when an actual stored value differs from
+    /// the value the checker computed.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.checkExpectedVsActual(long, String, int, int)</c>.</remarks>
     void CheckExpectedVsActual(long ofs, string what, int expected, int actual)
     {
@@ -294,6 +357,10 @@ internal class BlobStoreChecker
             Error(ofs, "%s should be %08X instead of %08X", what, expected, actual);
     }
 
+    /// <summary>
+    /// Returns true if the blob is marked free, reporting an error otherwise (it was
+    /// referenced from a free table but is not free).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.checkBlobIsFree(Blob)</c>.</remarks>
     bool CheckBlobIsFree(Blob blob)
     {
@@ -305,6 +372,11 @@ internal class BlobStoreChecker
         return true;
     }
 
+    /// <summary>
+    /// Verifies a leaf free table held in the given free blob: that the blob's size
+    /// falls in the trunk slot's range and that each populated leaf slot references a
+    /// valid free-blob chain, then checks the leaf range bitmask.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.checkLeafFreeTable(int, Blob)</c>.</remarks>
     void CheckLeafFreeTable(int trunkSlot, Blob blob)
     {
@@ -342,6 +414,11 @@ internal class BlobStoreChecker
             Error(blob, "Leaf free-table must have at least one entry");
     }
 
+    /// <summary>
+    /// Walks a doubly-linked free-blob chain for a given size class, verifying each
+    /// blob is free, has the expected page count and correct prev/next links, and
+    /// detecting circular references.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.checkFreeBlobChain(int, int, Blob)</c>.</remarks>
     void CheckFreeBlobChain(int trunkSlot, int leafSlot, Blob blob)
     {
@@ -390,6 +467,10 @@ internal class BlobStoreChecker
         }
     }
 
+    /// <summary>
+    /// A recorded consistency error, associating a file location with a descriptive
+    /// message so errors can be sorted and reported in file order.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.Error</c>.</remarks>
     sealed class ErrorEntry : IComparable<ErrorEntry>
     {
@@ -397,6 +478,9 @@ internal class BlobStoreChecker
         internal readonly long location;
         internal readonly string message;
 
+        /// <summary>
+        /// Creates an error at the given file location with the given message.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.Error(long, String)</c>.</remarks>
         internal ErrorEntry(long location, string message)
         {
@@ -404,12 +488,18 @@ internal class BlobStoreChecker
             this.message = message;
         }
 
+        /// <summary>
+        /// Orders errors by ascending file location.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.Error.compareTo(Error)</c>.</remarks>
         public int CompareTo(ErrorEntry? other)
         {
             return location.CompareTo(other!.location);
         }
 
+        /// <summary>
+        /// Formats the error as a hex offset followed by its message.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.Error.toString()</c>.</remarks>
         public override string ToString()
         {
@@ -418,18 +508,30 @@ internal class BlobStoreChecker
 
     }
 
+    /// <summary>
+    /// Records a consistency error at the given file offset, formatting the message
+    /// with the supplied arguments.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.error(long, String, Object...)</c>.</remarks>
     protected void Error(long ofs, string msg, params object?[] args)
     {
         _errors.Add(new ErrorEntry(ofs, JavaFormat.Format(msg, args)));
     }
 
+    /// <summary>
+    /// Records a consistency error associated with the given blob, prefixing the
+    /// message with the blob's first page.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.error(Blob, String, Object...)</c>.</remarks>
     protected void Error(Blob blob, string msg, params object?[] args)
     {
         _errors.Add(new ErrorEntry(AbsPosOfPage(blob.firstPage), JavaFormat.Format("Blob " + blob.firstPage + msg, args)));
     }
 
+    /// <summary>
+    /// Resolves the blob at the given page, reporting an error at the referencing
+    /// offset and returning null if the reference is invalid.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.getValidBlob(long, int)</c>.</remarks>
     Blob? GetValidBlob(long ofs, int page)
     {
@@ -440,6 +542,10 @@ internal class BlobStoreChecker
         return blob;
     }
 
+    /// <summary>
+    /// Resolves the blob at the given page and marks it referenced (in use); reports
+    /// an error and returns null if the reference is invalid.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.useBlob(long, int)</c>.</remarks>
     public Blob? UseBlob(long ofs, int page)
     {
@@ -450,6 +556,12 @@ internal class BlobStoreChecker
         return blob;
     }
 
+    /// <summary>
+    /// Returns the blob record for the given page, decoding its header (and computing
+    /// free-blob validity flags) on first access and caching it. Returns null and
+    /// reports an error when the page is out of range or the payload length is
+    /// illegal.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.getBlob(int)</c>.</remarks>
     Blob? GetBlob(int page)
     {
@@ -488,6 +600,9 @@ internal class BlobStoreChecker
         return blob;
     }
 
+    /// <summary>
+    /// Writes all accumulated errors, sorted by file location, to the given writer.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.reportErrors(PrintStream)</c>.</remarks>
     public void ReportErrors(TextWriter @out)
     {
@@ -496,6 +611,9 @@ internal class BlobStoreChecker
             @out.WriteLine(error);
     }
 
+    /// <summary>
+    /// Returns true if any consistency errors were recorded.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreChecker.hasErrors()</c>.</remarks>
     public bool HasErrors()
     {

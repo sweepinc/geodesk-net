@@ -26,6 +26,9 @@ internal readonly struct BlobHeader
 
     readonly ReadOnlyMemory<byte> _buf;
 
+    /// <summary>
+    /// Wraps the given memory window, sliced to the start of a blob, as a header cursor.
+    /// </summary>
     public BlobHeader(ReadOnlyMemory<byte> buf)
     {
         _buf = buf;

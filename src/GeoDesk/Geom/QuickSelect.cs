@@ -33,6 +33,11 @@ using static System.Math;
 
 namespace GeoDesk.Geom;
 
+/// <summary>
+/// Quickselect-based partial sorting: rearranges a list so elements fall into ordered groups, and
+/// places the k-th element in its sorted position, without fully sorting the list. Used to build
+/// spatial trees by partitioning features. Adapted from Volodymyr Agafonkin's quickselect.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.geom.QuickSelect</c>.</remarks>
 internal static class QuickSelect
 {
@@ -40,6 +45,10 @@ internal static class QuickSelect
     // sort an array so that items come in groups of n unsorted items, with groups sorted between each
     // other; combines selection algorithm with binary divide & conquer approach
 
+    /// <summary>
+    /// Partially sorts the list so that it is divided into consecutive groups of <paramref name="n"/>
+    /// elements, with the groups ordered relative to one another (but elements unsorted within a group).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.QuickSelect.multiSelect(List, int, int, int, Comparator)</c>.</remarks>
     public static void MultiSelect<T>(IList<T> arr, int left, int right, int n, IComparer<T> compare)
     {
@@ -64,12 +73,20 @@ internal static class QuickSelect
         }
     }
 
+    /// <summary>
+    /// Rearranges the list so that the element at index <paramref name="k"/> is the one that would be
+    /// there if the range were fully sorted, with smaller elements to its left and larger to its right.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.QuickSelect.quickselect(List, int, int, int, Comparator)</c>.</remarks>
     public static void Quickselect<T>(IList<T> arr, int k, int left, int right, IComparer<T> compare)
     {
         QuickselectStep(arr, k, left, right != 0 ? right : (arr.Count - 1), compare);
     }
 
+    /// <summary>
+    /// The core quickselect partitioning loop that positions the k-th element, using a sampled pivot
+    /// for large ranges to keep performance near-linear.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.QuickSelect.quickselectStep(List, int, int, int, Comparator)</c>.</remarks>
     static void QuickselectStep<T>(IList<T> arr, int k, int left, int right, IComparer<T> compare)
     {
@@ -117,6 +134,9 @@ internal static class QuickSelect
         }
     }
 
+    /// <summary>
+    /// Swaps the elements at indices <paramref name="i"/> and <paramref name="j"/>.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.QuickSelect.swap(List, int, int)</c>.</remarks>
     static void Swap<T>(IList<T> arr, int i, int j)
     {

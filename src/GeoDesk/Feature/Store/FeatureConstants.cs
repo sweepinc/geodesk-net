@@ -7,6 +7,10 @@
 
 namespace GeoDesk.Feature.Store;
 
+/// <summary>
+/// Constants shared by the feature-table iterators: the starting TIP and the
+/// starting TEX values for relation members, parent relations, and way feature-nodes.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureConstants</c>.</remarks>
 internal static class FeatureConstants
 {

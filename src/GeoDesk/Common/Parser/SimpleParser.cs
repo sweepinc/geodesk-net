@@ -13,6 +13,12 @@ using GeoDesk.Common.Math;
 
 namespace GeoDesk.Common.Parser;
 
+/// <summary>
+/// A minimal scannerless parser that reads tokens (identifiers, quoted strings, numeric literals,
+/// and character/string literals) directly off a string, skipping whitespace between them and
+/// reporting line/column positions for errors. Identifier character sets are described by a bitmask
+/// <see cref="Schema"/>.
+/// </summary>
 /// <remarks>Ported from Java <c>com.clarisma.common.parser.SimpleParser</c>.</remarks>
 internal class SimpleParser
 {
@@ -21,9 +27,17 @@ internal class SimpleParser
     int _pos;
     char _nextChar;
 
+    /// <summary>
+    /// Bitmask description of which ASCII characters are valid as the first and as subsequent
+    /// characters of an identifier, split into lower (0-63) and upper (64-127) halves.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.SimpleParser.Schema</c>.</remarks>
     public record Schema(long FirstLower, long FirstUpper, long SubsequentLower, long SubsequentUpper);
 
+    /// <summary>
+    /// Creates a parser over the given source string and positions it at the first non-whitespace
+    /// character.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.SimpleParser(String)</c>.</remarks>
     public SimpleParser(string s)
     {
@@ -31,12 +45,19 @@ internal class SimpleParser
         SkipWhitespace();
     }
 
+    /// <summary>
+    /// Skips whitespace starting from the current position, updating the lookahead character.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.SimpleParser.skipWhitespace()</c>.</remarks>
     void SkipWhitespace()
     {
         SkipWhitespace(_pos >= _buf.Length ? (char)0xFFFF : _buf[_pos]);
     }
 
+    /// <summary>
+    /// Skips whitespace beginning from the given character and stores the first non-whitespace
+    /// character as the lookahead.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.SimpleParser.skipWhitespace(char)</c>.</remarks>
     void SkipWhitespace(char ch)
     {
@@ -47,6 +68,9 @@ internal class SimpleParser
         _nextChar = ch;
     }
 
+    /// <summary>
+    /// Advances the position by one and returns the next character, or 0xFFFF at end of input.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.SimpleParser.advance()</c>.</remarks>
     char Advance()
     {
@@ -54,6 +78,9 @@ internal class SimpleParser
         return _pos < _buf.Length ? _buf[_pos] : (char)0xFFFF;
     }
 
+    /// <summary>
+    /// The current lookahead character (the next non-whitespace character to be parsed).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.SimpleParser.nextChar()</c>.</remarks>
     public char NextChar => _nextChar;
 
@@ -105,12 +132,20 @@ internal class SimpleParser
         return s;
     }
 
+    /// <summary>
+    /// Reports a parse error at the current position by throwing a <see cref="ParserException"/>
+    /// prefixed with the line and column.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.SimpleParser.error(String)</c>.</remarks>
     protected void Error(string msg)
     {
         throw new ParserException(LineColString() + msg);
     }
 
+    /// <summary>
+    /// Computes the current 1-based line and column from the buffer position, packing the line into
+    /// the low 32 bits and the column into the high 32 bits.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.SimpleParser.lineCol()</c>.</remarks>
     protected long LineCol()
     {
@@ -134,6 +169,9 @@ internal class SimpleParser
         return (long)line | (((long)col) << 32);
     }
 
+    /// <summary>
+    /// Returns the current position as a bracketed <c>[line:column]</c> prefix string for error messages.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.SimpleParser.lineColString()</c>.</remarks>
     protected string LineColString()
     {
@@ -141,6 +179,11 @@ internal class SimpleParser
         return string.Format(CultureInfo.InvariantCulture, "[{0}:{1}] ", (int)lineCol, (int)((ulong)lineCol >> 32));
     }
 
+    /// <summary>
+    /// Matches a single- or double-quoted string at the current position, returning the start and end
+    /// offsets of the content packed into a long (start in the low bits, end in the high bits), or 0
+    /// if the current token is not a quote. Reports an error on an unterminated literal.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.SimpleParser.matchQuoted()</c>.</remarks>
     protected long MatchQuoted()
     {

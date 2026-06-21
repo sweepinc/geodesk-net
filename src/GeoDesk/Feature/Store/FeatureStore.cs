@@ -23,6 +23,11 @@ using ZoomLevelsUtil = GeoDesk.Feature.Store.ZoomLevels;
 
 namespace GeoDesk.Feature.Store;
 
+/// <summary>
+/// A GeoDesk feature library opened from a <c>.gol</c> file. Provides access to the
+/// tile index, global string table, index schema, zoom-level configuration, and the
+/// matcher/geometry infrastructure used to run spatial queries against the store.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore</c>.</remarks>
 internal class FeatureStore : FreeStore
 {
@@ -55,6 +60,9 @@ internal class FeatureStore : FreeStore
     readonly object _producersLock = new object();
     readonly HashSet<Task> _producers = new HashSet<Task>();
 
+    /// <summary>
+    /// Creates a feature store backed by the file at the given path.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore(Path)</c>.</remarks>
     public FeatureStore(string path) :
         base(path)
@@ -62,6 +70,11 @@ internal class FeatureStore : FreeStore
 
     }
 
+    /// <summary>
+    /// Initializes the store after opening: reads the string table and index schema,
+    /// locates the active snapshot's tile index, enables queries, and caches the
+    /// zoom-level configuration.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.initialize()</c>.</remarks>
     protected override void Initialize()
     {
@@ -81,15 +94,28 @@ internal class FeatureStore : FreeStore
         _zoomSteps = ZoomLevelsUtil.ZoomSteps(zoomLevels);
     }
 
+    /// <summary>
+    /// The buffer containing the active snapshot's tile index.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.tileIndexBuf()</c>.</remarks>
     public NioBuffer TileIndexBuf => _tileIndexBuf;
 
+    /// <summary>
+    /// The byte offset of the tile index within its buffer.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.tileIndexOfs()</c>.</remarks>
     public int TileIndexOfs => _tileIndexOfs;
 
+    /// <summary>
+    /// The packed zoom-level configuration read from the store header.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.zoomLevels()</c>.</remarks>
     public int ZoomLevels => BaseMapping.Memory.Span.GetIntLE(ZOOM_LEVELS_OFS);
 
+    /// <summary>
+    /// Reads the global string table from the store, building the code-to-string array
+    /// and string-to-code map.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.readStringTable()</c>.</remarks>
     void ReadStringTable()
     {
@@ -109,6 +135,10 @@ internal class FeatureStore : FreeStore
         _stringsToCodes = stringMap;
     }
 
+    /// <summary>
+    /// Reads the index schema from the store, building the map from key codes to index
+    /// category bits used to select spatial indexes during queries.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.readIndexSchema()</c>.</remarks>
     void ReadIndexSchema()
     {
@@ -125,6 +155,10 @@ internal class FeatureStore : FreeStore
         _keysToCategories = map;
     }
 
+    /// <summary>
+    /// Sets up the query infrastructure: the matcher compiler, the maximum number of
+    /// concurrently pending tiles, and the geometry factory.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.enableQueries()</c>.</remarks>
     void EnableQueries()
     {
@@ -133,14 +167,26 @@ internal class FeatureStore : FreeStore
         _geometryFactory = new GeometryFactory();
     }
 
+    /// <summary>
+    /// The maximum number of tiles a query may have pending (being loaded or scanned)
+    /// at once.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.maxPendingTiles()</c>.</remarks>
     public int MaxPendingTiles => _maxPendingTiles;
 
     // PORT: token a Query links its producer to, so Close() can cancel all in-flight scans.
+    /// <summary>
+    /// A cancellation token that in-flight query producers observe so that
+    /// <see cref="Close"/> can stop all running tile scans before unmapping buffers.
+    /// </summary>
     internal CancellationToken QueryCancellation => _queryCancellation.Token;
 
     // PORT: registers a Query's background producer so Close() can wait for it. The task removes
     // itself from the set when it completes.
+    /// <summary>
+    /// Registers a query's background producer task so <see cref="Close"/> can wait for
+    /// it; the task removes itself from the tracking set on completion.
+    /// </summary>
     internal void TrackProducer(Task producer)
     {
         lock (_producersLock)
@@ -160,36 +206,57 @@ internal class FeatureStore : FreeStore
         }, this, TaskScheduler.Default);
     }
 
+    /// <summary>
+    /// Returns the raw tile-index entry for the given tile identifier (TIP), encoding
+    /// the tile's page and load state.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.tileIndexEntry(int)</c>.</remarks>
     public int TileIndexEntry(int tip)
     {
         return _tileIndexBuf.GetInt(_tileIndexOfs + tip * 4);
     }
 
+    /// <summary>
+    /// Extracts the tile's first page from a tile-index entry.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.pageFromEntry(int)</c>.</remarks>
     public static int PageFromEntry(int entry)
     {
         return (int)((uint)entry >> 2);
     }
 
+    /// <summary>
+    /// Returns true if the tile-index entry indicates the tile is loaded and current.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.isTileLoadedAndCurrent(int)</c>.</remarks>
     public static bool IsTileLoadedAndCurrent(int entry)
     {
         return (entry & 2) != 0;
     }
 
+    /// <summary>
+    /// Returns the first page of the tile with the given identifier (TIP).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.tilePage(int)</c>.</remarks>
     public int TilePage(int tip)
     {
         return (int)((uint)_tileIndexBuf.GetInt(_tileIndexOfs + tip * 4) >> 2);
     }
 
+    /// <summary>
+    /// Returns true if the tile with the given identifier (TIP) is loaded and ready
+    /// for querying.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.isTileReady(int)</c>.</remarks>
     public bool IsTileReady(int tip)
     {
         return (_tileIndexBuf.GetInt(_tileIndexOfs + tip * 4) & 2) != 0;
     }
 
+    /// <summary>
+    /// Returns the global string for the given code, throwing if the code is out of
+    /// range.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.stringFromCode(int)</c>.</remarks>
     public string StringFromCode(int code)
     {
@@ -211,12 +278,20 @@ internal class FeatureStore : FreeStore
         return _stringsToCodes.TryGetValue(s, out var v) ? v : -1;
     }
 
+    /// <summary>
+    /// Returns the geometry factory used to build geometry for this store's features,
+    /// throwing if queries are not enabled.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.geometryFactory()</c>.</remarks>
     public GeometryFactory GeometryFactory()
     {
         return _geometryFactory ?? throw new InvalidOperationException("Queries are not enabled");
     }
 
+    /// <summary>
+    /// Compiles (or returns a cached) matcher for the given GOQL query string,
+    /// throwing if queries are not enabled.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.getMatcher(String)</c>.</remarks>
     public Matcher GetMatcher(string query)
     {
@@ -226,6 +301,10 @@ internal class FeatureStore : FreeStore
         }
     }
 
+    /// <summary>
+    /// Constructs the appropriate stored feature (node, way, or relation) for the
+    /// record at the given buffer position, dispatching on its type bits.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.getFeature(ByteBuffer, int)</c>.</remarks>
     public StoredFeature GetFeature(NioBuffer buf, int p)
     {
@@ -244,6 +323,10 @@ internal class FeatureStore : FreeStore
     }
 
     // TODO: create an awaitOperations() method
+    /// <summary>
+    /// Closes the store, first cancelling and awaiting any in-flight query producers
+    /// and their tile scans so that buffers are not unmapped while still in use.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.close()</c>.</remarks>
     public new void Close()
     {
@@ -267,18 +350,27 @@ internal class FeatureStore : FreeStore
         base.Close();
     }
 
+    /// <summary>
+    /// Returns the map from key codes to index category bits.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.keysToCategories()</c>.</remarks>
     public IReadOnlyDictionary<int, int> KeysToCategories()
     {
         return _keysToCategories;
     }
 
+    /// <summary>
+    /// Returns the map from global strings to their codes.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.stringsToCodes()</c>.</remarks>
     public IReadOnlyDictionary<string, int> StringsToCodes()
     {
         return _stringsToCodes;
     }
 
+    /// <summary>
+    /// Returns the array mapping global string codes to their strings.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.codesToStrings()</c>.</remarks>
     public string[] CodesToStrings()
     {

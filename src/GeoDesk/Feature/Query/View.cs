@@ -19,6 +19,13 @@ using NetTopologySuite.Geometries.Prepared;
 
 namespace GeoDesk.Feature.Query;
 
+/// <summary>
+/// Abstract base for the query views that implement <see cref="IFeatureQuery"/>. A view captures a
+/// feature store, an accepted-type bitmask, a tag matcher, and an optional spatial filter, and
+/// exposes the fluent refinement operations (by type, by query string, by filter, by relationship)
+/// plus the terminal collection operations. Concrete subclasses (world, member, way-node, etc.)
+/// supply iteration and the factory <see cref="NewWith"/>.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.query.View</c>.</remarks>
 public abstract class View : IFeatureQuery
 {
@@ -28,6 +35,9 @@ public abstract class View : IFeatureQuery
     internal readonly Matcher matcher;
     internal readonly IFilter? filter;
 
+    /// <summary>
+    /// Initializes the view with its store, accepted feature types, matcher, and optional filter.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View(FeatureStore, int, Matcher, Filter)</c>.</remarks>
     internal View(FeatureStore store, int types, Matcher matcher, IFilter? filter)
     {
@@ -37,15 +47,26 @@ public abstract class View : IFeatureQuery
         this.filter = filter;
     }
 
+    /// <summary>
+    /// Factory that produces a new view of the same concrete kind with the given types, matcher, and
+    /// filter; the basis for all refinement operations.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.newWith(int, Matcher, Filter)</c>.</remarks>
     internal abstract IFeatureQuery NewWith(int types, Matcher matcher, IFilter? filter);
 
+    /// <summary>
+    /// Returns the bitmask of feature types this view accepts.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.types()</c>.</remarks>
     public int TypesValue()
     {
         return types;
     }
 
+    /// <summary>
+    /// Narrows the view to the intersection of its types with <paramref name="newTypes"/>, returning
+    /// the empty view if nothing remains.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.select(int)</c>.</remarks>
     protected IFeatureQuery Select(int newTypes)
     {
@@ -56,6 +77,10 @@ public abstract class View : IFeatureQuery
         return NewWith(newTypes, matcher, filter);
     }
 
+    /// <summary>
+    /// Narrows the view by both a type mask and a GOQL query string, ANDing the compiled matcher with
+    /// the current one and intersecting the accepted types.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.select(int, String)</c>.</remarks>
     protected virtual IFeatureQuery Select(int newTypes, string query)
     {
@@ -70,48 +95,73 @@ public abstract class View : IFeatureQuery
         return NewWith(newTypes, newMatcher, filter);
     }
 
+    /// <summary>
+    /// Narrows the view by a GOQL query string across all feature types.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.select(String)</c>.</remarks>
     public virtual IFeatureQuery Select(string query)
     {
         return Select(TypeBits.ALL, query);
     }
 
+    /// <summary>
+    /// Restricts the view to node features.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.nodes()</c>.</remarks>
     public IFeatureQuery Nodes()
     {
         return Select(TypeBits.NODES);
     }
 
+    /// <summary>
+    /// Restricts the view to node features matching the given query.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.nodes(String)</c>.</remarks>
     public IFeatureQuery Nodes(string query)
     {
         return Select(TypeBits.NODES, query);
     }
 
+    /// <summary>
+    /// Restricts the view to way features.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.ways()</c>.</remarks>
     public IFeatureQuery Ways()
     {
         return Select(TypeBits.WAYS);
     }
 
+    /// <summary>
+    /// Restricts the view to way features matching the given query.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.ways(String)</c>.</remarks>
     public IFeatureQuery Ways(string query)
     {
         return Select(TypeBits.WAYS, query);
     }
 
+    /// <summary>
+    /// Restricts the view to relation features.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.relations()</c>.</remarks>
     public IFeatureQuery Relations()
     {
         return Select(TypeBits.RELATIONS);
     }
 
+    /// <summary>
+    /// Restricts the view to relation features matching the given query.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.relations(String)</c>.</remarks>
     public IFeatureQuery Relations(string query)
     {
         return Select(TypeBits.RELATIONS, query);
     }
 
+    /// <summary>
+    /// Applies a spatial filter to the view, ANDing it with any existing filter and narrowing the
+    /// accepted types when the filter restricts them; returns the empty view if nothing can match.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.select(Filter)</c>.</remarks>
     public virtual IFeatureQuery Select(IFilter filter)
     {
@@ -134,6 +184,10 @@ public abstract class View : IFeatureQuery
         return NewWith(newTypes, matcher, filter);
     }
 
+    /// <summary>
+    /// Returns a view over the parent features of the given child: parent ways and relations for a
+    /// node, or parent relations for a way or relation, filtered by this view's types, matcher, and filter.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.parentsOf(Feature)</c>.</remarks>
     public virtual IFeatureQuery ParentsOf(IFeature child)
     {
@@ -159,6 +213,10 @@ public abstract class View : IFeatureQuery
         }
     }
 
+    /// <summary>
+    /// Returns a view over the members of the given relation, filtered by this view's types, matcher,
+    /// and filter. Other parent types yield an empty view.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.membersOf(Feature)</c>.</remarks>
     public virtual IFeatureQuery MembersOf(IFeature parent)
     {
@@ -169,6 +227,11 @@ public abstract class View : IFeatureQuery
         return EmptyView.Any;
     }
 
+    /// <summary>
+    /// Returns a view over the feature-nodes of the given way, filtered by this view's types, matcher,
+    /// and filter. Ways carrying only anonymous nodes (under a matcher query) and non-way parents yield
+    /// an empty view.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.nodesOf(Feature)</c>.</remarks>
     public virtual IFeatureQuery NodesOf(IFeature parent)
     {
@@ -195,9 +258,16 @@ public abstract class View : IFeatureQuery
 
     // PORT: Java's View does not declare in(); it is abstract here so View can satisfy the
     // Features.in(Bounds) contract, with each concrete view providing the body.
+    /// <summary>
+    /// Restricts the view to features within the given bounding box; implemented by each concrete view.
+    /// </summary>
     /// <remarks>Implements Java <c>com.geodesk.feature.Features.in(Bounds)</c> (abstract in this base).</remarks>
     public abstract IFeatureQuery In(IBounds bbox);
 
+    /// <summary>
+    /// Intersects this view with another feature query, combining their accepted types, matchers, and
+    /// filters; returns the empty view if no type can satisfy both.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.View.select(Features)</c>.</remarks>
     public IFeatureQuery Select(IFeatureQuery otherFeatures)
     {
@@ -362,9 +432,15 @@ public abstract class View : IFeatureQuery
     /// <inheritdoc />
     public virtual IFeatureQuery Within(IPreparedGeometry prepared) => FeaturesSupport.Within(this, prepared);
 
+    /// <summary>
+    /// Returns an enumerator over the features in this view; implemented by each concrete view.
+    /// </summary>
     /// <remarks>Implements Java <c>java.lang.Iterable.iterator()</c> (abstract in this base).</remarks>
     public abstract IEnumerator<IFeature> GetEnumerator();
 
+    /// <summary>
+    /// Non-generic enumerator, forwarding to the typed <see cref="GetEnumerator"/>.
+    /// </summary>
     IEnumerator IEnumerable.GetEnumerator()
     {
         return GetEnumerator();
@@ -373,6 +449,10 @@ public abstract class View : IFeatureQuery
     // The base adapts the synchronous enumerator — correct for views whose results are already in
     // memory and never block on a results channel. WorldView overrides this with a non-blocking,
     // tile-streaming enumerator for the spatial query path.
+    /// <summary>
+    /// Returns an async enumerator over the view's features. The base wraps the synchronous
+    /// enumerator; spatial views override it with a non-blocking, tile-streaming implementation.
+    /// </summary>
     public virtual async IAsyncEnumerator<IFeature> GetAsyncEnumerator(CancellationToken cancellationToken = default)
     {
         foreach (var feature in this)

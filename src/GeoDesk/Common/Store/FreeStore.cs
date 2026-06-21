@@ -15,6 +15,11 @@ using GeoDesk.Extensions;
 
 namespace GeoDesk.Common.Store;
 
+/// <summary>
+/// Read-only base for a memory-mapped, snapshot-based store file. Opens the file, takes a shared
+/// byte-range lock on the active snapshot to coordinate with writers, and maps the file in fixed-size
+/// segments on demand, exposing helpers to resolve the segment and offset of a given page.
+/// </summary>
 /// <remarks>
 /// Ported from Java <c>com.clarisma.common.store.FreeStore</c>.
 ///
@@ -38,6 +43,11 @@ internal class FreeStore
     const int ACTIVE_SNAPSHOT_OFS = 16;
     const int LOCK_OFS = 512;
 
+    /// <summary>
+    /// Opens the store file at the given path read-only, validates and reads its header, takes a
+    /// shared lock on the active snapshot (throwing <see cref="StoreException"/> if a writer holds it),
+    /// maps the base segment, and runs subclass <see cref="Initialize"/>.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.FreeStore(Path)</c>.</remarks>
     public FreeStore(string path)
     {
@@ -88,6 +98,10 @@ internal class FreeStore
         Initialize();
     }
 
+    /// <summary>
+    /// Closes the store: unmaps all segments and disposes the underlying file channel. Safe to call
+    /// when already closed.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.FreeStore.close()</c>.</remarks>
     public void Close()
     {
@@ -108,6 +122,9 @@ internal class FreeStore
     // === File Mapping ===
 
     // Non-null accessors that assert the store is open rather than suppressing nullability with `!`.
+    /// <summary>
+    /// The underlying file channel, throwing if the store has been closed.
+    /// </summary>
     FileStream Channel => _channel ?? throw new InvalidOperationException("Store is not open");
 
     /// <summary>The base segment carrying the active-snapshot header. Valid once the store is open.</summary>
@@ -115,6 +132,10 @@ internal class FreeStore
 
     // Maps one segment (read-only) as its own MemoryMappedFile + view, wrapped in a
     // Memory&lt;byte&gt;-backed NioBuffer wrapping a Segment. Segments are independent.
+    /// <summary>
+    /// Returns the read-only memory-mapped <see cref="Segment"/> with the given index, mapping it (and
+    /// growing the mapping table) on first access. Thread-safe.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.FreeStore.getMapping(int)</c>.</remarks>
     protected Segment GetMapping(int n)
     {
@@ -144,6 +165,9 @@ internal class FreeStore
         }
     }
 
+    /// <summary>
+    /// Disposes and clears all mapped segments. Thread-safe.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.FreeStore.unmapSegments()</c>.</remarks>
     bool UnmapSegments()
     {
@@ -156,24 +180,37 @@ internal class FreeStore
         }
     }
 
+    /// <summary>
+    /// Subclass extension point invoked at the end of construction; the base implementation does nothing.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.FreeStore.initialize()</c>.</remarks>
     protected virtual void Initialize()
     {
         // do nothing
     }
 
+    /// <summary>
+    /// Returns the mapped segment that contains the given page, derived from the page number and the
+    /// page-size shift.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.FreeStore.bufferOfPage(int)</c>.</remarks>
     internal Segment SegmentOfPage(int page)
     {
         return GetMapping(page >> (30 - _pageSizeShift));
     }
 
+    /// <summary>
+    /// Returns the byte offset of the given page within its containing segment.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.FreeStore.offsetOfPage(int)</c>.</remarks>
     public int OffsetOfPage(int page)
     {
         return (page << _pageSizeShift) & 0x3fff_ffff;
     }
 
+    /// <summary>
+    /// Returns the index of the currently active snapshot, read from the base segment's header.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.FreeStore.activeSnapshot()</c>.</remarks>
     public int ActiveSnapshot()
     {

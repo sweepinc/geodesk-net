@@ -16,6 +16,11 @@ using NetTopologySuite.Geometries;
 namespace GeoDesk.IO;
 
 // PORT: Java's BufferedReader source is represented as a .NET TextReader.
+/// <summary>
+/// Parses a polygon definition in the Osmosis <c>.poly</c> text format into an NTS
+/// polygon or multipolygon, applying a coordinate transform to each parsed
+/// longitude/latitude pair.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.io.PolyReader</c>.</remarks>
 internal class PolyReader
 {
@@ -24,6 +29,10 @@ internal class PolyReader
     readonly GeometryFactory _factory;
     readonly CoordinateTransformer _transformer;
 
+    /// <summary>
+    /// Creates a reader that consumes the given text source, builds geometry with the
+    /// given factory, and transforms parsed coordinates with the given transformer.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.io.PolyReader(BufferedReader, GeometryFactory, CoordinateTransformer)</c>.</remarks>
     public PolyReader(TextReader input, GeometryFactory factory, CoordinateTransformer transformer)
     {
@@ -32,6 +41,10 @@ internal class PolyReader
         _transformer = transformer;
     }
 
+    /// <summary>
+    /// Throws a <see cref="ParseException"/> describing the given error at the given
+    /// line number; never returns normally.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.io.PolyReader.error(String, int)</c>.</remarks>
     [DoesNotReturn]
     static void Error(string msg, int line)
@@ -39,6 +52,9 @@ internal class PolyReader
         throw new ParseException(string.Format(CultureInfo.InvariantCulture, "Line {0}: {1}", line, msg));
     }
 
+    /// <summary>
+    /// Builds a polygon from a shell ring and its (possibly empty) list of hole rings.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.io.PolyReader.makePolygon(LinearRing, List)</c>.</remarks>
     Polygon MakePolygon(LinearRing shell, List<LinearRing> holes)
     {
@@ -46,6 +62,11 @@ internal class PolyReader
         return _factory.CreatePolygon(shell, holes.ToArray());
     }
 
+    /// <summary>
+    /// Reads the entire <c>.poly</c> definition and returns it as a single polygon, or
+    /// a multipolygon when several shells are defined. Rings are auto-closed when their
+    /// last coordinate does not repeat the first.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.io.PolyReader.read()</c>.</remarks>
     public Geometry Read()
     {

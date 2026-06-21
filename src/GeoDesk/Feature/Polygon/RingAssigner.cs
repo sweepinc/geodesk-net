@@ -7,10 +7,19 @@
 
 namespace GeoDesk.Feature.Polygons;
 
+/// <summary>
+/// Assigns inner rings (holes) to their containing outer rings when assembling a
+/// multipolygon from an OSM area relation. Determines, for each inner ring, which
+/// outer ring encloses it so that the resulting polygon hierarchy is well formed.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.polygon.RingAssigner</c>.</remarks>
 internal class RingAssigner
 {
 
+    /// <summary>
+    /// Assigns a single inner ring to the smallest outer ring that contains it,
+    /// falling back to the largest outer ring when no tighter container is found.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.polygon.RingAssigner.assignRing(Ring[], Ring)</c>.</remarks>
     static void AssignRing(Ring[] outerRings, Ring inner)
     {
@@ -36,6 +45,12 @@ internal class RingAssigner
         outerRings[0].AddInner(inner);
     }
 
+    /// <summary>
+    /// Assigns every inner ring in a linked list of holes to its containing outer
+    /// ring and returns the array of outer rings, each populated with the inner
+    /// rings it encloses. The largest outer ring is placed at index zero and serves
+    /// as the catch-all container.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.polygon.RingAssigner.assignRings(Ring, Ring)</c>.</remarks>
     public static Ring[] AssignRings(Ring firstOuter, Ring firstInner)
     {

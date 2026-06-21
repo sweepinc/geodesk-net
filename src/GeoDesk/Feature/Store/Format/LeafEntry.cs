@@ -29,15 +29,19 @@ internal readonly struct LeafEntry
 
     readonly ReadOnlyMemory<byte> _buf; // sliced to the start of the leaf entry (its bbox)
 
+    /// <summary>Wraps the given memory window, sliced to the start of a leaf entry, as a cursor.</summary>
     public LeafEntry(ReadOnlyMemory<byte> buf)
     {
         _buf = buf;
     }
 
+    /// <summary>The flags word of the embedded feature.</summary>
     public int Flags => _buf.Span.GetIntLE(FeatureOfs);
 
+    /// <summary>True if this is the last entry in its leaf.</summary>
     public bool IsLast => (Flags & LastFlag) != 0;
 
+    /// <summary>The entry's bounding box.</summary>
     public Bounds Bounds => new Bounds(_buf.Slice(BoundsOfs));
 
     /// <summary>This entry's single type bit, to AND against the query's accepted-types mask.</summary>

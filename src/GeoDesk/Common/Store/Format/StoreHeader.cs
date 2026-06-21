@@ -27,17 +27,25 @@ internal readonly struct StoreHeader
 
     readonly ReadOnlyMemory<byte> _buf; // sliced to the start of the store (offset 0)
 
+    /// <summary>
+    /// Wraps the given memory window, sliced to the start of the store, as a header
+    /// cursor.
+    /// </summary>
     public StoreHeader(ReadOnlyMemory<byte> buf)
     {
         _buf = buf;
     }
 
+    /// <summary>The store's magic number, identifying the file format.</summary>
     public int Magic => _buf.Span.GetIntLE(MagicOfs);
 
+    /// <summary>The store's file-format version.</summary>
     public int Version => _buf.Span.GetIntLE(VERSION_OFS);
 
+    /// <summary>The store's creation/modification timestamp.</summary>
     public long Timestamp => _buf.Span.GetLongLE(TIMESTAMP_OFS);
 
+    /// <summary>The total number of pages the store occupies.</summary>
     public int TotalPages => _buf.Span.GetIntLE(TOTAL_PAGES_OFS);
 
     /// <summary>The page-size code (0 = 4K … 15 = 128 MB).</summary>
@@ -49,6 +57,7 @@ internal readonly struct StoreHeader
     /// <summary>The resolved (absolute) pointer to the index, or 0 if the store is empty.</summary>
     public int IndexPointer => INDEX_PTR_OFS + _buf.Span.GetIntLE(INDEX_PTR_OFS);
 
+    /// <summary>True if the header's magic number identifies a valid store.</summary>
     public bool IsValid => Magic == MAGIC;
 
     /// <summary>An empty store is valid but has no contents (no index pointer).</summary>

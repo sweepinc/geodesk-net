@@ -45,6 +45,10 @@ internal class MapMaker
         _attribution = attribution;
     }
 
+    /// <summary>
+    /// Writes a projected coordinate as a Leaflet <c>[lat, lon]</c> array, converting
+    /// the Mercator X/Y to longitude/latitude.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.writeXY(Appendable, double, double)</c>.</remarks>
     internal void WriteXY(TextWriter outp, double x, double y)
     {
@@ -55,6 +59,9 @@ internal class MapMaker
         outp.Write(']');
     }
 
+    /// <summary>
+    /// Registers a marker with this map and returns it.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.add(Marker)</c>.</remarks>
     Marker Add(Marker marker)
     {
@@ -85,6 +92,9 @@ internal class MapMaker
         return Add(new GeometryMarker(geom));
     }
 
+    /// <summary>
+    /// Adds a marker for each feature in the given sequence.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.add(Iterable)</c>.</remarks>
     public void Add(IEnumerable<GeoDesk.Feature.IFeature> features)
     {
@@ -101,6 +111,10 @@ internal class MapMaker
         Write(outp);
     }
 
+    /// <summary>
+    /// Writes the complete HTML document for the map, including the Leaflet stylesheet,
+    /// script references, container element, and the generated map script.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.write(Appendable)</c>.</remarks>
     public void Write(TextWriter outp)
     {
@@ -115,6 +129,11 @@ internal class MapMaker
         outp.Write("</script></body></html>");
     }
 
+    /// <summary>
+    /// Writes the Leaflet initialization JavaScript: the map, tile layer, scale
+    /// control, all visible markers, and a final call to fit the view to their
+    /// combined bounds.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.writeScript(Appendable)</c>.</remarks>
     void WriteScript(TextWriter outp)
     {
@@ -148,12 +167,19 @@ internal class MapMaker
         outp.Write("]);");
     }
 
+    /// <summary>
+    /// A map marker that renders an arbitrary JTS/NTS geometry (point, line, polygon,
+    /// or collection) as the corresponding Leaflet layer.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.GeometryMarker</c>.</remarks>
     class GeometryMarker : Marker
     {
 
         readonly Geometry _geom;
 
+        /// <summary>
+        /// Creates a marker that renders the given geometry.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.GeometryMarker(Geometry)</c>.</remarks>
         internal GeometryMarker(Geometry geom)
         {
@@ -161,6 +187,10 @@ internal class MapMaker
         }
 
         // TODO: winding order?
+        /// <summary>
+        /// Writes the exterior and interior ring coordinates of a polygon as nested
+        /// Leaflet coordinate arrays.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.GeometryMarker.writePolygonCoordinates(Appendable, Polygon)</c>.</remarks>
         void WritePolygonCoordinates(TextWriter outp, Polygon p)
         {
@@ -174,18 +204,28 @@ internal class MapMaker
             outp.Write(']');
         }
 
+        /// <summary>
+        /// Returns the bounding box of the marker's geometry.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.GeometryMarker.bounds()</c>.</remarks>
         public override IBounds Bounds()
         {
             return Box.FromEnvelope(_geom.EnvelopeInternal);
         }
 
+        /// <summary>
+        /// Writes the Leaflet layer constructor call for this marker's geometry.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.GeometryMarker.writeStub(Appendable)</c>.</remarks>
         protected override void WriteStub(TextWriter outp)
         {
             WriteStub(outp, _geom);
         }
 
+        /// <summary>
+        /// Writes the appropriate Leaflet layer constructor for the given geometry,
+        /// dispatching on whether it is polygonal, lineal, a point, or a collection.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.GeometryMarker.writeStub(Appendable, Geometry)</c>.</remarks>
         void WriteStub(TextWriter outp, Geometry g)
         {
@@ -251,24 +291,36 @@ internal class MapMaker
 
     }
 
+    /// <summary>
+    /// A map marker that renders a bounding box as a Leaflet rectangle.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.BoxMarker</c>.</remarks>
     class BoxMarker : Marker
     {
 
         readonly IBounds _box;
 
+        /// <summary>
+        /// Creates a marker that renders the given bounding box.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.BoxMarker(Bounds)</c>.</remarks>
         internal BoxMarker(IBounds box)
         {
             _box = box;
         }
 
+        /// <summary>
+        /// Returns this marker's bounding box.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.BoxMarker.bounds()</c>.</remarks>
         public override IBounds Bounds()
         {
             return _box;
         }
 
+        /// <summary>
+        /// Writes the Leaflet rectangle constructor call for this box.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.BoxMarker.writeStub(Appendable)</c>.</remarks>
         protected override void WriteStub(TextWriter outp)
         {
@@ -281,28 +333,44 @@ internal class MapMaker
 
     }
 
+    /// <summary>
+    /// A placeholder marker for an empty geometry: it has empty bounds, is not
+    /// visible, and renders nothing.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.EmptyMarker</c>.</remarks>
     class EmptyMarker : Marker
     {
 
+        /// <summary>
+        /// Returns an empty bounding box.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.EmptyMarker.bounds()</c>.</remarks>
         public override IBounds Bounds()
         {
             return new Box();       // TODO: cache
         }
 
+        /// <summary>
+        /// Always returns false; an empty marker is never drawn.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.EmptyMarker.isVisible()</c>.</remarks>
         public override bool IsVisible()
         {
             return false;
         }
 
+        /// <summary>
+        /// Writes nothing.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.EmptyMarker.writeStub(Appendable)</c>.</remarks>
         protected override void WriteStub(TextWriter outp)
         {
             // do nothing
         }
 
+        /// <summary>
+        /// Writes nothing.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.util.MapMaker.EmptyMarker.write(Appendable)</c>.</remarks>
         public override void Write(TextWriter outp)
         {

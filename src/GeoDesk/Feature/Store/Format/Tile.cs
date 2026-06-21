@@ -23,20 +23,24 @@ internal readonly struct Tile
     readonly ReadOnlyMemory<byte> _buf; // sliced to the start of the tile
 
     /// <summary>
-    /// Initializes a new instance.
+    /// Wraps the given memory window, sliced to the start of a tile, as a cursor.
     /// </summary>
-    /// <param name="buf"></param>
+    /// <param name="buf">the memory sliced to the start of the tile</param>
     public Tile(ReadOnlyMemory<byte> buf)
     {
         _buf = buf;
     }
 
+    /// <summary>The spatial index root for the tile's node features.</summary>
     public SpatialIndex NodeIndex => new SpatialIndex(_buf.Slice(NodeIndexOfs));
 
+    /// <summary>The spatial index root for the tile's way features.</summary>
     public SpatialIndex WayIndex => new SpatialIndex(_buf.Slice(WayIndexOfs));
 
+    /// <summary>The spatial index root for the tile's area features.</summary>
     public SpatialIndex AreaIndex => new SpatialIndex(_buf.Slice(AreaIndexOfs));
 
+    /// <summary>The spatial index root for the tile's relation features.</summary>
     public SpatialIndex RelationIndex => new SpatialIndex(_buf.Slice(RelationIndexOfs));
 
 }

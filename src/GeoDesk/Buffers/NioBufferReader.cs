@@ -24,6 +24,9 @@ internal readonly struct NioBufferReader
 
     readonly ReadOnlyMemory<byte> _mem;
 
+    /// <summary>
+    /// Wraps the given read-only memory window in a buffer reader.
+    /// </summary>
     public NioBufferReader(ReadOnlyMemory<byte> mem)
     {
         _mem = mem;
@@ -38,12 +41,16 @@ internal readonly struct NioBufferReader
     /// <summary>The byte at an absolute index (<c>ByteBuffer.get(int)</c>).</summary>
     public byte Get(int index) => _mem.Span[index];
 
+    /// <summary>The little-endian 32-bit integer at an absolute index.</summary>
     public int GetInt(int index) => _mem.Span.GetIntLE(index);
 
+    /// <summary>The little-endian 64-bit integer at an absolute index.</summary>
     public long GetLong(int index) => _mem.Span.GetLongLE(index);
 
+    /// <summary>The little-endian 16-bit integer at an absolute index.</summary>
     public short GetShort(int index) => _mem.Span.GetShortLE(index);
 
+    /// <summary>The little-endian 16-bit character at an absolute index.</summary>
     public char GetChar(int index) => _mem.Span.GetCharLE(index);
 
     /// <summary>Absolute bulk get (<c>ByteBuffer.get(int, byte[])</c>).</summary>

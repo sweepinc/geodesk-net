@@ -14,6 +14,10 @@ using NetTopologySuite.Geometries;
 namespace GeoDesk.IO;
 
 // PORT: Java's Appendable sink is represented as a .NET TextWriter.
+/// <summary>
+/// Serializes an NTS polygon or multipolygon to the Osmosis <c>.poly</c> text format,
+/// applying a coordinate transform to each emitted vertex.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.io.PolyWriter</c>.</remarks>
 internal class PolyWriter
 {
@@ -23,6 +27,10 @@ internal class PolyWriter
     int _shellCount;
     int _holeCount;
 
+    /// <summary>
+    /// Creates a writer that emits to the given text sink and transforms coordinates
+    /// with the given transformer.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.io.PolyWriter(Appendable, CoordinateTransformer)</c>.</remarks>
     public PolyWriter(TextWriter outp, CoordinateTransformer transformer)
     {
@@ -30,6 +38,10 @@ internal class PolyWriter
         _transformer = transformer;
     }
 
+    /// <summary>
+    /// Writes a complete <c>.poly</c> document: the given name header, the geometry's
+    /// rings, and the closing <c>END</c> marker.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.io.PolyWriter.write(String, Geometry)</c>.</remarks>
     public void Write(string name, Geometry geom)
     {
@@ -39,6 +51,10 @@ internal class PolyWriter
         _out.Write("END");
     }
 
+    /// <summary>
+    /// Writes each polygon component of the given geometry; non-polygon components are
+    /// skipped.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.io.PolyWriter.write(Geometry)</c>.</remarks>
     public void Write(Geometry geom)
     {
@@ -48,6 +64,10 @@ internal class PolyWriter
         }
     }
 
+    /// <summary>
+    /// Writes a single polygon as its exterior shell ring followed by its interior
+    /// hole rings.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.io.PolyWriter.write(Polygon)</c>.</remarks>
     public void Write(Polygon polygon)
     {
@@ -58,6 +78,10 @@ internal class PolyWriter
         }
     }
 
+    /// <summary>
+    /// Writes a single ring as a named section: a header line followed by one
+    /// transformed X/Y coordinate per line and a closing <c>END</c>.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.io.PolyWriter.writeRing(String, int, LinearRing)</c>.</remarks>
     void WriteRing(string name, int count, LinearRing ring)
     {

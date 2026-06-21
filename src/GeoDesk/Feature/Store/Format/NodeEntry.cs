@@ -29,17 +29,22 @@ internal readonly struct NodeEntry
 
     readonly ReadOnlyMemory<byte> _buf; // sliced to the start of the node entry
 
+    /// <summary>Wraps the given memory window, sliced to the start of a node entry, as a cursor.</summary>
     public NodeEntry(ReadOnlyMemory<byte> buf)
     {
         _buf = buf;
     }
 
+    /// <summary>The flags word of the embedded node feature.</summary>
     public int Flags => _buf.Span.GetIntLE(FeatureOfs);
 
+    /// <summary>True if this is the last entry in its leaf.</summary>
     public bool IsLast => (Flags & LastFlag) != 0;
 
+    /// <summary>The node's X coordinate.</summary>
     public int X => _buf.Span.GetIntLE(XOfs);
 
+    /// <summary>The node's Y coordinate.</summary>
     public int Y => _buf.Span.GetIntLE(YOfs);
 
     /// <summary>The embedded node feature, anchored at its flags word.</summary>
@@ -52,6 +57,7 @@ internal readonly struct NodeEntry
     /// </summary>
     public int Size => BaseSize + (Flags & FeatureFlags.RELATION_MEMBER_FLAG);
 
+    /// <summary>Returns true if the node lies within the given bounding box.</summary>
     public bool InBounds(int minX, int minY, int maxX, int maxY)
     {
         var x = X;

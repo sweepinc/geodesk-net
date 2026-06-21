@@ -12,6 +12,11 @@ using GeoDesk.Feature;
 // as Polygons (plural).
 namespace GeoDesk.Feature.Polygons;
 
+/// <summary>
+/// One way segment used while assembling polygon rings from a relation's member ways. Holds the
+/// way, its coordinate sequence, a link to the next segment, a direction flag, and a ring-assignment
+/// status (unassigned, tentative, assigned, or dangling).
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.polygon.Segment</c>.</remarks>
 internal class Segment
 {
@@ -28,6 +33,10 @@ internal class Segment
     internal bool backward;
     internal byte status;
 
+    /// <summary>
+    /// Creates a segment for the given way (capturing its coordinates) and links it ahead of
+    /// <paramref name="next"/> in the segment chain.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.polygon.Segment(int, Way, Segment)</c>.</remarks>
     internal Segment(int number, IWay way, Segment? next)
     {

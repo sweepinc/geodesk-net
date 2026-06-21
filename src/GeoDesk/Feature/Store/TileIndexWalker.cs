@@ -35,6 +35,10 @@ internal class TileIndexWalker
     bool _tileBasedAcceleration;
     int _pTileIndex;
 
+    /// <summary>
+    /// Creates a walker over the tile index at the given pointer, building the level
+    /// chain (one level per zoom step) from the store's zoom-level configuration.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker(ByteBuffer, int, int)</c>.</remarks>
     public TileIndexWalker(NioBuffer buf, int pTileIndex, int zoomLevels)
     {
@@ -60,18 +64,28 @@ internal class TileIndexWalker
         }
     }
 
+    /// <summary>
+    /// Creates a walker over the given store's tile index using its configuration.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker(FeatureStore)</c>.</remarks>
     public TileIndexWalker(FeatureStore store)
         : this(store.TileIndexBuf, store.TileIndexOfs, store.ZoomLevels)
     {
     }
 
+    /// <summary>
+    /// Begins a traversal that returns the tiles intersecting the given bounding box.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker.start(Bounds)</c>.</remarks>
     public void Start(IBounds bounds)
     {
         Start(bounds, null);
     }
 
+    /// <summary>
+    /// Begins a traversal over the tiles intersecting the given bounds, optionally
+    /// using a filter that may accelerate or short-circuit tile selection.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker.start(Bounds, Filter)</c>.</remarks>
     public void Start(IBounds bounds, IFilter? filter)
     {
@@ -92,6 +106,9 @@ internal class TileIndexWalker
         }
     }
 
+    /// <summary>
+    /// Returns the pointer to the start of the tile index.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker.tileIndexPointer()</c>.</remarks>
     protected int TileIndexPointer()
     {
@@ -100,30 +117,47 @@ internal class TileIndexWalker
 
     // PORT: Java's tile() and filter() are renamed CurrentTile()/CurrentFilter() to avoid colliding
     // with the GeoDesk.Geom.Tile type and the Filter type referenced in this file.
+    /// <summary>
+    /// Returns the tile reached by the most recent <see cref="Next"/> call.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker.tile()</c>.</remarks>
     public int CurrentTile()
     {
         return _currentTile;
     }
 
+    /// <summary>
+    /// Returns the tile-index pointer (TIP) of the current tile.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker.tip()</c>.</remarks>
     public int Tip()
     {
         return _currentTip;
     }
 
+    /// <summary>
+    /// Returns the filter in effect for the current tile, which may have been
+    /// substituted by a tile-specific filter.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker.filter()</c>.</remarks>
     public IFilter? CurrentFilter()
     {
         return _filter;
     }
 
+    /// <summary>
+    /// Returns the multitile north/west flags for the current tile, indicating whether
+    /// its northern and western neighbours are part of the result set.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker.northwestFlags()</c>.</remarks>
     public int NorthwestFlags()
     {
         return _northwestFlags;
     }
 
+    /// <summary>
+    /// Returns the first page of the current tile, resolved from its tile-index entry.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker.tilePage()</c>.</remarks>
     public int TilePage()
     {
@@ -133,6 +167,11 @@ internal class TileIndexWalker
         return (int)((uint)entry >> 2);
     }
 
+    /// <summary>
+    /// Advances to the next tile that intersects the query bounds, descending into
+    /// child levels of the tile tree as needed and applying tile-based filter
+    /// acceleration. Returns false when the whole tree has been traversed.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker.next()</c>.</remarks>
     public bool Next()
     {
@@ -234,6 +273,10 @@ internal class TileIndexWalker
         }
     }
 
+    /// <summary>
+    /// Skips the children of the current tile, ascending to its parent level so the
+    /// next call continues past the current subtree.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker.skipChildren()</c>.</remarks>
     public void SkipChildren()
     {
@@ -241,6 +284,10 @@ internal class TileIndexWalker
     }
 
     // TODO: could the col/rows be shorts? Performance impact?
+    /// <summary>
+    /// One zoom level of the tile-index traversal, holding the cursor state (column,
+    /// row, and bounds-clipped extents) for the matrix of child tiles at that level.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker.Level</c>.</remarks>
     class Level
     {
@@ -259,6 +306,11 @@ internal class TileIndexWalker
         internal int currentRow;
         internal IFilter? filter;
 
+        /// <summary>
+        /// Initializes this level for traversal under the given parent tile: clips the
+        /// matrix of child tiles to the query bounds, reads the child-tile mask, and
+        /// positions the cursor at the start of the clipped range.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.feature.store.TileIndexWalker.Level.init(ByteBuffer, int, int, Bounds, Filter)</c>.</remarks>
         internal void Init(NioBuffer buf, int pEntry, int parentTile, IBounds bounds, IFilter? filter)
         {

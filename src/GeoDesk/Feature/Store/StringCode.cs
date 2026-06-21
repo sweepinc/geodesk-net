@@ -17,8 +17,10 @@ internal readonly record struct StringCode(int Value)
     /// <summary>The "not found in the GST" sentinel, as returned by <c>FeatureStore.CodeFromString</c>.</summary>
     public static readonly StringCode Nil = new(-1);
 
+    /// <summary>True if this is a real string code rather than the "not found" sentinel.</summary>
     public bool IsValid => Value >= 0;
 
+    /// <summary>Returns a debug string of the form <c>str#{value}</c>.</summary>
     public override string ToString() => $"str#{Value}";
 
 }

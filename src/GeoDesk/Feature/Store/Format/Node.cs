@@ -25,6 +25,7 @@ internal readonly struct Node
 
     readonly ReadOnlyMemory<byte> _buf; // sliced to the feature anchor (the flags word)
 
+    /// <summary>Wraps the given memory window, sliced to the node's anchor, as a cursor.</summary>
     public Node(ReadOnlyMemory<byte> buf)
     {
         _buf = buf;

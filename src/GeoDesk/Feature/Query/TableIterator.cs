@@ -14,6 +14,12 @@ namespace GeoDesk.Feature.Query;
 // type). It is currently unused scaffolding in the Java source; the concrete table iterators
 // implement their own state. Kept here, mirroring its fields/constants, atop the FeatureIterator
 // adapter base.
+/// <summary>
+/// Abstract base scaffolding for iterators that walk a packed feature reference
+/// table, holding the shared foreign-tile tracking state and flag constants. The
+/// concrete table iterators currently implement their own state; this mirrors the
+/// Java type atop the <see cref="FeatureIterator"/> adapter.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.query.TableIterator</c>.</remarks>
 internal abstract class TableIterator : FeatureIterator
 {

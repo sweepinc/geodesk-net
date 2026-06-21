@@ -11,6 +11,11 @@ namespace GeoDesk.Feature.Store;
 // own constants; the inherited BlobStore constants are referenced via BlobStoreConstants
 // directly at the (few) call sites. Note MAGIC/VERSION/VERSION_OFS deliberately differ
 // from the BlobStore values.
+/// <summary>
+/// Header-layout constants specific to a GeoDesk feature library file: its magic number, format
+/// version, and the byte offsets of header fields such as the tile index, string table, properties,
+/// and index schema pointers.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStoreConstants</c>.</remarks>
 internal static class FeatureStoreConstants
 {

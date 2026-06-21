@@ -19,30 +19,49 @@ using NioBuffer = GeoDesk.Buffers.NioBufferReader;
 
 namespace GeoDesk.Feature.Store;
 
+/// <summary>
+/// A relation feature read directly from a feature library tile. Enumerates and
+/// queries its members, and builds the appropriate geometry (a multipolygon for area
+/// relations, otherwise a geometry collection gathered recursively from members).
+/// </summary>
+/// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredRelation</c>.</remarks>
 internal class StoredRelation : StoredFeature, IRelation
 {
 
     /// <summary>
-    /// Initializes a new instance.
+    /// Creates a stored relation backed by the given store, buffer, and pointer to the
+    /// relation's record.
     /// </summary>
-    /// <param name="store"></param>
-    /// <param name="buf"></param>
-    /// <param name="ptr"></param>
+    /// <param name="store">the feature store the relation was read from</param>
+    /// <param name="buf">the buffer containing the relation's record</param>
+    /// <param name="ptr">the pointer to the relation's record</param>
     public StoredRelation(FeatureStore store, NioBuffer buf, int ptr) :
         base(store, buf, ptr)
     {
 
     }
 
+    /// <summary>
+    /// The feature type, always <see cref="FeatureType.Relation"/>.
+    /// </summary>
     public override FeatureType Type => FeatureType.Relation;
 
+    /// <summary>
+    /// Always true; this feature is a relation.
+    /// </summary>
     public bool IsRelation => true;
 
+    /// <summary>
+    /// Returns a debug string of the form <c>relation/{id}</c>.
+    /// </summary>
     public override string ToString()
     {
         return "relation/" + Id;
     }
 
+    /// <summary>
+    /// Resolves the absolute pointer to a relation's member table from its record.
+    /// </summary>
     public static int BodyPointer(NioBuffer buf, int ptr)
     {
         int ppMembers = ptr + 12;
@@ -50,17 +69,27 @@ internal class StoredRelation : StoredFeature, IRelation
     }
 
     // TODO: Decide what this should return
+    /// <summary>
+    /// Returns an empty coordinate array; a relation has no inherent coordinate
+    /// sequence.
+    /// </summary>
     public override int[] ToXY()
     {
         return [];
     }
 
+    /// <summary>
+    /// Returns true if the member table at the given pointer is empty.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredRelation.isEmpty(int)</c>.</remarks>
     bool IsEmpty(int pMembers)
     {
         return buf.GetInt(pMembers) == 0;
     }
 
+    /// <summary>
+    /// Returns an iterator over all members of this relation.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredRelation.iterator()</c>.</remarks>
     public override IEnumerator<IFeature> GetEnumerator()
     {
@@ -71,6 +100,10 @@ internal class StoredRelation : StoredFeature, IRelation
         return new MemberIterator(store, buf, pMembers, TypeBits.ALL, Matcher.ALL, null);
     }
 
+    /// <summary>
+    /// Returns an iterator over the members of this relation that match the given types
+    /// and matcher.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredRelation.iterator(int, Matcher)</c>.</remarks>
     public IEnumerator<IFeature> GetEnumerator(int types, Matcher matcher)
     {
@@ -81,6 +114,10 @@ internal class StoredRelation : StoredFeature, IRelation
         return new MemberIterator(store, buf, pMembers, types, matcher, null);
     }
 
+    /// <summary>
+    /// Builds the geometry of this relation: a polygon/multipolygon for area relations,
+    /// otherwise a geometry collection assembled from its members.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredRelation.toGeometry()</c>.</remarks>
     public override Geometry ToGeometry()
     {
@@ -152,12 +189,19 @@ internal class StoredRelation : StoredFeature, IRelation
         return store.GeometryFactory().CreateGeometryCollection(geoms.ToArray());
     }
 
+    /// <summary>
+    /// Returns a query over all members of this relation.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredRelation.members()</c>.</remarks>
     public IFeatureQuery Members()
     {
         return Members(TypeBits.ALL, Matcher.ALL, null);
     }
 
+    /// <summary>
+    /// Returns a query over the members of this relation of the given types that match
+    /// the given GOQL query string.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredRelation.members(int, String)</c>.</remarks>
     IFeatureQuery Members(int types, string query)
     {
@@ -165,6 +209,10 @@ internal class StoredRelation : StoredFeature, IRelation
         return Members(types & matcher.AcceptedTypes, matcher, null);
     }
 
+    /// <summary>
+    /// Returns a query over the members of this relation constrained by the given types,
+    /// matcher, and optional filter; an empty view when the relation has no members.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredRelation.members(int, Matcher, Filter)</c>.</remarks>
     public IFeatureQuery Members(int types, Matcher matcher, IFilter? filter)
     {
@@ -175,6 +223,10 @@ internal class StoredRelation : StoredFeature, IRelation
         return new MemberView(store, buf, pMembers, types, matcher, filter);
     }
 
+    /// <summary>
+    /// Returns a query over the members of this relation that match the given GOQL
+    /// query string.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredRelation.members(String)</c>.</remarks>
     public IFeatureQuery Members(string q)
     {

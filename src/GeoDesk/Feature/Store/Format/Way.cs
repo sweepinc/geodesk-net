@@ -25,6 +25,7 @@ internal readonly struct Way
 
     readonly ReadOnlyMemory<byte> _buf; // sliced to the feature anchor (the flags word)
 
+    /// <summary>Wraps the given memory window, sliced to the way's anchor, as a cursor.</summary>
     public Way(ReadOnlyMemory<byte> buf)
     {
         _buf = buf;

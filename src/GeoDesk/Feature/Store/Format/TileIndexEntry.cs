@@ -36,14 +36,16 @@ internal readonly struct TileIndexEntry
     readonly ReadOnlyMemory<byte> _buf; // sliced to the start of the entry
 
     /// <summary>
-    /// Initializes a new instance.
+    /// Wraps the given memory window, sliced to the start of a tile-index entry, as a
+    /// cursor.
     /// </summary>
-    /// <param name="buf"></param>
+    /// <param name="buf">the memory sliced to the start of the entry</param>
     public TileIndexEntry(ReadOnlyMemory<byte> buf)
     {
         _buf = buf;
     }
 
+    /// <summary>The raw first word of the entry (a page or a child-level pointer).</summary>
     public int Raw => _buf.Span.GetIntLE(EntryOfs);
 
     /// <summary>

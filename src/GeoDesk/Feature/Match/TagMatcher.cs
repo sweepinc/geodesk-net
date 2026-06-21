@@ -13,6 +13,11 @@ using NioBuffer = GeoDesk.Buffers.NioBufferReader;
 
 namespace GeoDesk.Feature.Match;
 
+/// <summary>
+/// Abstract base for matchers that test a feature's tags. Holds the global string table for
+/// resolving string-coded keys and values and a key range used to quickly reject features whose
+/// indexed key set cannot contain the matcher's key. Subclasses implement the actual tag comparison.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagMatcher</c>.</remarks>
 internal abstract class TagMatcher : Matcher
 {
@@ -22,6 +27,10 @@ internal abstract class TagMatcher : Matcher
     protected readonly int keyMin;
 
     // TODO: take FeatureStore, resources
+    /// <summary>
+    /// Initializes the tag matcher with its accepted types, the global string table, and the key
+    /// index range used for fast index rejection.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagMatcher(int, String[], int, int)</c>.</remarks>
     protected TagMatcher(int types, string[] globalStrings, int keyMask, int keyMin)
         : base(types)
@@ -31,6 +40,9 @@ internal abstract class TagMatcher : Matcher
         this.keyMin = keyMin;
     }
 
+    /// <summary>
+    /// Rejects the feature if its type is not in the accepted set, otherwise runs the tag test.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagMatcher.acceptTyped(int, ByteBuffer, int)</c>.</remarks>
     public override bool AcceptTyped(int types, NioBuffer buf, int pos)
     {
@@ -39,12 +51,19 @@ internal abstract class TagMatcher : Matcher
         return Accept(buf, pos);
     }
 
+    /// <summary>
+    /// Accepts an index key set only if the masked key value is at least the matcher's minimum,
+    /// enabling fast index-based pruning.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagMatcher.acceptIndex(int)</c>.</remarks>
     public override bool AcceptIndex(int keys)
     {
         return (keys & keyMask) >= keyMin;
     }
 
+    /// <summary>
+    /// Renders a double as a string, omitting the decimal portion when the value is integral.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagMatcher.doubleToString(double)</c>.</remarks>
     protected static string DoubleToString(double d)
     {
@@ -52,12 +71,19 @@ internal abstract class TagMatcher : Matcher
         return d.ToString("R", CultureInfo.InvariantCulture);
     }
 
+    /// <summary>
+    /// Leniently parses a string as a double for numeric tag comparisons.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagMatcher.stringToDouble(String)</c>.</remarks>
     protected static double StringToDouble(string s)
     {
         return MathUtils.DoubleFromString(s);
     }
 
+    /// <summary>
+    /// Resolves a global string code to its text, throwing <see cref="QueryException"/> if the code is
+    /// out of range (a sign of an invalid store).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagMatcher.globalString(int)</c>.</remarks>
     protected string GlobalString(int code)
     {

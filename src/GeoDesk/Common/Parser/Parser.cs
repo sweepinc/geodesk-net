@@ -566,42 +566,63 @@ internal class Parser : IFileLocation
         tokenValue = SubSequence(0, n);
     }
 
+    /// <summary>
+    /// Returns the number of characters remaining from the current position to the end of the buffer.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.Parser.length()</c>.</remarks>
     public int Length()
     {
         return buf.Length - pos;
     }
 
+    /// <summary>
+    /// Returns the character at the given offset relative to the current position.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.Parser.charAt(int)</c>.</remarks>
     public char CharAt(int index)
     {
         return buf[pos + index];
     }
 
+    /// <summary>
+    /// Returns the substring between the two offsets relative to the current position.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.Parser.subSequence(int, int)</c>.</remarks>
     public string SubSequence(int start, int end)
     {
         return buf.Substring(pos + start, end - start);
     }
 
+    /// <summary>
+    /// Returns the name of the file being parsed (for diagnostics).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.Parser.getFile()</c>.</remarks>
     public string GetFile()
     {
         return fileName!;
     }
 
+    /// <summary>
+    /// Returns the 1-based line number of the current token.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.Parser.getLine()</c>.</remarks>
     public int GetLine()
     {
         return line;
     }
 
+    /// <summary>
+    /// Returns the 1-based column number where the current token starts.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.Parser.getColumn()</c>.</remarks>
     public int GetColumn()
     {
         return column;
     }
 
+    /// <summary>
+    /// Returns true if the pattern matches the entire string (not merely a substring).
+    /// </summary>
     /// <remarks>Port-only helper for Java's <c>Matcher.matches()</c> (full-string regex match).</remarks>
     static bool FullMatch(Regex pattern, string s)
     {

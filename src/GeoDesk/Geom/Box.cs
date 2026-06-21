@@ -519,6 +519,10 @@ public class Box : IBounds
     }
 
     // TODO: rename of()?
+    /// <summary>
+    /// Creates an integer-coordinate <c>Box</c> covering the given floating-point
+    /// envelope.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Box.fromEnvelope(Envelope)</c>.</remarks>
     public static Box FromEnvelope(Envelope env)
     {
@@ -551,6 +555,10 @@ public class Box : IBounds
             (int)System.Math.Ceiling(y1 > y2 ? y1 : y2));
     }
 
+    /// <summary>
+    /// Parses a single coordinate value from a string, validating that it falls within
+    /// the allowed range and throwing an <see cref="ArgumentException"/> otherwise.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Box.parseCoordinate(String, String, double)</c>.</remarks>
     static double ParseCoordinate(string s, string name, double max)
     {
@@ -605,6 +613,10 @@ public class Box : IBounds
             int.MinValue, int.MinValue, int.MaxValue, int.MaxValue);
     }
 
+    /// <summary>
+    /// Builds a rectangular polygon geometry covering this box, using the given
+    /// geometry factory.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Box.toGeometry(GeometryFactory)</c>.</remarks>
     public Geometry ToGeometry(GeometryFactory factory)
     {

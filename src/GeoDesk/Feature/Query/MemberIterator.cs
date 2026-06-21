@@ -16,6 +16,11 @@ namespace GeoDesk.Feature.Query;
 // TODO: filter
 // TODO: fix lazy tile loading
 // TODO: Apply filter
+/// <summary>
+/// Iterates over the members of a relation, decoding the packed member table to
+/// resolve each member feature (local or foreign), its role, and applying the
+/// type filter, matcher, and optional spatial filter as it advances.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.query.MemberIterator</c>.</remarks>
 internal class MemberIterator : FeatureIterator
 {
@@ -43,6 +48,11 @@ internal class MemberIterator : FeatureIterator
     int _member;
     IFeature? _memberFeature;
 
+    /// <summary>
+    /// Creates an iterator over the relation member table starting at the given
+    /// pointer, restricted to the given feature types and constrained by the
+    /// supplied matcher and optional filter, and pre-fetches the first member.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.MemberIterator(FeatureStore, ByteBuffer, int, int, Matcher, Filter)</c>.</remarks>
     public MemberIterator(FeatureStore store, NioBuffer buf, int pTable, int types, Matcher matcher, IFilter? filter)
     {
@@ -57,6 +67,12 @@ internal class MemberIterator : FeatureIterator
         FetchNextFeature();
     }
 
+    /// <summary>
+    /// Advances through the packed member table, decoding flags, foreign-tile and
+    /// role information, until a member whose role is accepted by the matcher is
+    /// reached. Returns the buffer position past that member's header, or 0 when the
+    /// table is exhausted.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.MemberIterator.fetchNext()</c>.</remarks>
     int FetchNext()
     {
@@ -118,6 +134,12 @@ internal class MemberIterator : FeatureIterator
         }
     }
 
+    /// <summary>
+    /// Resolves the next accepted member to an actual feature, loading the foreign
+    /// tile and exports table for foreign members, applying the typed matcher, and
+    /// assigning the member's role. Caches the result in the member-feature field,
+    /// or null when no further matching member exists.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.MemberIterator.fetchNextFeature()</c>.</remarks>
     void FetchNextFeature()
     {
@@ -163,12 +185,18 @@ internal class MemberIterator : FeatureIterator
         }
     }
 
+    /// <summary>
+    /// Returns true if a pre-fetched member feature is available.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.MemberIterator.hasNext()</c>.</remarks>
     public override bool HasNext()
     {
         return _memberFeature != null;
     }
 
+    /// <summary>
+    /// Returns the current member feature and pre-fetches the next one.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.MemberIterator.next()</c>.</remarks>
     public override IFeature? Next()
     {

@@ -27,11 +27,15 @@ internal readonly struct FreeBlob
 
     readonly ReadOnlyMemory<byte> _buf; // sliced to the start of the free blob's first block
 
+    /// <summary>
+    /// Wraps the given memory window, sliced to the start of a free blob, as a cursor.
+    /// </summary>
     public FreeBlob(ReadOnlyMemory<byte> buf)
     {
         _buf = buf;
     }
 
+    /// <summary>The shared blob header at the start of this free blob.</summary>
     public BlobHeader Header => new BlobHeader(_buf);
 
     /// <summary>Page of the previous free blob in the same size range, or <see cref="PageIndex.Nil"/>.</summary>

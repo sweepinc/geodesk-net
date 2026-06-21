@@ -11,10 +11,17 @@ using System.Diagnostics;
 namespace GeoDesk.Geom;
 
 // not used
+/// <summary>
+/// In-place quicksort that sorts an integer key array while keeping a parallel list of associated
+/// values in the same order, so the two arrays remain paired.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.geom.PairSort</c>.</remarks>
 internal static class PairSort
 {
 
+    /// <summary>
+    /// Sorts the entire key array (and the parallel value list) in ascending key order.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.PairSort.sort(int[], List)</c>.</remarks>
     public static void Sort<T>(int[] keys, IList<T> values)
     {
@@ -22,6 +29,10 @@ internal static class PairSort
         Sort(keys, values, 0, keys.Length - 1);
     }
 
+    /// <summary>
+    /// Recursively quicksorts the keys (and parallel values) within the inclusive index range
+    /// <paramref name="left"/>..<paramref name="right"/>.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.PairSort.sort(int[], List, int, int)</c>.</remarks>
     public static void Sort<T>(int[] keys, IList<T> values, int left, int right)
     {
@@ -43,6 +54,10 @@ internal static class PairSort
         Sort(keys, values, j + 1, right);
     }
 
+    /// <summary>
+    /// Swaps the entries at indices <paramref name="i"/> and <paramref name="j"/> in both the key
+    /// array and the value list.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.PairSort.swap(int[], List, int, int)</c>.</remarks>
     static void Swap<T>(int[] keys, IList<T> values, int i, int j)
     {

@@ -25,6 +25,7 @@ internal readonly struct Relation
 
     readonly ReadOnlyMemory<byte> _buf; // sliced to the feature anchor (the flags word)
 
+    /// <summary>Wraps the given memory window, sliced to the relation's anchor, as a cursor.</summary>
     public Relation(ReadOnlyMemory<byte> buf)
     {
         _buf = buf;

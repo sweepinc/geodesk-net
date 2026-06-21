@@ -41,6 +41,13 @@ namespace GeoDesk.Geom;
 
 // careful when translating code from JavaScript:
 // must cast ints explicitly into doubles
+/// <summary>
+/// An R-tree bulk-loaded with the Overlap Minimizing Top-down (OMT) algorithm,
+/// partitioning items into roughly square tiles by alternating X/Y selection to keep
+/// node overlap low. Unlike <see cref="OmtTreeBuilder{B}"/> this materializes the
+/// concrete <see cref="RTree.Node"/> tree directly. Based on the rbush implementation
+/// by Volodymyr Agafonkin.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.geom.OverlapMinimizingTree</c>.</remarks>
 internal class OverlapMinimizingTree : RTree
 {
@@ -48,12 +55,22 @@ internal class OverlapMinimizingTree : RTree
     static readonly IComparer<IBounds> CompareMinX = new MinXComparer();
     static readonly IComparer<IBounds> CompareMinY = new MinYComparer();
 
+    /// <summary>
+    /// Builds the tree from the given items with at most <paramref name="maxEntries"/>
+    /// entries per node, setting the resulting root.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.OverlapMinimizingTree(List, int)</c>.</remarks>
     public OverlapMinimizingTree(List<IBounds> items, int maxEntries)
     {
         root = Build(items, 0, items.Count - 1, 0, maxEntries);
     }
 
+    /// <summary>
+    /// Recursively builds the subtree covering items in the index range
+    /// [<paramref name="left"/>, <paramref name="right"/>]: returns a leaf node when
+    /// the range fits, otherwise partitions it into mostly-square tiles via X/Y
+    /// quickselect and packs each tile into a child node.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.OverlapMinimizingTree.build(List, int, int, int, int)</c>.</remarks>
     Node Build(List<IBounds> items, int left, int right, int height, int maxEntries)
     {
@@ -101,16 +118,28 @@ internal class OverlapMinimizingTree : RTree
     }
 
     // Port of Java's method reference OverlapMinimizingTree::compareMinX.
+    /// <summary>
+    /// Comparer that orders bounds by ascending minimum X coordinate.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.OverlapMinimizingTree.compareMinX(Bounds, Bounds)</c>.</remarks>
     sealed class MinXComparer : IComparer<IBounds>
     {
+        /// <summary>
+        /// Compares two bounds by their minimum X coordinate.
+        /// </summary>
         public int Compare(IBounds? a, IBounds? b) => a!.MinX - b!.MinX;
     }
 
     // Port of Java's method reference OverlapMinimizingTree::compareMinY.
+    /// <summary>
+    /// Comparer that orders bounds by ascending minimum Y coordinate.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.OverlapMinimizingTree.compareMinY(Bounds, Bounds)</c>.</remarks>
     sealed class MinYComparer : IComparer<IBounds>
     {
+        /// <summary>
+        /// Compares two bounds by their minimum Y coordinate.
+        /// </summary>
         public int Compare(IBounds? a, IBounds? b) => a!.MinY - b!.MinY;
     }
 

@@ -27,13 +27,16 @@ internal readonly struct IndexBucket
 
     readonly ReadOnlyMemory<byte> _buf; // sliced to the start of the bucket entry
 
+    /// <summary>Wraps the given memory window, sliced to the start of a bucket, as a cursor.</summary>
     public IndexBucket(ReadOnlyMemory<byte> buf)
     {
         _buf = buf;
     }
 
+    /// <summary>The bucket's accepted-tag key bits, AND-tested against a query's key set.</summary>
     public int KeyBits => _buf.Span.GetIntLE(KeyBitsOfs);
 
+    /// <summary>True if this is the last bucket in the index.</summary>
     public bool IsLast => (_buf.Span.GetIntLE(RootAndFlagsOfs) & LastFlag) != 0;
 
     /// <summary>The bucket's R-tree root trunk node.</summary>

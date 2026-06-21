@@ -7,6 +7,10 @@
 
 namespace GeoDesk.Feature.Store;
 
+/// <summary>
+/// Fixed global string table codes that every GeoDesk feature library reserves for the most common
+/// tag values (the empty string and the keywords <c>no</c>, <c>yes</c>, <c>outer</c>, and <c>inner</c>).
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.store.GlobalStrings</c>.</remarks>
 internal static class GlobalStrings
 {

@@ -17,6 +17,7 @@ internal readonly record struct Tex(int Value)
     /// <summary>Applies a (possibly negative) delta, as carried in foreign-feature references.</summary>
     public static Tex operator +(Tex tex, int delta) => new(tex.Value + delta);
 
+    /// <summary>Returns a debug string of the form <c>TEX {value}</c>.</summary>
     public override string ToString() => $"TEX {Value}";
 
 }
