@@ -36,6 +36,10 @@ internal class TagClause : Variable, IComparable<TagClause>
     Expression? _exp;
     public TagClause? next;
 
+    /// <summary>
+    /// Creates a tag clause for the given key with its match flags, global-string key code, key category,
+    /// and (optional) value expression.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagClause(int, String, int, int, Expression)</c>.</remarks>
     public TagClause(int flags, string keyString, int key, int category, Expression? exp) :
         base(keyString)
@@ -46,48 +50,78 @@ internal class TagClause : Variable, IComparable<TagClause>
         _exp = exp;
     }
 
+    /// <summary>
+    /// Returns the bit field of match flags describing this clause's key-requirement and value-type
+    /// behaviour.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagClause.flags()</c>.</remarks>
     public int Flags() => _flags;
 
+    /// <summary>
+    /// Returns the next clause in the selector's linked list of clauses, or null if this is the last.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagClause.next()</c>.</remarks>
     public TagClause? Next()
     {
         return next;
     }
 
+    /// <summary>
+    /// Returns the value-match expression for this clause, or null if the clause only tests for the key's
+    /// presence.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagClause.expression()</c>.</remarks>
     public Expression? Expression()
     {
         return _exp;
     }
 
+    /// <summary>
+    /// Replaces this clause's value-match expression.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagClause.setExpression(Expression)</c>.</remarks>
     public void SetExpression(Expression? exp)
     {
         _exp = exp;
     }
 
+    /// <summary>
+    /// Returns the global-string code of this clause's key, or 0 for a local (uncommon) key.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagClause.keyCode()</c>.</remarks>
     public int KeyCode()
     {
         return _key;
     }
 
+    /// <summary>
+    /// Returns the index category associated with this clause's key, used to select the relevant spatial
+    /// index bucket.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagClause.category()</c>.</remarks>
     public int Category()
     {
         return _category;
     }
 
+    /// <summary>
+    /// Returns whether matching this clause requires the tag's key to be present (explicitly or implicitly).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagClause.isKeyRequired()</c>.</remarks>
     public bool IsKeyRequired()
     {
         return (_flags & (KEY_REQUIRED_EXPLICITLY | KEY_REQUIRED_IMPLICITLY)) != 0;
     }
 
+    /// <summary>
+    /// Returns whether this clause's key is a local (uncommon) key, i.e. has no global-string code.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagClause.isLocalKey()</c>.</remarks>
     public bool IsLocalKey() => _key == 0;
 
+    /// <summary>
+    /// Returns whether this clause's key is a global (common) key with a global-string code.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagClause.isGlobalKey()</c>.</remarks>
     public bool IsGlobalKey() => _key != 0;
 
@@ -112,8 +146,8 @@ internal class TagClause : Variable, IComparable<TagClause>
     /// case no further merging steps should be taken. If a combination of clauses is nonsensical,
     /// throws QueryException.
     /// </summary>
-    /// <returns>true if the clauses can be combined, false if they are problematic but have been fixed</returns>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagClause.checkConjoined(TagClause)</c>.</remarks>
+    /// <returns>true if the clauses can be combined, false if they are problematic but have been fixed</returns>
     bool CheckConjoined(TagClause other)
     {
         if (!IsKeyRequired() && _exp == null)
@@ -139,9 +173,9 @@ internal class TagClause : Variable, IComparable<TagClause>
     /// only once, so we need to merge the two clauses into a single one that contains an AND
     /// expression.
     /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagClause.absorb(TagClause, boolean)</c>.</remarks>
     /// <param name="other">another TagClause with the same key</param>
     /// <param name="conjoin">true if the expressions should be combined using AND, or false if logical OR should be used</param>
-    /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagClause.absorb(TagClause, boolean)</c>.</remarks>
     public void Absorb(TagClause other, bool conjoin)
     {
         if (conjoin)

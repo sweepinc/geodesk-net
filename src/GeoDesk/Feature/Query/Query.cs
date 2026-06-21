@@ -32,6 +32,14 @@ namespace GeoDesk.Feature.Query;
 // bounded Channel; the consumer (this cursor) drains the Channel synchronously. Within a tile the
 // index buckets are scanned in parallel by TileScanner. Cancellation is wired through _cts so that
 // abandoning the cursor (Dispose) stops the producer before the store can unmap its buffers.
+/// <summary>
+/// Executes a spatial feature query over a <see cref="FeatureStore"/> and exposes the matching features as
+/// a forward-only cursor. A background producer walks the tile index within the query's bounding box,
+/// scans each loaded tile in parallel, and feeds batches of results through a bounded channel; this object
+/// drains that channel, materializing one feature at a time. Supports both the synchronous Java iterator
+/// surface (<see cref="HasNext"/>/<see cref="Next"/>) and the .NET <see cref="IEnumerator{T}"/> /
+/// <see cref="IAsyncEnumerator{T}"/> patterns.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query</c>.</remarks>
 internal class Query : IEnumerator<IFeature>, IAsyncEnumerator<IFeature>, IBounds
 {
@@ -94,27 +102,52 @@ internal class Query : IEnumerator<IFeature>, IAsyncEnumerator<IFeature>, IBound
         Start(view.filter, prefetch);
     }
 
+    /// <summary>
+    /// The feature store this query runs against.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.store()</c>.</remarks>
     public FeatureStore Store => _store;
 
+    /// <summary>
+    /// The bit mask of feature types this query accepts.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.types()</c>.</remarks>
     public int Types => _types;
 
+    /// <summary>
+    /// The matcher that decides whether a candidate feature satisfies the query's tag criteria.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.matcher()</c>.</remarks>
     public Matcher Matcher => _matcher;
 
+    /// <summary>
+    /// The minimum X (west) bound of the query's bounding box, in Mercator imps.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.minX()</c>.</remarks>
     public int MinX => _minX;
 
+    /// <summary>
+    /// The minimum Y (south) bound of the query's bounding box, in Mercator imps.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.minY()</c>.</remarks>
     public int MinY => _minY;
 
+    /// <summary>
+    /// The maximum X (east) bound of the query's bounding box, in Mercator imps.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.maxX()</c>.</remarks>
     public int MaxX => _maxX;
 
+    /// <summary>
+    /// The maximum Y (north) bound of the query's bounding box, in Mercator imps.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.maxY()</c>.</remarks>
     public int MaxY => _maxY;
 
+    /// <summary>
+    /// (Re)starts the query with the given optional spatial filter, launching the background tile producer
+    /// and prefetching the first result.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.start(Filter)</c>.</remarks>
     public void Start(IFilter? filter)
     {
@@ -137,6 +170,11 @@ internal class Query : IEnumerator<IFeature>, IAsyncEnumerator<IFeature>, IBound
 
     // PORT: replaces requestTile() + the ForkJoinPool submission throttle. Bounded by
     // MaxPendingTiles via Parallel.ForEachAsync; each tile's results are written to the channel.
+    /// <summary>
+    /// The background producer: walks the candidate tiles in the query's bounding box, scans each in
+    /// parallel (bounded by the store's max pending tiles), and writes each tile's results to the channel,
+    /// completing the channel (with any fault) when finished.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.requestTile()</c>.</remarks>
     async Task ProduceAsync(IFilter? filter, CancellationToken ct)
     {
@@ -183,6 +221,11 @@ internal class Query : IEnumerator<IFeature>, IAsyncEnumerator<IFeature>, IBound
     // PORT: replaces take(). Blocks the consumer until the next tile's results arrive; returns null
     // once the producer has completed and the channel is drained. A producer fault surfaces as the
     // channel's completion exception, which is stashed and re-thrown from HasNext().
+    /// <summary>
+    /// Blocks until the next tile's results arrive, returning null once the producer has completed and the
+    /// channel is drained. A producer fault is stashed in <c>_error</c> and re-thrown later from
+    /// <see cref="HasNext"/>.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.take()</c>.</remarks>
     QueryResults? TakeBatch()
     {
@@ -212,6 +255,10 @@ internal class Query : IEnumerator<IFeature>, IAsyncEnumerator<IFeature>, IBound
         }
     }
 
+    /// <summary>
+    /// Advances to the next matching feature, walking across result batches and blocking for the next tile's
+    /// results at a batch boundary. Sets <c>_nextFeature</c> to null once the query is exhausted.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.fetchNext()</c>.</remarks>
     void FetchNext()
     {
@@ -304,6 +351,9 @@ internal class Query : IEnumerator<IFeature>, IAsyncEnumerator<IFeature>, IBound
         }
     }
 
+    /// <summary>
+    /// Returns whether another feature is available, re-throwing any fault raised by the background producer.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.hasNext()</c>.</remarks>
     public bool HasNext()
     {
@@ -316,6 +366,10 @@ internal class Query : IEnumerator<IFeature>, IAsyncEnumerator<IFeature>, IBound
         return false;
     }
 
+    /// <summary>
+    /// Returns the current feature and advances the cursor to the next one. Returns null when the query is
+    /// exhausted.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.next()</c>.</remarks>
     public IFeature? Next()
     {

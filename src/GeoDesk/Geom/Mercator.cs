@@ -227,9 +227,9 @@ internal static class Mercator
     /// Calculates the area of the given geometry (in square meters). A simple method that is
     /// sufficiently accurate only for small areas.
     /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.area(Geometry)</c>.</remarks>
     /// <param name="geom">the geometry</param>
     /// <returns>area in square meters</returns>
-    /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.area(Geometry)</c>.</remarks>
     // TODO: check
     public static double Area(Geometry geom)
     {
@@ -268,8 +268,8 @@ internal static class Mercator
     /// Converts the WGS84 (longitude/latitude) coordinates of a Geometry into Mercator projection.
     /// The Geometry is modified in-place.
     /// </summary>
-    /// <param name="geom">the Geometry whose coordinates to project</param>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.project(Geometry)</c>.</remarks>
+    /// <param name="geom">the Geometry whose coordinates to project</param>
     public static void Project(Geometry geom)
     {
         geom.Apply(new ProjectFilter());
