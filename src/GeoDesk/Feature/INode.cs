@@ -8,7 +8,8 @@
 namespace GeoDesk.Feature;
 
 /// <summary>
-/// A <see cref="IFeature"/> that represents a single point.
+/// An <see cref="IFeature"/> that represents a single OSM node — a point at one coordinate. A node
+/// may be a standalone feature or a vertex shared by one or more ways.
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.Node</c>.</remarks>
 public interface INode : IFeature

@@ -7,6 +7,7 @@
 
 using System;
 using System.IO;
+using System.Threading.Tasks;
 
 using GeoDesk.Feature;
 using GeoDesk.Geom;
@@ -61,6 +62,39 @@ public class WorldQueryTest
         IFeature? first = world.Ways("w[highway]").First();
         Assert.NotNull(first);
         Assert.True(first!.HasTag("highway"));
+    }
+
+    [Fact]
+    public async Task StreamsHighwaysAsyncMatchingSyncCount()
+    {
+        string gol = GolFile();
+        if (!File.Exists(gol))
+        {
+            output.WriteLine($"No GOL fixture at {gol} - skipping.");
+            return;
+        }
+
+        using var world = FeatureLibrary.Open(gol);
+
+        Box monaco = Box.OfWSEN(7.40, 43.71, 7.45, 43.76);
+        IFeatureQuery query = world.Ways("w[highway]").In(monaco);
+
+        // The synchronous result is the reference.
+        long syncCount = query.Count();
+        Assert.True(syncCount > 0, "expected highways within the Monaco bbox");
+
+        // Stream the same query through the non-blocking async path (await foreach over the public
+        // IFeatureQuery, which resolves to WorldView.GetAsyncEnumerator). It must yield every feature
+        // the synchronous enumeration does.
+        long asyncCount = 0;
+        await foreach (var f in query)
+        {
+            Assert.True(f.HasTag("highway"));
+            asyncCount++;
+        }
+
+        output.WriteLine($"highways sync={syncCount}, async={asyncCount}");
+        Assert.Equal(syncCount, asyncCount);
     }
 
     [Fact]

@@ -15,13 +15,17 @@ using NetTopologySuite.Geometries;
 namespace GeoDesk.Feature;
 
 /// <summary>
-/// A Geographic Object Library containing features.
+/// A Geographic Object Library (GOL): the disposable root handle for an open feature store. It is
+/// itself a <see cref="WorldView"/>, so it acts as an <see cref="IFeatureQuery"/> over all features
+/// in the library, and owns the underlying <see cref="FeatureStore"/> that its views read from.
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.FeatureLibrary</c>.</remarks>
 public class FeatureLibrary : WorldView, IDisposable
 {
 
-    /// <summary>Opens the given Geographic Object Library.</summary>
+    /// <summary>
+    /// Opens the Geographic Object Library at the given path and returns its root handle.
+    /// </summary>
     /// <param name="path">the path of the GOL file</param>
     /// <remarks>
     /// The returned <see cref="FeatureLibrary"/> is the disposable root and is itself an
@@ -46,9 +50,16 @@ public class FeatureLibrary : WorldView, IDisposable
 
     }
 
+    /// <summary>
+    /// The underlying <see cref="FeatureStore"/> backing this library.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.FeatureLibrary.store()</c>.</remarks>
     internal FeatureStore Store => store;
 
+    /// <summary>
+    /// The JTS (NetTopologySuite) <see cref="GeometryFactory"/> used to build geometries for features
+    /// in this library, configured with the library's coordinate model.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.FeatureLibrary.geometryFactory()</c>.</remarks>
     public GeometryFactory GeometryFactory => store.GeometryFactory();
 
@@ -66,6 +77,9 @@ public class FeatureLibrary : WorldView, IDisposable
         store.Close();
     }
 
+    /// <summary>
+    /// Disposes the library by closing it and releasing its resources. Equivalent to <see cref="Close"/>.
+    /// </summary>
     /// <remarks>Port-only adapter: IDisposable maps to Java's <c>AutoCloseable.close()</c>; delegates to <see cref="Close"/>.</remarks>
     public void Dispose()
     {

@@ -33,7 +33,7 @@ namespace GeoDesk.Feature.Query;
 // index buckets are scanned in parallel by TileScanner. Cancellation is wired through _cts so that
 // abandoning the cursor (Dispose) stops the producer before the store can unmap its buffers.
 /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query</c>.</remarks>
-internal class Query : IEnumerator<IFeature>, IBounds
+internal class Query : IEnumerator<IFeature>, IAsyncEnumerator<IFeature>, IBounds
 {
 
     readonly FeatureStore _store;
@@ -62,7 +62,15 @@ internal class Query : IEnumerator<IFeature>, IBounds
     /// Initializes a new instance.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query(WorldView)</c>.</remarks>
-    public Query(WorldView view)
+    public Query(WorldView view) :
+        this(view, prefetch: true)
+    {
+    }
+
+    // Async consumers construct with prefetch:false so the constructor does NOT block on the first
+    // batch — MoveNextAsync drives the fetching instead. externalCt links the `await foreach`
+    // cancellation token into this query's cancellation source.
+    internal Query(WorldView view, bool prefetch, CancellationToken externalCt = default)
     {
         _store = view.store;
         _types = view.types;
@@ -79,11 +87,11 @@ internal class Query : IEnumerator<IFeature>, IBounds
             SingleReader = true,
             SingleWriter = false,
         });
-        _cts = CancellationTokenSource.CreateLinkedTokenSource(_store.QueryCancellation);
+        _cts = CancellationTokenSource.CreateLinkedTokenSource(_store.QueryCancellation, externalCt);
         _tileWalker = new TileIndexWalker(_store);
         _currentResults = QueryResults.Empty;
 
-        Start(view.filter);
+        Start(view.filter, prefetch);
     }
 
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.store()</c>.</remarks>
@@ -110,13 +118,21 @@ internal class Query : IEnumerator<IFeature>, IBounds
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.start(Filter)</c>.</remarks>
     public void Start(IFilter? filter)
     {
+        Start(filter, prefetch: true);
+    }
+
+    void Start(IFilter? filter, bool prefetch)
+    {
         _currentResults = QueryResults.Empty;
         _currentPos = -1;
 
         _producer = ProduceAsync(filter, _cts.Token);
         _store.TrackProducer(_producer);
 
-        FetchNext();
+        // Sync consumers prefetch the first feature here (blocking); async consumers skip this and
+        // let MoveNextAsync await the first batch instead.
+        if (prefetch)
+            FetchNext();
     }
 
     // PORT: replaces requestTile() + the ForkJoinPool submission throttle. Bounded by
@@ -181,6 +197,21 @@ internal class Query : IEnumerator<IFeature>, IBounds
         }
     }
 
+    // The async counterpart of TakeBatch: awaits the next tile's results instead of blocking the
+    // calling thread, so a web request enumerating a query releases its thread between tiles.
+    async ValueTask<QueryResults?> TakeBatchAsync(CancellationToken ct)
+    {
+        try
+        {
+            return await _channel.Reader.ReadAsync(ct).ConfigureAwait(false);
+        }
+        catch (ChannelClosedException e)
+        {
+            _error = e.InnerException;
+            return null;
+        }
+    }
+
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.fetchNext()</c>.</remarks>
     void FetchNext()
     {
@@ -212,26 +243,64 @@ internal class Query : IEnumerator<IFeature>, IBounds
                 continue;   // go back to loop since batch could be empty
             }
 
-            var buf = _currentResults.buf;
-            var pFeature = _currentResults.pointers[_currentPos];
-            var type = pFeature & 3;
-            pFeature ^= type;
+            BuildFeatureAtCurrentPos();
+            return;
+        }
+    }
 
-            if (type == 1)
+    // The async counterpart of FetchNext: identical batch-walking, but awaits the next tile's
+    // results at a batch boundary instead of blocking. Within a batch it completes synchronously.
+    async ValueTask FetchNextAsync(CancellationToken ct)
+    {
+        _currentPos++;
+        for (; ; )
+        {
+            if (_currentPos >= _currentResults.size)
             {
-                _nextFeature = new StoredWay(_store, buf, pFeature);
-                return;
+                _currentPos = 0;
+                if (_currentResults.next == null)
+                {
+                    var batch = await TakeBatchAsync(ct).ConfigureAwait(false);
+                    if (batch == null)
+                    {
+                        _nextFeature = null;
+                        return;
+                    }
+
+                    _currentResults = batch;
+                    continue;
+                }
+
+                _currentResults = _currentResults.next;
+                continue;
             }
 
-            if (type == 0)
-            {
-                _nextFeature = new StoredNode(_store, buf, pFeature);
-                return;
-            }
+            BuildFeatureAtCurrentPos();
+            return;
+        }
+    }
 
+    // Materializes the feature at the current batch position into _nextFeature. The low two bits of
+    // the stored pointer encode the feature type (0 = node, 1 = way, 2 = relation).
+    void BuildFeatureAtCurrentPos()
+    {
+        var buf = _currentResults.buf;
+        var pFeature = _currentResults.pointers[_currentPos];
+        var type = pFeature & 3;
+        pFeature ^= type;
+
+        if (type == 1)
+        {
+            _nextFeature = new StoredWay(_store, buf, pFeature);
+        }
+        else if (type == 0)
+        {
+            _nextFeature = new StoredNode(_store, buf, pFeature);
+        }
+        else
+        {
             System.Diagnostics.Debug.Assert(type == 2);
             _nextFeature = new StoredRelation(_store, buf, pFeature);
-            return;
         }
     }
 
@@ -272,6 +341,39 @@ internal class Query : IEnumerator<IFeature>, IBounds
     public void Reset()
     {
         throw new NotSupportedException();
+    }
+
+    // --- IAsyncEnumerator<Feature>: the non-blocking consumer path. MoveNextAsync awaits the next
+    // batch only at tile boundaries; within a tile's results it completes synchronously. ---
+
+    public async ValueTask<bool> MoveNextAsync()
+    {
+        await FetchNextAsync(_cts.Token).ConfigureAwait(false);
+        if (_nextFeature == null)
+        {
+            if (_error != null)
+                throw _error;
+            return false;
+        }
+
+        _enumeratorCurrent = _nextFeature;
+        return true;
+    }
+
+    // PORT: async counterpart of Dispose — awaits the background producer (after cancelling) rather
+    // than blocking on it, so the store can safely unmap buffers once all cursors are disposed.
+    public async ValueTask DisposeAsync()
+    {
+        _cts.Cancel();
+        try
+        {
+            await _producer.ConfigureAwait(false);
+        }
+        catch
+        {
+            // producer completes via cancellation/fault; nothing to surface here
+        }
+        _cts.Dispose();
     }
 
     // PORT: stops the background producer and waits for any in-flight tile scans to finish before

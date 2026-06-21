@@ -8,7 +8,9 @@
 namespace GeoDesk.Feature;
 
 /// <summary>
-/// A <see cref="IFeature"/> that represents a linestring, linear ring, or a simple polygon.
+/// An <see cref="IFeature"/> that represents an OSM way — an ordered sequence of nodes forming a
+/// linestring, a closed linear ring, or a simple polygon (depending on whether it is closed and
+/// tagged as an area).
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.Way</c>.</remarks>
 public interface IWay : IFeature

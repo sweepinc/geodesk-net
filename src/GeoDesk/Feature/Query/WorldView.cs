@@ -6,6 +6,7 @@
  */
 
 using System.Collections.Generic;
+using System.Threading;
 
 using GeoDesk.Feature.Filters;
 using GeoDesk.Feature.Match;
@@ -119,6 +120,14 @@ public class WorldView : View
     public override IEnumerator<IFeature> GetEnumerator()
     {
         return new Query(this);
+    }
+
+    // The non-blocking counterpart of GetEnumerator: the Query is built without prefetching, so it
+    // streams features as each tile's results arrive on the channel — MoveNextAsync awaits between
+    // tiles rather than parking a thread. This is the path a web server should use.
+    public override IAsyncEnumerator<IFeature> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+    {
+        return new Query(this, prefetch: false, cancellationToken);
     }
 
 }

@@ -13,7 +13,9 @@ using NetTopologySuite.Geometries;
 namespace GeoDesk.Feature;
 
 /// <summary>
-/// An interface for classes that select the features to be returned by a query.
+/// Selects which features a query returns. A filter can decide per feature, optionally using the
+/// feature's geometry, and can advertise optimization hints (via <see cref="Strategy"/>) such as
+/// supplying a bounding box or a cheaper per-tile filter so the query engine can skip work.
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.Filter</c>.</remarks>
 public interface IFilter
@@ -72,6 +74,11 @@ public interface IFilter
     /// <remarks>Ported from Java <c>com.geodesk.feature.Filter.bounds()</c>.</remarks>
     IBounds Bounds => Box.OfWorld(); // TODO: use singleton
 
+    /// <summary>
+    /// The set of feature types (as <see cref="TypeBits"/> flags) this filter can accept. The query
+    /// engine can use this to skip whole categories of features that the filter would never match;
+    /// the default accepts all types.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.Filter.acceptedTypes()</c>.</remarks>
     int AcceptedTypes => TypeBits.ALL;
 

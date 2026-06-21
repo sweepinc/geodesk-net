@@ -7,6 +7,11 @@
 
 namespace GeoDesk.Geom;
 
+/// <summary>
+/// A mutable accumulator for building a bounding box incrementally by expanding it to include points
+/// or other boxes. Implements <see cref="IBounds"/> so it can be read as a box once populated. Results
+/// are undefined for boxes that straddle the antimeridian.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.geom.BoxBuilder</c>.</remarks>
 internal class BoxBuilder : IBounds
 {
@@ -16,6 +21,9 @@ internal class BoxBuilder : IBounds
     int _maxX;
     int _maxY;
 
+    /// <summary>
+    /// Resets the builder to the empty (null) state, so the next expansion establishes the box.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.BoxBuilder.reset()</c>.</remarks>
     public void Reset()
     {
@@ -25,21 +33,36 @@ internal class BoxBuilder : IBounds
         _maxY = int.MinValue;
     }
 
+    /// <summary>
+    /// Returns true if the builder is empty (no points have been included since the last reset).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.BoxBuilder.isNull()</c>.</remarks>
     public bool IsNull()
     {
         return _maxY < _minY;
     }
 
+    /// <summary>
+    /// The current minimum X coordinate of the accumulated box.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.BoxBuilder.minX()</c>.</remarks>
     public int MinX => _minX;
 
+    /// <summary>
+    /// The current minimum Y coordinate of the accumulated box.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.BoxBuilder.minY()</c>.</remarks>
     public int MinY => _minY;
 
+    /// <summary>
+    /// The current maximum X coordinate of the accumulated box.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.BoxBuilder.maxX()</c>.</remarks>
     public int MaxX => _maxX;
 
+    /// <summary>
+    /// The current maximum Y coordinate of the accumulated box.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.BoxBuilder.maxY()</c>.</remarks>
     public int MaxY => _maxY;
 

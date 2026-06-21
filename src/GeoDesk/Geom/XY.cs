@@ -17,7 +17,10 @@ namespace GeoDesk.Geom;
 internal static class XY
 {
 
-    /// <summary>Creates a <c>long</c> coordinate based on the given X and Y.</summary>
+    /// <summary>
+    /// Packs the given X and Y into a single <c>long</c> coordinate (Y in the upper 32 bits, X in the
+    /// lower).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.XY.of(int, int)</c>.</remarks>
     public static long Of(int x, int y)
     {
@@ -34,13 +37,18 @@ internal static class XY
         return Of((int)System.Math.Floor(c.X + 0.5), (int)System.Math.Floor(c.Y + 0.5));
     }
 
-    /// <summary>Turns a <c>long</c> coordinate into a JTS Coordinate.</summary>
+    /// <summary>
+    /// Unpacks a <c>long</c> coordinate into a JTS <see cref="Coordinate"/>.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.XY.toCoordinate(long)</c>.</remarks>
     public static Coordinate ToCoordinate(long xy)
     {
         return new Coordinate(X(xy), Y(xy));
     }
 
+    /// <summary>
+    /// Unpacks an array of <c>long</c> coordinates into an array of JTS <see cref="Coordinate"/> objects.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.XY.toCoordinates(long[])</c>.</remarks>
     public static Coordinate[] ToCoordinates(long[] xy)
     {
@@ -52,21 +60,28 @@ internal static class XY
         return coords;
     }
 
-    /// <summary>Returns the X coordinate of the given <c>long</c> coordinate.</summary>
+    /// <summary>
+    /// Extracts the X coordinate (lower 32 bits) from the given <c>long</c> coordinate.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.XY.x(long)</c>.</remarks>
     public static int X(long coord)
     {
         return (int)coord;
     }
 
-    /// <summary>Returns the Y coordinate of the given <c>long</c> coordinate.</summary>
+    /// <summary>
+    /// Extracts the Y coordinate (upper 32 bits) from the given <c>long</c> coordinate.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.XY.y(long)</c>.</remarks>
     public static int Y(long coord)
     {
         return (int)(coord >> 32);
     }
 
-    /// <summary>Returns an array of <c>long</c> coordinates as an array of x/y coordinate pairs.</summary>
+    /// <summary>
+    /// Unpacks an array of <c>long</c> coordinates into a flat <c>int</c> array of X/Y pairs (X at
+    /// even indexes, Y at odd indexes).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.XY.of(long[])</c>.</remarks>
     public static int[] Of(long[] coords)
     {
@@ -79,7 +94,10 @@ internal static class XY
         return xy;
     }
 
-    /// <summary>Checks whether a given set of coordinates represents a linear ring.</summary>
+    /// <summary>
+    /// Checks whether the given flat X/Y coordinate array forms a closed linear ring (at least three
+    /// points with the first and last coinciding).
+    /// </summary>
     /// <param name="coords">array of X/Y coordinates</param>
     /// <remarks>Ported from Java <c>com.geodesk.geom.XY.isClosed(int[])</c>.</remarks>
     public static bool IsClosed(int[] coords)
@@ -89,6 +107,9 @@ internal static class XY
         return coords[0] == coords[len - 2] && coords[1] == coords[len - 1];
     }
 
+    /// <summary>
+    /// Returns true if the given flat X/Y coordinate array contains the exact point (x, y).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.XY.contains(int[], int, int)</c>.</remarks>
     public static bool Contains(int[] coords, int x, int y)
     {

@@ -17,6 +17,10 @@ namespace GeoDesk.Feature;
 internal static class FeatureTypes
 {
 
+    /// <summary>
+    /// Parses a feature-type name (<c>node</c>, <c>way</c>, or <c>relation</c>) into the matching
+    /// <see cref="FeatureType"/>, throwing <see cref="InvalidOperationException"/> for any other value.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.FeatureType.from(String)</c>.</remarks>
     public static FeatureType From(string s)
     {
@@ -29,6 +33,10 @@ internal static class FeatureTypes
         };
     }
 
+    /// <summary>
+    /// Returns the lowercase name (<c>node</c>, <c>way</c>, or <c>relation</c>) for the given
+    /// <see cref="FeatureType"/>, or an empty string if the value is not recognized.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.FeatureType.toString()</c>.</remarks>
     public static string ToString(FeatureType type)
     {

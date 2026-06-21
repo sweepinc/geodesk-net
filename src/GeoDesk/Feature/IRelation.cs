@@ -8,7 +8,8 @@
 namespace GeoDesk.Feature;
 
 /// <summary>
-/// A <see cref="IFeature"/> that represents a grouping of related features or a complex polygon.
+/// An <see cref="IFeature"/> that represents an OSM relation — an ordered collection of member
+/// features (each with an optional role), used to model logical groupings or multi-polygon areas.
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.Relation</c>.</remarks>
 public interface IRelation : IFeature

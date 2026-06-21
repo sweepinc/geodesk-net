@@ -37,6 +37,10 @@ internal sealed class Heading
         North, Northeast, East, Southeast, South, Southwest, West, Northwest
     };
 
+    /// <summary>
+    /// Returns the eight headings in clockwise order starting from north, mirroring a Java enum's
+    /// <c>values()</c>.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Heading.values()</c>.</remarks>
     public static Heading[] Values() => ValuesArray;
 
@@ -50,6 +54,10 @@ internal sealed class Heading
         return ValuesArray[(int)(((degrees % 360) + 22.5) / 45)];
     }
 
+    /// <summary>
+    /// Returns the compass bearing (in degrees, normalized to 0-360) obtained by turning
+    /// <paramref name="byDegrees"/> from <paramref name="fromDegrees"/>.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Heading.turnedBy(double, double)</c>.</remarks>
     public static double TurnedBy(double fromDegrees, double byDegrees)
     {
@@ -72,6 +80,10 @@ internal sealed class Heading
         return new Coordinate(x, y);
     }
 
+    /// <summary>
+    /// Returns the line segment from the given origin to the point at the given distance and bearing
+    /// (0 = north, 90 = east) from it.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Heading.project(double, double, Coordinate)</c>.</remarks>
     public static LineSegment Project(double angle, double distance, Coordinate from)
     {
@@ -81,6 +93,10 @@ internal sealed class Heading
         return new LineSegment(from, to);
     }
 
+    /// <summary>
+    /// Builds a JTS <see cref="LineString"/> from the given origin to the point at the given distance
+    /// and bearing (0 = north, 90 = east) from it, using the supplied geometry factory.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Heading.projectedLine(GeometryFactory, double, double, Coordinate)</c>.</remarks>
     public static LineString ProjectedLine(GeometryFactory factory, double angle, double distance, Coordinate from)
     {
@@ -96,6 +112,10 @@ internal sealed class Heading
     readonly int _eastFactor;
     readonly int _degrees;
 
+    /// <summary>
+    /// Initializes a heading with its ordinal, abbreviation, north/east unit-vector components, and
+    /// compass bearing in degrees.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Heading</c> enum constructor.</remarks>
     Heading(int ordinal, string id, int northFactor, int eastFactor, int degrees)
     {
@@ -106,25 +126,42 @@ internal sealed class Heading
         _degrees = degrees;
     }
 
+    /// <summary>
+    /// The zero-based position of this heading in clockwise order from north (0 = north, 2 = east).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Heading.ordinal()</c>.</remarks>
     public int Ordinal => _ordinal;
 
+    /// <summary>
+    /// Returns the heading's compass abbreviation (e.g. <c>N</c>, <c>SE</c>).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Heading.toString()</c>.</remarks>
     public override string ToString()
     {
         return _id;
     }
 
+    /// <summary>
+    /// The heading's compass abbreviation (e.g. <c>N</c>, <c>SE</c>).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Heading.id()</c>.</remarks>
     public string Id => _id;
 
+    /// <summary>
+    /// The northward component of this heading's unit direction (+1 north, -1 south, 0 east/west).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Heading.northFactor()</c>.</remarks>
     public int NorthFactor => _northFactor;
 
+    /// <summary>
+    /// The eastward component of this heading's unit direction (+1 east, -1 west, 0 north/south).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Heading.eastFactor()</c>.</remarks>
     public int EastFactor => _eastFactor;
 
-    /// <summary>Heading in degrees.</summary>
+    /// <summary>
+    /// Returns this heading as a compass bearing in degrees.
+    /// </summary>
     /// <returns>0 = north, 90 = east, etc.</returns>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Heading.toDegrees()</c>.</remarks>
     public int ToDegrees()
@@ -132,13 +169,18 @@ internal sealed class Heading
         return _degrees;
     }
 
-    /// <summary>Returns the opposite Heading (the heading that lies 180 degrees opposite).</summary>
+    /// <summary>
+    /// Returns the heading that lies 180 degrees opposite this one (e.g. north to south).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Heading.reversed()</c>.</remarks>
     public Heading Reversed()
     {
         return ValuesArray[(_ordinal + 4) % 8];
     }
 
+    /// <summary>
+    /// Returns the nearest heading obtained by turning the given number of degrees from this heading.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Heading.turnedBy(double)</c>.</remarks>
     public Heading TurnedBy(double degrees)
     {

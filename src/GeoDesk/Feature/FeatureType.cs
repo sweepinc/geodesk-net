@@ -8,7 +8,9 @@
 namespace GeoDesk.Feature;
 
 /// <summary>
-/// An enum representing the three feature types: <c>Node</c>, <c>Way</c> and <c>Relation</c>.
+/// Identifies the kind of OpenStreetMap feature: a <c>Node</c> (a single point), a <c>Way</c>
+/// (an ordered sequence of nodes), or a <c>Relation</c> (a collection of member features). The
+/// ordinal values match the 2-bit type codes that GeoDesk encodes alongside feature IDs.
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.FeatureType</c>.</remarks>
 public enum FeatureType

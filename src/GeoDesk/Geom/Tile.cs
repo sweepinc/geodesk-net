@@ -15,30 +15,49 @@ using NetTopologySuite.Geometries;
 
 namespace GeoDesk.Geom;
 
+/// <summary>
+/// Helpers for working with packed tile numbers. A tile number encodes a zoom level (bits 24-27),
+/// a row (bits 12-23), and a column (bits 0-11) into a single <c>int</c>; the top nibble is reserved
+/// for flags. Tiles partition the Mercator coordinate space into a quadtree-like grid where each
+/// zoom level doubles the number of rows and columns.
+/// </summary>
+/// <remarks>Ported from Java <c>com.geodesk.geom.Tile</c>.</remarks>
 internal static class Tile
 {
+    /// <summary>
+    /// Extracts the row index from a packed tile number.
+    /// </summary>
     public static int Row(int tile)
     {
         return (tile >> 12) & 0xfff;
     }
 
+    /// <summary>
+    /// Extracts the column index from a packed tile number.
+    /// </summary>
     public static int Column(int tile)
     {
         return tile & 0xfff;
     }
 
+    /// <summary>
+    /// Extracts the zoom level from a packed tile number, masking off the reserved flag nibble.
+    /// </summary>
     public static int Zoom(int tile)
     {
         return (int)((uint)tile >> 24) & 0xf; // mask off nibble to allow top nibble to be used for flags
     }
 
+    /// <summary>
+    /// Returns the total number of tiles (rows times columns) at the given zoom level.
+    /// </summary>
     public static int TilesAtZoom(int zoom)
     {
         return (1 << zoom) << zoom;
     }
 
     /// <summary>
-    /// Returns the width/height of a tile at the given zoom level
+    /// Returns the width and height of a tile at the given zoom level, in coordinate units.
     /// </summary>
     /// <param name="zoom">a valid zoom level</param>
     /// <returns>width/height in pixels</returns>
@@ -48,14 +67,17 @@ internal static class Tile
         // This must be a long since int overflows for zoom 0 and zoom 1
     }
 
+    /// <summary>
+    /// Returns the zoom level corresponding to the given tile size in coordinate units (the inverse of
+    /// <see cref="SizeAtZoom"/>).
+    /// </summary>
     public static int ZoomFromSize(long size)
     {
         return BitOperations.LeadingZeroCount((ulong)size) - 31;
     }
 
     /// <summary>
-    /// Creates a tile number. This method does not check whether
-    /// the given column, row, and zoom level are valid.
+    /// Packs the given column, row, and zoom level into a tile number, without validating the inputs.
     /// </summary>
     public static int FromColumnRowZoom(int col, int row, int zoom)
     {
@@ -63,8 +85,8 @@ internal static class Tile
     }
 
     /// <summary>
-    /// Determines the tile to which a coordinate belongs;
-    /// coordinates must be in the projection used by the Mercator class.
+    /// Determines the tile that contains the given Mercator-projected coordinate at the given zoom
+    /// level.
     /// </summary>
     public static int FromXYZ(int x, int y, int zoom)
     {
@@ -73,23 +95,35 @@ internal static class Tile
         return FromColumnRowZoom(col, row, zoom);
     }
 
+    /// <summary>
+    /// Computes the tile column index for the given Mercator X coordinate at the given zoom level.
+    /// </summary>
     public static int ColumnFromXZ(int x, int zoom)
     {
         return (int)(((long)x + (1L << 31)) >> (32 - zoom));
     }
 
+    /// <summary>
+    /// Computes the tile row index for the given Mercator Y coordinate at the given zoom level.
+    /// Remember that tile rows increase going south while Y coordinates decrease.
+    /// </summary>
     public static int RowFromYZ(int y, int zoom)
     {
         return (int)(((long)int.MaxValue - y) >> (32 - zoom));
     }
 
+    /// <summary>
+    /// Determines the tile containing the given fractional Mercator coordinate at the given zoom
+    /// level, rounding the coordinate to the nearest integer first.
+    /// </summary>
     public static int FromXYZ(double x, double y, int zoom)
     {
         return FromXYZ((int)System.Math.Floor(x + 0.5), (int)System.Math.Floor(y + 0.5), zoom);
     }
 
     /// <summary>
-    /// Checks if the given number represents a valid tile number
+    /// Checks whether the given number is a valid tile number (zoom at most 12 and row/column within
+    /// range for that zoom).
     /// </summary>
     public static bool IsValid(int tile)
     {
@@ -100,7 +134,7 @@ internal static class Tile
     }
 
     /// <summary>
-    /// Returns the leftmost (lowest) x-coordinate that lies within the given tile
+    /// Returns the leftmost (lowest) X coordinate that lies within the given tile.
     /// </summary>
     public static int LeftX(int tile)
     {
@@ -110,7 +144,7 @@ internal static class Tile
     }
 
     /// <summary>
-    /// Returns the rightmost (highest) x-coordinate that lies within the given tile
+    /// Returns the rightmost (highest) X coordinate that lies within the given tile.
     /// </summary>
     public static int RightX(int tile)
     {
@@ -121,9 +155,8 @@ internal static class Tile
     }
 
     /// <summary>
-    /// Returns the bottom (lowest) y-coordinate that lies within the given tile.
-    /// Remember, going from top to bottom, tile rows *increase*, while
-    /// y-coordinates *decrease*.
+    /// Returns the bottom (lowest) Y coordinate that lies within the given tile. Remember that going
+    /// from top to bottom, tile rows increase while Y coordinates decrease.
     /// </summary>
     public static int BottomY(int tile)
     {
@@ -131,6 +164,9 @@ internal static class Tile
             // << 32 wraps around for int, that's why we cast to long
     }
 
+    /// <summary>
+    /// Returns the top (highest) Y coordinate that lies within the given tile.
+    /// </summary>
     public static int TopY(int tile)
     {
         return int.MaxValue - (Row(tile) << (32 - Zoom(tile)));
@@ -166,6 +202,9 @@ internal static class Tile
         return FromColumnRowZoom(col, row, zoom);
     }
 
+    /// <summary>
+    /// Returns the bounding box (in Mercator coordinates) covered by the given tile.
+    /// </summary>
     public static Box Bounds(int tile)
     {
         int zoom = Zoom(tile);
@@ -176,6 +215,9 @@ internal static class Tile
         return new Box(left, bottom, (int)(left + extent - 1), (int)(bottom + extent - 1));
     }
 
+    /// <summary>
+    /// Returns the given tile's footprint as a JTS <see cref="Polygon"/> (an axis-aligned square).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Tile.polygon(int)</c>.</remarks>
     public static Polygon Polygon(int tile)
     {
@@ -204,6 +246,9 @@ internal static class Tile
         return FromXYZ(bbox.MaxX, bbox.MinY, zoom);
     }
 
+    /// <summary>
+    /// Formats the tile number as a <c>zoom/column/row</c> string.
+    /// </summary>
     public static string ToString(int tile)
     {
         return string.Format(CultureInfo.InvariantCulture, "{0}/{1}/{2}", Zoom(tile), Column(tile), Row(tile));
@@ -261,6 +306,10 @@ internal static class Tile
         return ((tile ^ (tile >> 12)) & 1) != 0;
     }
 
+    /// <summary>
+    /// Returns the JTS <see cref="Envelope"/> of overlap between the given tile's bounds and the given
+    /// envelope.
+    /// </summary>
     public static Envelope Intersection(int tile, Envelope env)
     {
         int extent = 1 << (32 - Zoom(tile));
@@ -305,6 +354,10 @@ internal static class Tile
     }
 
     // not used
+    /// <summary>
+    /// Returns the <see cref="TileBox"/> covering all descendant tiles of the given tile at a deeper
+    /// zoom level. Currently unused.
+    /// </summary>
     public static TileBox ChildrenOfTileAtZoom(int tile, int zoom)
     {
         int levels = zoom - Zoom(tile);
@@ -319,6 +372,10 @@ internal static class Tile
     }
 
     // TODO: only works for positive deltas, and does not wrap!
+    /// <summary>
+    /// Returns the tile at the given column/row offset from the given tile, at the same zoom level.
+    /// Only valid for positive deltas and does not wrap at the grid edges.
+    /// </summary>
     public static int Relative(int tile, int deltaCol, int deltaRow)
     {
         return tile + (deltaRow << 12) + deltaCol;

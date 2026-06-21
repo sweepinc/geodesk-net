@@ -38,18 +38,23 @@ public readonly struct TagCollection : IReadOnlyCollection<Tag>, IReadOnlyDictio
     readonly StoredFeature? _feature;
 
     /// <summary>
-    /// Initializes a new instance.
+    /// Creates a tag collection that lazily reads the tags of the given stored feature.
     /// </summary>
-    /// <param name="feature"></param>
+    /// <param name="feature">the feature whose tags this collection exposes</param>
     internal TagCollection(StoredFeature feature)
     {
         _feature = feature;
     }
 
-    /// <summary>True if the feature has no tags.</summary>
+    /// <summary>
+    /// True if the feature has no tags (or no backing feature at all).
+    /// </summary>
     public bool IsEmpty => _feature == null || _feature.HasNoTags();
 
-    /// <summary>The number of tags (a full pass over the tag table).</summary>
+    /// <summary>
+    /// The number of tags in the feature. Computed by making a full pass over the tag table, since
+    /// the count is not stored explicitly.
+    /// </summary>
     public int Count
     {
         get
@@ -62,14 +67,22 @@ public readonly struct TagCollection : IReadOnlyCollection<Tag>, IReadOnlyDictio
         }
     }
 
-    /// <summary>Returns the tag with the given key.</summary>
+    /// <summary>
+    /// Returns the <see cref="Tag"/> with the given key. OSM keys are unique per feature, so the
+    /// lookup is unambiguous.
+    /// </summary>
     /// <exception cref="KeyNotFoundException">if the feature has no tag with that key.</exception>
     public Tag this[string key] => TryGetValue(key, out var tag) ? tag : throw new KeyNotFoundException($"No tag with key '{key}'");
 
-    /// <summary>Checks whether a tag with the given key is present.</summary>
+    /// <summary>
+    /// Checks whether a tag with the given key is present on the feature.
+    /// </summary>
     public bool ContainsKey(string key) => _feature != null && _feature.HasTag(key);
 
-    /// <summary>Gets the tag with the given key, if present.</summary>
+    /// <summary>
+    /// Tries to get the tag with the given key. Returns true and sets <paramref name="tag"/> when the
+    /// key is present; otherwise returns false and sets it to <c>default</c>.
+    /// </summary>
     public bool TryGetValue(string key, out Tag tag)
     {
         if (_feature != null)
@@ -86,7 +99,9 @@ public readonly struct TagCollection : IReadOnlyCollection<Tag>, IReadOnlyDictio
         return false;
     }
 
-    /// <summary>The tag keys.</summary>
+    /// <summary>
+    /// The keys of all tags on the feature, in iteration order.
+    /// </summary>
     public IEnumerable<string> Keys
     {
         get
@@ -96,7 +111,10 @@ public readonly struct TagCollection : IReadOnlyCollection<Tag>, IReadOnlyDictio
         }
     }
 
-    /// <summary>The tags (the values of the by-key map).</summary>
+    /// <summary>
+    /// The tags themselves — the values of the by-key map view — in iteration order. Useful as a
+    /// LINQ entry point that avoids the dual-<c>IEnumerable</c> ambiguity of the concrete type.
+    /// </summary>
     public IEnumerable<Tag> Values
     {
         get
@@ -106,21 +124,35 @@ public readonly struct TagCollection : IReadOnlyCollection<Tag>, IReadOnlyDictio
         }
     }
 
-    /// <summary>Returns an allocation-free enumerator over the tags.</summary>
+    /// <summary>
+    /// Returns a struct-typed, allocation-free <see cref="Enumerator"/> over the feature's tags.
+    /// </summary>
     public Enumerator GetEnumerator() => new Enumerator(_feature);
 
+    /// <summary>
+    /// Explicit <see cref="IEnumerable{T}"/> implementation that boxes the struct enumerator over tags.
+    /// </summary>
     IEnumerator<Tag> IEnumerable<Tag>.GetEnumerator() => GetEnumerator();
 
     // The IReadOnlyDictionary<string, Tag> view enumerates key/Tag pairs (the key duplicates Tag.Key).
+    /// <summary>
+    /// Explicit dictionary-view enumerator that yields each tag as a key/Tag pair, where the key
+    /// duplicates <see cref="Tag.Key"/>.
+    /// </summary>
     IEnumerator<KeyValuePair<string, Tag>> IEnumerable<KeyValuePair<string, Tag>>.GetEnumerator()
     {
         foreach (var tag in this)
             yield return new KeyValuePair<string, Tag>(tag.Key, tag);
     }
 
+    /// <summary>
+    /// Explicit non-generic <see cref="IEnumerable"/> implementation over the feature's tags.
+    /// </summary>
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-    /// <summary>Renders the tags as <c>key=value</c> pairs joined by <c>, </c>.</summary>
+    /// <summary>
+    /// Renders all tags as <c>key=value</c> pairs joined by <c>, </c>.
+    /// </summary>
     public override string ToString()
     {
         var sb = new StringBuilder();
@@ -135,7 +167,11 @@ public readonly struct TagCollection : IReadOnlyCollection<Tag>, IReadOnlyDictio
         return sb.ToString();
     }
 
-    /// <summary>A forward-only cursor over a feature's tags, yielding <see cref="Tag"/> values.</summary>
+    /// <summary>
+    /// A forward-only, struct-typed cursor over a feature's tags, yielding <see cref="Tag"/> values.
+    /// It walks the encoded tag table directly, distinguishing common (global-string) keys from
+    /// uncommon (local-string) keys.
+    /// </summary>
     public struct Enumerator : IEnumerator<Tag>
     {
 
@@ -147,6 +183,10 @@ public readonly struct TagCollection : IReadOnlyCollection<Tag>, IReadOnlyDictio
         string _key;
         long _rawValue;
 
+        /// <summary>
+        /// Initializes the cursor on the given feature, locating its tag table and positioning the
+        /// cursor before the first tag. A null feature produces an immediately-exhausted enumerator.
+        /// </summary>
         internal Enumerator(StoredFeature? feature)
         {
             _feature = feature;
@@ -171,12 +211,21 @@ public readonly struct TagCollection : IReadOnlyCollection<Tag>, IReadOnlyDictio
                 _pNextTag = (_uncommonKeysFlag != 0) ? (_pTagTable - 6) : -1;
         }
 
-        /// <summary>The tag at the current cursor position (its value is decoded on demand).</summary>
+        /// <summary>
+        /// The tag at the current cursor position. Its value remains encoded and is decoded on demand
+        /// by the <see cref="Tag"/> accessors.
+        /// </summary>
         public Tag Current => new Tag(_feature!, _key, _rawValue);
 
+        /// <summary>
+        /// The current tag, boxed for the non-generic <see cref="IEnumerator"/> contract.
+        /// </summary>
         object IEnumerator.Current => Current;
 
-        /// <summary>Advances to the next tag; returns false when the tags are exhausted.</summary>
+        /// <summary>
+        /// Advances the cursor to the next tag, decoding its key and raw value. Returns false once all
+        /// common and uncommon tags have been read.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.TagIterator.next()</c>.</remarks>
         public bool MoveNext()
         {
@@ -212,13 +261,18 @@ public readonly struct TagCollection : IReadOnlyCollection<Tag>, IReadOnlyDictio
             return true;
         }
 
-        /// <summary>Resets the cursor to before the first tag.</summary>
+        /// <summary>
+        /// Resets the cursor to before the first tag, so the feature's tags can be enumerated again.
+        /// </summary>
         public void Reset()
         {
             this = new Enumerator(_feature);
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// No-op; the enumerator holds no unmanaged resources but implements <c>IDisposable</c>
+        /// to satisfy the <see cref="IEnumerator{T}"/> contract.
+        /// </summary>
         public readonly void Dispose()
         {
 

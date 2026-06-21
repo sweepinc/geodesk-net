@@ -39,7 +39,10 @@ internal static class Mercator
     // default, so we replicate Java's semantics explicitly. (Port-only helper, no Java counterpart.)
     static long JavaRound(double a) => (long)Floor(a + 0.5);
 
-    /// <summary>Converts a longitude to Mercator imps.</summary>
+    /// <summary>
+    /// Converts a longitude (in degrees) to a Mercator X coordinate in imps, throwing if the
+    /// longitude is outside the valid -180 to 180 range.
+    /// </summary>
     /// <param name="lon">longitude (in degrees)</param>
     /// <returns>equivalent imps</returns>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.xFromLon(double)</c>.</remarks>
@@ -51,7 +54,9 @@ internal static class Mercator
         return (int)JavaRound(MapWidth * lon / 360);
     }
 
-    /// <summary>Converts a longitude to Mercator imps.</summary>
+    /// <summary>
+    /// Converts a longitude expressed in 100-nanodegree increments to a Mercator X coordinate in imps.
+    /// </summary>
     /// <param name="lon">longitude (in 100-nanodegree increments)</param>
     /// <returns>equivalent imps</returns>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.xFromLon100nd(int)</c>.</remarks>
@@ -60,7 +65,11 @@ internal static class Mercator
         return XFromLon((double)lon / 10_000_000);
     }
 
-    /// <summary>Converts a latitude to Mercator imps.</summary>
+    /// <summary>
+    /// Converts a latitude (in degrees) to a Mercator Y coordinate in imps. Latitudes are clamped to
+    /// the Web Mercator limits (<see cref="MinLat"/>/<see cref="MaxLat"/>); values outside -90 to 90
+    /// throw.
+    /// </summary>
     /// <param name="lat">latitude (in degrees)</param>
     /// <returns>equivalent imps</returns>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.yFromLat(double)</c>.</remarks>
@@ -86,7 +95,9 @@ internal static class Mercator
             (MapWidth / 2 / PI));
     }
 
-    /// <summary>Converts a latitude to Mercator imps.</summary>
+    /// <summary>
+    /// Converts a latitude expressed in 100-nanodegree increments to a Mercator Y coordinate in imps.
+    /// </summary>
     /// <param name="lat">latitude (in 100-nanodegree increments)</param>
     /// <returns>equivalent imps</returns>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.yFromLat100nd(int)</c>.</remarks>
@@ -95,13 +106,19 @@ internal static class Mercator
         return YFromLat((double)lat / 10_000_000);
     }
 
+    /// <summary>
+    /// Returns the Mercator distortion factor at the given projected Y coordinate, i.e. how much the
+    /// projection stretches relative to true ground distance at that latitude (1.0 at the equator).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.scale(double)</c>.</remarks>
     public static double Scale(double y)
     {
         return Cosh(y * 2 * PI / MapWidth);
     }
 
-    /// <summary>Converts a projected longitude to WGS84.</summary>
+    /// <summary>
+    /// Converts a projected X coordinate (in imps) back to a WGS-84 longitude in degrees.
+    /// </summary>
     /// <param name="x">projected longitude (in imps)</param>
     /// <returns>equivalent WGS-84 longitude in degrees</returns>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.lonFromX(double)</c>.</remarks>
@@ -110,7 +127,10 @@ internal static class Mercator
         return x * 360 / MapWidth;
     }
 
-    /// <summary>Converts a projected longitude to WGS84, rounded to 7 decimal points.</summary>
+    /// <summary>
+    /// Converts a projected X coordinate (in imps) to a WGS-84 longitude in degrees, rounded to
+    /// 7 decimal places (the precision OSM uses).
+    /// </summary>
     /// <param name="x">projected longitude (in imps)</param>
     /// <returns>equivalent WGS-84 longitude in degrees</returns>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.lonPrecision7fromX(double)</c>.</remarks>
@@ -119,7 +139,9 @@ internal static class Mercator
         return (double)JavaRound(LonFromX(x) * 10000000) / 10000000;
     }
 
-    /// <summary>Converts a projected latitude to WGS84.</summary>
+    /// <summary>
+    /// Converts a projected Y coordinate (in imps) back to a WGS-84 latitude in degrees.
+    /// </summary>
     /// <param name="y">projected latitude (in imps)</param>
     /// <returns>equivalent WGS-84 latitude in degrees</returns>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.latFromY(double)</c>.</remarks>
@@ -128,7 +150,10 @@ internal static class Mercator
         return Atan(Exp(y * PI * 2 / MapWidth)) * 360 / PI - 90;
     }
 
-    /// <summary>Converts a projected latitude to WGS84, rounded to 7 decimal points.</summary>
+    /// <summary>
+    /// Converts a projected Y coordinate (in imps) to a WGS-84 latitude in degrees, rounded to
+    /// 7 decimal places (the precision OSM uses).
+    /// </summary>
     /// <param name="y">projected latitude (in imps)</param>
     /// <returns>equivalent WGS-84 latitude in degrees</returns>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.latPrecision7fromY(double)</c>.</remarks>
@@ -137,6 +162,10 @@ internal static class Mercator
         return (double)JavaRound(LatFromY(y) * 10000000) / 10000000;
     }
 
+    /// <summary>
+    /// Returns the number of ground meters represented by one imp at the given projected Y coordinate,
+    /// accounting for Mercator distortion.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.metersAtY(int)</c>.</remarks>
     public static double MetersAtY(int y)
     {
@@ -213,6 +242,10 @@ internal static class Mercator
         return area * scale * scale;
     }
 
+    /// <summary>
+    /// Expands the given envelope outward by the imp-equivalent of the given distance in meters,
+    /// computed at the envelope's mid-latitude. Mutates and returns the same envelope.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.expandEnvelope(Envelope, double)</c>.</remarks>
     public static Envelope ExpandEnvelope(Envelope env, double meters)
     {
@@ -221,6 +254,9 @@ internal static class Mercator
         return env;
     }
 
+    /// <summary>
+    /// Builds a JTS <see cref="Envelope"/> in Mercator imps from two longitude/latitude corner points.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.envelope(double, double, double, double)</c>.</remarks>
     public static Envelope Envelope(double lon1, double lat1, double lon2, double lat2)
     {
@@ -239,17 +275,31 @@ internal static class Mercator
     }
 
     // Port of the anonymous CoordinateSequenceFilter used by Mercator.project(Geometry) in Java.
+    /// <summary>
+    /// A JTS coordinate-sequence filter that projects each coordinate from WGS-84 longitude/latitude
+    /// into Mercator imps in place, used by <see cref="Project"/>.
+    /// </summary>
     sealed class ProjectFilter : ICoordinateSequenceFilter
     {
 
+        /// <summary>
+        /// Projects the coordinate at index <paramref name="i"/> of the sequence in place, replacing
+        /// its longitude/latitude ordinates with Mercator imps.
+        /// </summary>
         public void Filter(CoordinateSequence seq, int i)
         {
             seq.SetOrdinate(i, 0, XFromLon(seq.GetX(i)));
             seq.SetOrdinate(i, 1, YFromLat(seq.GetY(i)));
         }
 
+        /// <summary>
+        /// Always false; every coordinate in the sequence is visited.
+        /// </summary>
         public bool Done => false;
 
+        /// <summary>
+        /// Always true; the filter mutates coordinates, so the geometry is marked as changed.
+        /// </summary>
         public bool GeometryChanged => true;
 
     }

@@ -9,10 +9,18 @@ using System.Diagnostics;
 
 namespace GeoDesk.Geom;
 
+/// <summary>
+/// Helpers for computing Morton (Z-order) codes, which interleave the bits of two coordinates into a
+/// single value so that spatially nearby points tend to have nearby codes.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.geom.Morton</c>.</remarks>
 internal static class Morton
 {
 
+    /// <summary>
+    /// Interleaves the low 16 bits of the given X and Y into a 32-bit Morton (Z-order) code. The
+    /// inputs must fit in 16 bits each.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Morton.mortonFromXY(int, int)</c>.</remarks>
     public static int MortonFromXY(int x, int y)
     {

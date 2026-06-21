@@ -26,6 +26,10 @@ public readonly struct Tag
     readonly string _key;
     readonly long _rawValue; // encoded value; decoded on demand by the accessors below
 
+    /// <summary>
+    /// Creates a tag bound to the given feature, key, and still-encoded raw value. The value is left
+    /// encoded so the accessors can decode it lazily on demand.
+    /// </summary>
     internal Tag(StoredFeature feature, string key, long rawValue)
     {
         _feature = feature;
@@ -33,29 +37,47 @@ public readonly struct Tag
         _rawValue = rawValue;
     }
 
-    /// <summary>The tag's key.</summary>
+    /// <summary>
+    /// The tag's key.
+    /// </summary>
     public string Key => _key;
 
-    /// <summary>The tag's value as a string (the canonical OSM form).</summary>
+    /// <summary>
+    /// The tag's value as a string, in the canonical OSM form. Decodes the raw value on access.
+    /// </summary>
     public string Value => _feature.DecodeTagValue(_rawValue);
 
-    /// <summary>The tag's value parsed as an <see cref="int"/>.</summary>
+    /// <summary>
+    /// The tag's value parsed as an <see cref="int"/>, decoded directly from the raw value without
+    /// first materializing the string.
+    /// </summary>
     public int IntValue => _feature.DecodeTagInt(_rawValue);
 
-    /// <summary>The tag's value parsed as a <see cref="long"/>.</summary>
+    /// <summary>
+    /// The tag's value parsed as a <see cref="long"/>, decoded directly from the raw value without
+    /// first materializing the string.
+    /// </summary>
     public long LongValue => _feature.DecodeTagLong(_rawValue);
 
-    /// <summary>The tag's value parsed as a <see cref="double"/>.</summary>
+    /// <summary>
+    /// The tag's value parsed as a <see cref="double"/>, decoded directly from the raw value without
+    /// first materializing the string.
+    /// </summary>
     public double DoubleValue => _feature.DecodeTagDouble(_rawValue);
 
-    /// <summary>Deconstructs the tag into its key and string value (enables <c>foreach (var (key, value) in …)</c>).</summary>
+    /// <summary>
+    /// Deconstructs the tag into its key and string value, enabling tuple-style iteration such as
+    /// <c>foreach (var (key, value) in …)</c>.
+    /// </summary>
     public void Deconstruct(out string key, out string value)
     {
         key = _key;
         value = Value;
     }
 
-    /// <summary>Renders the tag as <c>key=value</c>.</summary>
+    /// <summary>
+    /// Renders the tag in its <c>key=value</c> text form.
+    /// </summary>
     public override string ToString() => _key + "=" + Value;
 
 }

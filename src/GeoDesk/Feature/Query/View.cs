@@ -7,6 +7,7 @@
 
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 
 using GeoDesk.Feature.Filters;
 using GeoDesk.Feature.Match;
@@ -367,6 +368,20 @@ public abstract class View : IFeatureQuery
     IEnumerator IEnumerable.GetEnumerator()
     {
         return GetEnumerator();
+    }
+
+    // The base adapts the synchronous enumerator — correct for views whose results are already in
+    // memory and never block on a results channel. WorldView overrides this with a non-blocking,
+    // tile-streaming enumerator for the spatial query path.
+    public virtual async IAsyncEnumerator<IFeature> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+    {
+        foreach (var feature in this)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return feature;
+        }
+
+        await System.Threading.Tasks.Task.CompletedTask.ConfigureAwait(false);
     }
 
 }
