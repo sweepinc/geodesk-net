@@ -7,6 +7,10 @@
 
 namespace GeoDesk.Common.Store;
 
+/// <summary>
+/// Fixed byte offsets and flag constants for the BlobStore on-disk format: the header
+/// fields, the free-table layout, and the per-blob marker bits.
+/// </summary>
 /// <remarks>Ported from Java <c>com.clarisma.common.store.BlobStoreConstants</c>.</remarks>
 internal static class BlobStoreConstants
 {

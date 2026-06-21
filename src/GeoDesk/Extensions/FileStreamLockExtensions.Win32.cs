@@ -16,6 +16,10 @@ namespace GeoDesk.Extensions;
 
 // Windows back-end: LockFileEx / UnlockFileEx. Locks are owned by the file handle, which matches the
 // per-descriptor semantics the Unix back-ends emulate with OFD / handle-once locks.
+/// <summary>
+/// Windows back-end of the byte-range file locking extensions, implemented via
+/// <c>LockFileEx</c> / <c>UnlockFileEx</c> on the file handle.
+/// </summary>
 internal static partial class FileStreamLockExtensions
 {
 

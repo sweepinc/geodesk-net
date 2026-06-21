@@ -12,6 +12,11 @@ namespace GeoDesk.Feature.Match;
 // In Java this is abstract (subclasses are generated as bytecode). Here it is a concrete
 // base so Matcher.ALL can be instantiated directly; the hand-written matcher subclasses
 // (IdMatcher, TypeMatcher, AndMatcher, …) extend it as usual.
+/// <summary>
+/// Tests whether stored features satisfy a compiled query. The base class accepts any
+/// feature of its allowed types; hand-written subclasses add tag, role, and index
+/// conditions. <see cref="ALL"/> is the universal matcher.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.match.Matcher</c>.</remarks>
 internal class Matcher
 {
@@ -20,12 +25,16 @@ internal class Matcher
 
     protected readonly int acceptedTypes;
 
+    /// <summary>
+    /// Creates a matcher that accepts features of the given type-bits mask.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.Matcher(int)</c>.</remarks>
     public Matcher(int types)
     {
         acceptedTypes = types;
     }
 
+    /// <summary>The feature types this matcher accepts.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.Matcher.acceptedTypes()</c>.</remarks>
     public int AcceptedTypes => acceptedTypes;
 

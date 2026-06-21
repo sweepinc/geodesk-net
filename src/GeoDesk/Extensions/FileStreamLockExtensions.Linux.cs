@@ -24,6 +24,10 @@ namespace GeoDesk.Extensions;
 // the callee is variadic or not, so the flock pointer lands where fcntl expects it. (This is NOT true
 // on Apple-silicon macOS — see the OSX back-end.) CoreCLR does not support vararg (__arglist) P/Invoke,
 // so that is not an option.
+/// <summary>
+/// Linux back-end of the byte-range file locking extensions, implemented via
+/// <c>fcntl</c> with an OFD lock structure.
+/// </summary>
 internal static partial class FileStreamLockExtensions
 {
 

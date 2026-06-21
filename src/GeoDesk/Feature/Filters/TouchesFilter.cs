@@ -24,24 +24,31 @@ namespace GeoDesk.Feature.Filters;
 internal class TouchesFilter : AbstractRelateFilter
 {
 
+    /// <summary>Creates a filter using the given feature's geometry as the test geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.TouchesFilter(Feature)</c>.</remarks>
     public TouchesFilter(IFeature feature)
         : this(feature.ToGeometry())
     {
     }
 
+    /// <summary>Creates a filter that accepts features touching the given geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.TouchesFilter(Geometry)</c>.</remarks>
     public TouchesFilter(Geometry geom)
         : this(PreparedGeometryFactory.Prepare(geom))
     {
     }
 
+    /// <summary>Creates a filter from an already-prepared reference geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.TouchesFilter(PreparedGeometry)</c>.</remarks>
     public TouchesFilter(IPreparedGeometry prepared)
         : base(prepared, AcceptedType(prepared))
     {
     }
 
+    /// <summary>
+    /// Determines which feature types can possibly touch the given test geometry,
+    /// based on its dimension.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.TouchesFilter.acceptedType(PreparedGeometry)</c>.</remarks>
     static int AcceptedType(IPreparedGeometry prepared)
     {
@@ -51,6 +58,7 @@ internal class TouchesFilter : AbstractRelateFilter
         return TypeBits.ALL;
     }
 
+    /// <summary>Returns true if the feature's geometry touches the reference geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.TouchesFilter.accept(Feature, Geometry)</c>.</remarks>
     public override bool Accept(IFeature feature, Geometry geom)
     {

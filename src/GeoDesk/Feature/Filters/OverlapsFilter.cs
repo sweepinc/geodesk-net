@@ -26,24 +26,31 @@ namespace GeoDesk.Feature.Filters;
 internal class OverlapsFilter : AbstractRelateFilter
 {
 
+    /// <summary>Creates a filter using the given feature's geometry as the test geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.OverlapsFilter(Feature)</c>.</remarks>
     public OverlapsFilter(IFeature feature)
         : this(feature.ToGeometry())
     {
     }
 
+    /// <summary>Creates a filter that accepts features overlapping the given geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.OverlapsFilter(Geometry)</c>.</remarks>
     public OverlapsFilter(Geometry geom)
         : this(PreparedGeometryFactory.Prepare(geom))
     {
     }
 
+    /// <summary>Creates a filter from an already-prepared reference geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.OverlapsFilter(PreparedGeometry)</c>.</remarks>
     public OverlapsFilter(IPreparedGeometry prepared)
         : base(prepared, AcceptedType(prepared))
     {
     }
 
+    /// <summary>
+    /// Determines which feature types can possibly overlap the given test geometry,
+    /// based on its dimension (overlap requires equal dimensions).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.OverlapsFilter.acceptedType(PreparedGeometry)</c>.</remarks>
     static int AcceptedType(IPreparedGeometry prepared)
     {
@@ -54,6 +61,7 @@ internal class OverlapsFilter : AbstractRelateFilter
         return 0;   // don't accept generic GeometryCollection
     }
 
+    /// <summary>Returns true if the feature's geometry overlaps the reference geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.OverlapsFilter.accept(Feature, Geometry)</c>.</remarks>
     public override bool Accept(IFeature feature, Geometry geom)
     {

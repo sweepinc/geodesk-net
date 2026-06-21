@@ -24,6 +24,12 @@ namespace GeoDesk.Common.Store;
 
 // TODO: We cannot mark a ticket as "completed" until the transaction has been comitted!
 
+/// <summary>
+/// Fetches missing blobs (tiles and the store metadata) from a remote repository over HTTP on a single
+/// background thread, inflating each one and writing it into the backing <see cref="BlobStore"/> within a
+/// transaction. Callers enqueue work via <see cref="Request"/>, which returns a <see cref="Ticket"/> they
+/// can await or attach a completion callback to; identical concurrent requests share one ticket.
+/// </summary>
 /// <remarks>
 /// Ported from Java <c>com.clarisma.common.store.Downloader</c>. The Java original fetches blobs
 /// over HTTP via <c>java.net.URLConnection</c> and inflates them with <c>InflaterInputStream</c>;
@@ -59,6 +65,10 @@ internal class Downloader
     readonly int _retryDelay = 500;
     readonly bool _progressiveDelay = true;
 
+    /// <summary>
+    /// Creates a downloader that writes into <paramref name="store"/> and fetches blobs relative to
+    /// <paramref name="baseUrl"/> (a trailing slash is appended if missing).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Downloader(BlobStore, String)</c>.</remarks>
     public Downloader(BlobStore store, string baseUrl)
     {
@@ -89,13 +99,21 @@ internal class Downloader
             Id = id;
         }
 
+        /// <summary>
+        /// Returns the store page at which the downloaded blob was written, valid once the ticket has
+        /// completed successfully.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.clarisma.common.store.Downloader.Ticket.page()</c>.</remarks>
         public int Page()
         {
             return _page;
         }
 
-        // don't call this directly; must be called by Downloader.TicketCompleted()
+        /// <summary>
+        /// Marks the ticket complete with its resulting page and any error, notifies all registered
+        /// consumers, and wakes any threads blocked in <see cref="AwaitCompletion"/>. Must not be called
+        /// directly; it is invoked by <see cref="Downloader.TicketCompleted"/>.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.clarisma.common.store.Downloader.Ticket.complete(int, Throwable)</c>.</remarks>
         internal void Complete(int page, Exception? error)
         {
@@ -110,6 +128,9 @@ internal class Downloader
             }
         }
 
+        /// <summary>
+        /// Blocks the calling thread until this ticket has been completed.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.clarisma.common.store.Downloader.Ticket.awaitCompletion()</c>.</remarks>
         public void AwaitCompletion()
         {
@@ -124,6 +145,10 @@ internal class Downloader
             }
         }
 
+        /// <summary>
+        /// Rethrows the error that caused the download to fail, if any; a <see cref="StoreException"/> is
+        /// rethrown as-is and any other exception is wrapped in one. The ticket must already be completed.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.clarisma.common.store.Downloader.Ticket.throwError()</c>.</remarks>
         public void ThrowError()
         {
@@ -143,6 +168,13 @@ internal class Downloader
         }
     }
 
+    /// <summary>
+    /// Requests the blob with the given <paramref name="id"/> (or the metadata blob for
+    /// <see cref="METADATA_ID"/>), returning a <see cref="Ticket"/> tracking the download. An existing
+    /// pending ticket for the same id is reused. The optional <paramref name="consumer"/> is invoked when
+    /// the ticket completes. Starts the background download thread on first use and blocks while the pending
+    /// queue is full.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Downloader.request(int, Consumer)</c>.</remarks>
     public Ticket Request(int id, Action<Ticket>? consumer)
     {
@@ -176,6 +208,10 @@ internal class Downloader
         }
     }
 
+    /// <summary>
+    /// Marks the downloader as shut down (so further requests are refused) and blocks until the background
+    /// thread has stopped, interrupting it as needed.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Downloader.shutdown()</c>.</remarks>
     public void Shutdown()
     {
@@ -198,6 +234,10 @@ internal class Downloader
         }
     }
 
+    /// <summary>
+    /// Removes the ticket from the pending map, completes it with its page and error, and wakes any waiters
+    /// (including requesters blocked on a full queue).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Downloader.ticketCompleted(Ticket, int, Throwable)</c>.</remarks>
     void TicketCompleted(Ticket ticket, int page, Exception? error)
     {
@@ -209,6 +249,9 @@ internal class Downloader
         }
     }
 
+    /// <summary>
+    /// Clears the reference to the background thread and wakes any waiters once the thread has finished.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Downloader.threadEnded()</c>.</remarks>
     void ThreadEnded()
     {
@@ -219,6 +262,10 @@ internal class Downloader
         }
     }
 
+    /// <summary>
+    /// Fails every outstanding ticket with the given exception and clears the work queue, typically after
+    /// the download thread has aborted.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Downloader.cancelTickets(Throwable)</c>.</remarks>
     void CancelTickets(Exception ex)
     {
@@ -235,6 +282,11 @@ internal class Downloader
         }
     }
 
+    /// <summary>
+    /// Dequeues the next pending ticket. When <paramref name="wait"/> is true and the queue is empty, waits
+    /// up to the keep-alive timeout for more work, clearing the thread reference if none arrives. Returns
+    /// null when there is nothing to do.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Downloader.takeTicket(boolean)</c>.</remarks>
     Ticket? TakeTicket(bool wait)
     {
@@ -253,6 +305,10 @@ internal class Downloader
         }
     }
 
+    /// <summary>
+    /// Builds the repository URL for the blob with the given id: <c>meta.tile</c> for the metadata blob, or
+    /// a hierarchical <c>XXX/YYY.tile</c> path derived from the tile number otherwise.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Downloader.urlOf(int)</c>.</remarks>
     protected Uri UrlOf(int id)
     {
@@ -263,6 +319,11 @@ internal class Downloader
     }
 
     // TODO: don't complete tickets here
+    /// <summary>
+    /// Resolves a ticket to a store page: returns the existing page if the blob is already present (or, for
+    /// metadata, if the store is non-empty), otherwise downloads it from its URL, records the new index
+    /// entry for tile blobs, and returns the page it was written to.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Downloader.download(Ticket)</c>.</remarks>
     protected int Download(Ticket ticket)
     {
@@ -289,6 +350,10 @@ internal class Downloader
         return page;
     }
 
+    /// <summary>
+    /// Throws a <see cref="StoreException"/> with the given reason, used to abort a download when the tile
+    /// data is malformed or incompatible.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Downloader.invalidTileFile(String)</c>.</remarks>
     [DoesNotReturn]
     void InvalidTileFile(string reason)
@@ -296,6 +361,12 @@ internal class Downloader
         throw new StoreException(reason, (Exception?)null);
     }
 
+    /// <summary>
+    /// Downloads and inflates the blob at the given URL, validating its exported-tile header (magic number
+    /// and, for tile blobs, the store GUID), allocating store space, and writing the payload into the store.
+    /// First and last blocks are journaled (and, for metadata, only the first block) while interior blocks
+    /// are written directly. Returns the first store page of the written blob.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Downloader.download(int, URL)</c>.</remarks>
     protected int Download(int id, Uri url)
     {
@@ -440,8 +511,11 @@ internal class Downloader
         }
     }
 
-    // Reads exactly len bytes (or until EOF) from a stream into buf at the given offset, mirroring
-    // the single InputStream.read(b, off, len) the Java original performs to load the tile header.
+    /// <summary>
+    /// Reads exactly <paramref name="len"/> bytes (or until end of stream) from <paramref name="s"/> into
+    /// <paramref name="buf"/> at the given offset, mirroring the single <c>InputStream.read(b, off, len)</c>
+    /// the Java original performs to load the tile header. Returns the number of bytes actually read.
+    /// </summary>
     static int ReadFully(Stream s, byte[] buf, int off, int len)
     {
         int total = 0;
@@ -455,6 +529,11 @@ internal class Downloader
         return total;
     }
 
+    /// <summary>
+    /// The background thread loop: repeatedly takes a ticket, opens an append transaction, downloads and
+    /// commits each available ticket within it, then ends the transaction. On any failure it cancels all
+    /// outstanding tickets and tears down the transaction before the thread exits.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.store.Downloader.DownloadThread.run()</c>.</remarks>
     void DownloadThreadRun()
     {
@@ -506,9 +585,11 @@ internal class Downloader
         ThreadEnded();
     }
 
-    // Mirrors java.util.zip.CRC32 (used by the Java original's read() helper). The downloaded
-    // payload's checksum verification is currently disabled (see Download), so this is computed
-    // but unused; it is retained to keep the port structurally faithful.
+    /// <summary>
+    /// Mirrors <c>java.util.zip.CRC32</c> (used by the Java original's read() helper). The downloaded
+    /// payload's checksum verification is currently disabled (see <see cref="Download(int, Uri)"/>), so the
+    /// computed value is currently unused; it is retained to keep the port structurally faithful.
+    /// </summary>
     sealed class Crc32
     {
 
@@ -516,6 +597,9 @@ internal class Downloader
 
         uint _crc = 0xffff_ffff;
 
+        /// <summary>
+        /// Builds the 256-entry CRC-32 lookup table for the IEEE polynomial.
+        /// </summary>
         static uint[] BuildTable()
         {
             var table = new uint[256];
@@ -529,6 +613,10 @@ internal class Downloader
             return table;
         }
 
+        /// <summary>
+        /// Updates the running checksum with <paramref name="length"/> bytes from <paramref name="buf"/>
+        /// starting at <paramref name="offset"/>.
+        /// </summary>
         public void Update(byte[] buf, int offset, int length)
         {
             uint c = _crc;
@@ -537,6 +625,9 @@ internal class Downloader
             _crc = c;
         }
 
+        /// <summary>
+        /// The finalized CRC-32 checksum value computed so far.
+        /// </summary>
         public long Value => _crc ^ 0xffff_ffff;
     }
 }

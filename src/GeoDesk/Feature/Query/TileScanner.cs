@@ -20,6 +20,11 @@ namespace GeoDesk.Feature.Query;
 // the .NET-idiomatic equivalent of the original fork()/join()/merge loop. The recursive R-tree
 // descent (SearchTrunk/SearchLeaf) is folded in from RTreeQueryTask and runs synchronously inside
 // each bucket task.
+/// <summary>
+/// Scans a single tile for features matching a query, descending the per-category
+/// spatial R-trees and collecting matching feature pointers. Index buckets are scanned
+/// concurrently and their results merged.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.query.TileQueryTask</c> + <c>RTreeQueryTask</c>.</remarks>
 internal sealed class TileScanner
 {
@@ -37,12 +42,13 @@ internal sealed class TileScanner
     readonly int _maxY;
 
     /// <summary>
-    /// Initializes a new instance.
+    /// Creates a scanner for the given tile page within a query, capturing the query's
+    /// bounding box, type, matcher, and filter constraints.
     /// </summary>
-    /// <param name="query"></param>
-    /// <param name="tilePage"></param>
-    /// <param name="bboxFlags"></param>
-    /// <param name="filter"></param>
+    /// <param name="query">the owning query supplying the search parameters</param>
+    /// <param name="tilePage">the first page of the tile to scan</param>
+    /// <param name="bboxFlags">flags describing how the tile relates to the query bounding box</param>
+    /// <param name="filter">an optional per-tile filter</param>
     public TileScanner(Query query, int tilePage, int bboxFlags, IFilter? filter)
     {
         _store = query.Store;
@@ -61,6 +67,11 @@ internal sealed class TileScanner
     // Returns ValueTask: a tile with no accepted buckets completes synchronously (returns
     // QueryResults.Empty without awaiting), so ValueTask avoids allocating a Task on that path. The
     // single caller awaits the result exactly once, which is the required ValueTask usage.
+    /// <summary>
+    /// Scans the tile, forking one task per accepted index bucket across the requested
+    /// type categories and merging their results in order. Completes synchronously when
+    /// no buckets are accepted.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.TileQueryTask.exec()</c>.</remarks>
     public async ValueTask<QueryResults> ScanAsync()
     {

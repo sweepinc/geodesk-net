@@ -10,6 +10,10 @@ using System.Text;
 
 namespace GeoDesk.Feature.Query;
 
+/// <summary>
+/// Helpers for the key-index category bitset: converting a category number to its bit,
+/// formatting a bitset as category names, and extracting the first category.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.query.IndexBits</c>.</remarks>
 internal static class IndexBits
 {
@@ -26,6 +30,10 @@ internal static class IndexBits
     }
 
     // Note: category starts with 1, but categories[] is 0-based
+    /// <summary>
+    /// Formats an index bitset as a separator-joined list of category names, returning
+    /// the given placeholder when no categories are set.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.IndexBits.toString(int, String[], String, String)</c>.</remarks>
     public static string ToString(int bits, string[] categories, string separator, string uncategorized)
     {
@@ -43,6 +51,9 @@ internal static class IndexBits
         return buf.ToString();
     }
 
+    /// <summary>
+    /// Returns the lowest-numbered category set in the bitset, or 0 if none are set.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.IndexBits.firstCategory(int)</c>.</remarks>
     public static int FirstCategory(int bits)
     {

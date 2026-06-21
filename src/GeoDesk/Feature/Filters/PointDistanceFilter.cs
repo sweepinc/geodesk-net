@@ -26,6 +26,10 @@ internal class PointDistanceFilter : IFilter
     readonly int _py;
     readonly double _distanceSquared;
 
+    /// <summary>
+    /// Creates a filter accepting features within the given distance (in meters) of the
+    /// point at (x, y), converting the distance into projected units at that latitude.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.PointDistanceFilter(double, int, int)</c>.</remarks>
     public PointDistanceFilter(double distance, int x, int y)
     {
@@ -36,9 +40,14 @@ internal class PointDistanceFilter : IFilter
         _distanceSquared = d * d;
     }
 
+    /// <summary>The bounding box enclosing the search radius.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.PointDistanceFilter.bounds()</c>.</remarks>
     public IBounds Bounds => _bounds;
 
+    /// <summary>
+    /// Returns true if any segment of the given way comes within the search distance of
+    /// the point.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.PointDistanceFilter.segmentsWithinDistance(StoredWay, int)</c>.</remarks>
     bool SegmentsWithinDistance(StoredWay way, int areaFlag)
     {
@@ -58,6 +67,10 @@ internal class PointDistanceFilter : IFilter
         return false;
     }
 
+    /// <summary>
+    /// Returns true if the given way is within the search distance: any segment close
+    /// enough, or for areas, the point lying inside the polygon.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.PointDistanceFilter.isWithinDistance(StoredWay)</c>.</remarks>
     bool IsWithinDistance(StoredWay way)
     {
@@ -72,6 +85,10 @@ internal class PointDistanceFilter : IFilter
         return SegmentsWithinDistance(way, 0);
     }
 
+    /// <summary>
+    /// Returns true if the feature is within the search distance of the point, handling
+    /// ways, nodes, and area/non-area relations.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.PointDistanceFilter.accept(Feature)</c>.</remarks>
     public bool Accept(IFeature feature)
     {
@@ -114,6 +131,10 @@ internal class PointDistanceFilter : IFilter
 
     // PORT: java.awt.geom.Line2D.ptSegDistSq(x1,y1,x2,y2,px,py) — squared distance from a point to
     // a line segment (JDK algorithm).
+    /// <summary>
+    /// Returns the squared distance from the point (px, py) to the line segment from
+    /// (x1, y1) to (x2, y2).
+    /// </summary>
     static double PtSegDistSq(double x1, double y1, double x2, double y2, double px, double py)
     {
         x2 -= x1;
@@ -142,6 +163,7 @@ internal class PointDistanceFilter : IFilter
     }
 
     // PORT: java.awt.geom.Point2D.distanceSq(x1,y1,x2,y2) — squared distance between two points.
+    /// <summary>Returns the squared distance between the points (x1, y1) and (x2, y2).</summary>
     static double DistanceSq(double x1, double y1, double x2, double y2)
     {
         x1 -= x2;

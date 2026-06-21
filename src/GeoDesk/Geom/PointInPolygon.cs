@@ -9,10 +9,18 @@ using GeoDesk.Feature.Store;
 
 namespace GeoDesk.Geom;
 
+/// <summary>
+/// Point-in-polygon tests using a ray-casting (even-odd) algorithm against a polygon's
+/// coordinate sequence.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.geom.PointInPolygon</c>.</remarks>
 internal static class PointInPolygon
 {
     // return -1 if vertex, 1 if inside, 0 if outside
+    /// <summary>
+    /// Returns true if the point (cx, cy) lies inside the polygon defined by the given
+    /// flat coordinate array, using even-odd ray casting.
+    /// </summary>
     public static bool IsInside(int[] coords, double cx, double cy)
     {
         bool odd = false;
@@ -75,6 +83,10 @@ internal static class PointInPolygon
         return odd;
     }
 
+    /// <summary>
+    /// Tests the point (cx, cy) against the polygon ring produced by the given
+    /// coordinate iterator, returning the accumulated even-odd crossing parity.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.geom.PointInPolygon.testFast(StoredWay.XYIterator, double, double)</c>.</remarks>
     public static int TestFast(StoredWay.XYIterator iter, double cx, double cy)
     {

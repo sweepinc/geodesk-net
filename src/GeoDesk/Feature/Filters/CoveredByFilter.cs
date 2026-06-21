@@ -19,24 +19,31 @@ namespace GeoDesk.Feature.Filters;
 internal class CoveredByFilter : AbstractRelateFilter
 {
 
+    /// <summary>Creates a filter using the given feature's geometry as the test geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.CoveredByFilter(Feature)</c>.</remarks>
     public CoveredByFilter(IFeature feature)
         : this(feature.ToGeometry())
     {
     }
 
+    /// <summary>Creates a filter that accepts features covered by the given geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.CoveredByFilter(Geometry)</c>.</remarks>
     public CoveredByFilter(Geometry geom)
         : this(PreparedGeometryFactory.Prepare(geom))
     {
     }
 
+    /// <summary>Creates a filter from an already-prepared reference geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.CoveredByFilter(PreparedGeometry)</c>.</remarks>
     public CoveredByFilter(IPreparedGeometry prepared)
         : base(prepared, AcceptedType(prepared))
     {
     }
 
+    /// <summary>
+    /// Determines which feature types can possibly be covered by the given test
+    /// geometry, based on its dimension.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.CoveredByFilter.acceptedType(PreparedGeometry)</c>.</remarks>
     static int AcceptedType(IPreparedGeometry prepared)
     {
@@ -47,10 +54,18 @@ internal class CoveredByFilter : AbstractRelateFilter
         return 0;   // don't accept generic GeometryCollection
     }
 
+    /// <summary>
+    /// The filter strategy flags: tile acceleration, needs geometry, uses a strict
+    /// bounding box, and restricts types.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.CoveredByFilter.strategy()</c>.</remarks>
     public override int Strategy => FilterStrategy.FastTileFilter | FilterStrategy.NeedsGeometry | FilterStrategy.UsesBbox |
             FilterStrategy.StrictBbox | FilterStrategy.RestrictsTypes;
 
+    /// <summary>
+    /// Specializes the filter per tile: rejects disjoint tiles, and for tiles properly
+    /// contained in a 2-D reference geometry waives the test via a fast tile filter.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.CoveredByFilter.filterForTile(int, Polygon)</c>.</remarks>
     public override IFilter? FilterForTile(int tile, Polygon tileGeometry)
     {
@@ -59,6 +74,7 @@ internal class CoveredByFilter : AbstractRelateFilter
         return this;
     }
 
+    /// <summary>Returns true if the feature's geometry is covered by the reference geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.CoveredByFilter.accept(Feature, Geometry)</c>.</remarks>
     public override bool Accept(IFeature feature, Geometry geom)
     {

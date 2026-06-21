@@ -28,6 +28,11 @@ internal class FastTileFilter : IFilter
     readonly int _tileMaxX;
     readonly int _tileMinY;
 
+    /// <summary>
+    /// Creates a fast tile filter for the given tile: single-tile features are accepted
+    /// or rejected per <paramref name="fastAccept"/>, while multi-tile features fall
+    /// back to <paramref name="slowFilter"/>.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.FastTileFilter(int, boolean, Filter)</c>.</remarks>
     public FastTileFilter(int tile, bool fastAccept, IFilter slowFilter)
     {
@@ -37,12 +42,17 @@ internal class FastTileFilter : IFilter
         _tileMinY = Tile.BottomY(tile);
     }
 
+    /// <summary>Returns true if the feature is accepted, materializing geometry only if needed.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.FastTileFilter.accept(Feature)</c>.</remarks>
     public bool Accept(IFeature feature)
     {
         return Accept(feature, null!);
     }
 
+    /// <summary>
+    /// Returns the fast verdict for a feature lying entirely within the tile, otherwise
+    /// delegates to the slow filter with the feature's geometry.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.FastTileFilter.accept(Feature, Geometry)</c>.</remarks>
     public bool Accept(IFeature feature, Geometry geom)
     {

@@ -37,6 +37,10 @@ using System.Globalization;
 
 namespace GeoDesk.Geom;
 
+/// <summary>
+/// Converts between 2-D coordinates and their position along a Hilbert space-filling
+/// curve, used to order features so that spatially close items are stored adjacently.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.geom.Hilbert</c>.</remarks>
 internal static class Hilbert
 {

@@ -16,6 +16,11 @@ using GeoDesk.Feature.Store;
 
 namespace GeoDesk.Feature.Match;
 
+/// <summary>
+/// Parses a GOL query string (a comma-separated list of selectors, each with a feature-type prefix and
+/// zero or more bracketed tag clauses) into a chain of <see cref="Selector"/> objects backed by tag-match
+/// expressions. Resolves key and value strings against the store's global-string and category tables.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherParser</c>.</remarks>
 internal class MatcherParser : Parser
 {
@@ -46,6 +51,11 @@ internal class MatcherParser : Parser
     readonly IReadOnlyDictionary<string, int> _stringsToCodes;
     readonly IReadOnlyDictionary<int, int> _keysToCategories;
 
+    /// <summary>
+    /// Creates a parser that resolves value strings via <paramref name="stringsToCodes"/> (the store's
+    /// global-string table) and key categories via <paramref name="keysToCategories"/>. Either map may be
+    /// null, in which case an empty map is used.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherParser(ObjectIntMap, IntIntMap)</c>.</remarks>
     public MatcherParser(IReadOnlyDictionary<string, int>? stringsToCodes, IReadOnlyDictionary<int, int>? keysToCategories)
     {
@@ -62,8 +72,8 @@ internal class MatcherParser : Parser
     /// Matches an identifier string and returns a bit field with the bits representing the types
     /// accepted by the current selector.
     /// </summary>
-    /// <returns>type mask, or 0 if the type specifier is not valid</returns>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherParser.featureTypes()</c>.</remarks>
+    /// <returns>type mask, or 0 if the type specifier is not valid</returns>
     int FeatureTypes()
     {
         var types = 0;
@@ -100,6 +110,10 @@ internal class MatcherParser : Parser
         return types;
     }
 
+    /// <summary>
+    /// Resolves a key string to its global-string code, but only if that code is within the range of
+    /// common keys; otherwise returns 0 (treating the key as local).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherParser.keyCode(String)</c>.</remarks>
     int KeyCode(string key)
     {
@@ -107,12 +121,19 @@ internal class MatcherParser : Parser
         return keyCode <= TagValues.MAX_COMMON_KEY ? keyCode : 0;
     }
 
+    /// <summary>
+    /// Looks up the global-string code for the given string, returning 0 if it is not a known global string.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherParser.stringCode(String)</c>.</remarks>
     int StringCode(string key)
     {
         return _stringsToCodes.TryGetValue(key, out var v) ? v : 0;
     }
 
+    /// <summary>
+    /// Parses a tag key, accepting either a bare identifier or a quoted string, and advances past it.
+    /// Returns null if the current token is neither.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherParser.key()</c>.</remarks>
     string? Key()
     {
@@ -130,6 +151,10 @@ internal class MatcherParser : Parser
         return key;
     }
 
+    /// <summary>
+    /// Parses a tag key like <see cref="Key"/>, but reports a parse error and returns null when no key is
+    /// present.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherParser.expectKey()</c>.</remarks>
     string? ExpectKey()
     {
@@ -139,6 +164,10 @@ internal class MatcherParser : Parser
         return null;
     }
 
+    /// <summary>
+    /// Consumes and returns the current token if it is a comparison <see cref="Operator"/>, otherwise
+    /// returns null without advancing.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherParser.operator()</c> (renamed: <c>operator</c> is a C# keyword).</remarks>
     Operator? OperatorTok()
     {
@@ -150,6 +179,11 @@ internal class MatcherParser : Parser
         return null;
     }
 
+    /// <summary>
+    /// Parses the right-hand value of a comparison (a number, identifier, or quoted string) and validates
+    /// it against the value types permitted by <paramref name="opFlags"/>. Returns the parsed value (a
+    /// <see cref="double"/> or <see cref="string"/>), or null on a type mismatch or missing value.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherParser.comparisonValue(int)</c>.</remarks>
     object? ComparisonValue(int opFlags)
     {
@@ -195,12 +229,20 @@ internal class MatcherParser : Parser
         return val;
     }
 
+    /// <summary>
+    /// Raises a parse error reporting that <paramref name="what"/> was expected instead of the current token.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherParser.errorExpected(String)</c>.</remarks>
     void ErrorExpected(string what)
     {
         Error(string.Format(CultureInfo.InvariantCulture, "Expected {0} instead of {1}", what, tokenValue));
     }
 
+    /// <summary>
+    /// Returns the bit field of <c>OP_*</c> flags describing which value types and matching behaviours are
+    /// valid for the given comparison operator (whether it requires a key, accepts numbers or strings,
+    /// allows value lists, and how equality and exactness are handled).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherParser.operatorFlags(Operator)</c>.</remarks>
     int OperatorFlags(Operator op)
     {
@@ -223,6 +265,10 @@ internal class MatcherParser : Parser
         return OP_REQUIRES_KEY | OP_NUMERIC;
     }
 
+    /// <summary>
+    /// Returns whether the entire string is a valid number (optionally signed), used to decide whether a
+    /// local-string value should also be treated as a numeric match candidate.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherParser.isNumericString(String)</c>.</remarks>
     static bool IsNumericString(string s)
     {
@@ -233,6 +279,11 @@ internal class MatcherParser : Parser
         return MathUtils.CountNumberChars(s) == len;
     }
 
+    /// <summary>
+    /// Parses a single bracketed tag clause (e.g. <c>[k]</c>, <c>[!k]</c>, <c>[k=v]</c>,
+    /// <c>[k=a,b,c]</c>, or wildcard forms) into a <see cref="TagClause"/> carrying the resolved key code,
+    /// category, match flags, and the tag-match expression tree. Returns null if no clause is present.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherParser.tagClause()</c>.</remarks>
     TagClause? TagClause()
     {
@@ -361,6 +412,11 @@ internal class MatcherParser : Parser
         return new TagClause(flags, key, keyCode, category, exp);
     }
 
+    /// <summary>
+    /// Parses a single selector: an optional feature-type prefix (defaulting to all types) followed by a
+    /// sequence of tag clauses. Returns the assembled <see cref="Selector"/>, or null on an invalid type
+    /// specifier.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherParser.selector()</c> (renamed: avoids clash with the <c>Selector</c> type).</remarks>
     Selector? SelectorTok()
     {
@@ -385,6 +441,10 @@ internal class MatcherParser : Parser
         return sel;
     }
 
+    /// <summary>
+    /// Parses a complete query: a comma-separated list of selectors terminated by end-of-input. Returns the
+    /// head of the resulting selector chain, or null if the query is empty.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherParser.query()</c>.</remarks>
     public Selector? Query()
     {
@@ -409,6 +469,10 @@ internal class MatcherParser : Parser
         return first;
     }
 
+    /// <summary>
+    /// Resets the identifier pattern to the default before delegating to the base parser to tokenize the
+    /// given input string.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherParser.parse(String)</c>.</remarks>
     public override void Parse(string s)
     {
@@ -416,6 +480,10 @@ internal class MatcherParser : Parser
         base.Parse(s);
     }
 
+    /// <summary>
+    /// Reports a parse error by prefixing the message with the current line and column and throwing a
+    /// <see cref="QueryException"/>.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherParser.error(String)</c>.</remarks>
     protected override void Error(string msg)
     {

@@ -28,6 +28,10 @@ internal static class TypeBits
     public const int NONAREA_RELATIONS = RELATIONS & (~AREAS);
     public const int ALL = NODES | WAYS | RELATIONS;
 
+    /// <summary>
+    /// Converts a feature's flag word into the single type bit identifying its kind and
+    /// area-ness.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.TypeBits.fromFeatureFlags(int)</c>.</remarks>
     public static int FromFeatureFlags(int flags)
     {
@@ -35,6 +39,10 @@ internal static class TypeBits
         return 1 << (flags >> 1); // Don't need & 0x1F, C#'s shift only considers lowest 5 bits
     }
 
+    /// <summary>
+    /// Returns a human-readable, newline-separated description of the feature types
+    /// selected by the given type-bits mask.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.TypeBits.toString(int)</c>.</remarks>
     public static string ToString(int flags)
     {

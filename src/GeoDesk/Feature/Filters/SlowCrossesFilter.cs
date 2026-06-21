@@ -27,18 +27,24 @@ internal class SlowCrossesFilter : SlowSpatialFilter
 
     readonly IPreparedGeometry _prepared;
 
+    /// <summary>Creates a filter from an already-prepared reference geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.SlowCrossesFilter(PreparedGeometry)</c>.</remarks>
     public SlowCrossesFilter(IPreparedGeometry prepared)
     {
         _prepared = prepared;
     }
 
+    /// <summary>Creates a filter that accepts features crossing the given geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.SlowCrossesFilter(Geometry)</c>.</remarks>
     public SlowCrossesFilter(Geometry geom)
         : this(PreparedGeometryFactory.Prepare(geom))
     {
     }
 
+    /// <summary>
+    /// Creates a filter from the given feature, building a multi-line geometry for
+    /// non-area relations and using the feature's own geometry otherwise.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.SlowCrossesFilter(Feature)</c>.</remarks>
     public SlowCrossesFilter(IFeature f)
     {
@@ -50,12 +56,14 @@ internal class SlowCrossesFilter : SlowSpatialFilter
         _prepared = PreparedGeometryFactory.Prepare(g);
     }
 
+    /// <summary>Returns true if the candidate geometry is non-null and crosses the reference geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.SlowCrossesFilter.acceptGeometry(Geometry)</c>.</remarks>
     protected override bool AcceptGeometry(Geometry geom)
     {
         return geom != null && _prepared.Crosses(geom);
     }
 
+    /// <summary>The bounding box of the reference geometry, used to pre-select candidate features.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.SlowCrossesFilter.bounds()</c>.</remarks>
     public IBounds Bounds()
     {

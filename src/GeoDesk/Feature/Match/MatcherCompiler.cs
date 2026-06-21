@@ -36,6 +36,10 @@ internal class MatcherCompiler
         _parser = new MatcherParser(stringsToCodes, keysToCategories);
     }
 
+    /// <summary>
+    /// Returns the matcher for the given query string, compiling and caching it on first
+    /// use.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherCompiler.getMatcher(String)</c>.</remarks>
     public Matcher GetMatcher(string query)
     {

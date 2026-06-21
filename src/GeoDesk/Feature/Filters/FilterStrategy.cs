@@ -7,6 +7,11 @@
 
 namespace GeoDesk.Feature.Filters;
 
+/// <summary>
+/// Bit-flag constants describing how a filter behaves, letting the query engine
+/// optimize: whether it uses a bounding box (and whether strictly), needs geometry,
+/// restricts feature types, or supports per-tile acceleration.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.filter.FilterStrategy</c>.</remarks>
 internal class FilterStrategy
 {

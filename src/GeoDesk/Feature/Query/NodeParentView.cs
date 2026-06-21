@@ -21,6 +21,10 @@ internal class NodeParentView : ParentRelationView
 
     internal readonly StoredNode node;
 
+    /// <summary>
+    /// Creates a view over the parent ways and relations of the given node, constrained
+    /// by the supplied types, matcher, and optional filter.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.NodeParentView(FeatureStore, ByteBuffer, StoredNode, int, int, Matcher, Filter)</c>.</remarks>
     public NodeParentView(FeatureStore store, NioBuffer buf, StoredNode node, int pRelations, int types,
         Matcher matcher, IFilter? filter)
@@ -29,6 +33,10 @@ internal class NodeParentView : ParentRelationView
         this.node = node;
     }
 
+    /// <summary>
+    /// Returns a new view with the given constraints applied, collapsing to a ways-only
+    /// or relations-only view when the requested types exclude one kind of parent.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.NodeParentView.newWith(int, Matcher, Filter)</c>.</remarks>
     internal override IFeatureQuery NewWith(int types, Matcher matcher, IFilter? filter)
     {

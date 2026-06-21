@@ -23,6 +23,10 @@ internal abstract class TableView : View
     protected readonly NioBuffer buf;
     protected readonly int ptr;
 
+    /// <summary>
+    /// Creates a table view over the table at the given pointer, constrained by the
+    /// supplied feature types, matcher, and optional filter.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.TableView(FeatureStore, ByteBuffer, int, int, Matcher, Filter)</c>.</remarks>
     public TableView(FeatureStore store, NioBuffer buf, int ptr, int types, Matcher matcher, IFilter? filter)
         : base(store, types, matcher, filter)
@@ -31,6 +35,10 @@ internal abstract class TableView : View
         this.ptr = ptr;
     }
 
+    /// <summary>
+    /// Returns a view restricted to the features in this table that intersect the given
+    /// bounding box.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.TableView.in(Bounds)</c>.</remarks>
     public override IFeatureQuery In(IBounds bbox)
     {

@@ -47,8 +47,8 @@ internal sealed class Heading
     /// <summary>
     /// Returns the Heading closest to the given compass heading in degrees (0 = north, 90 = east, etc.)
     /// </summary>
-    /// <param name="degrees">must be 0 &lt;= degrees &lt; 360</param>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Heading.fromDegrees(double)</c>.</remarks>
+    /// <param name="degrees">must be 0 &lt;= degrees &lt; 360</param>
     public static Heading FromDegrees(double degrees)
     {
         return ValuesArray[(int)(((degrees % 360) + 22.5) / 45)];
@@ -68,10 +68,10 @@ internal sealed class Heading
     /// Determines the Coordinate that lies a given distance from the center of the plane, in a given
     /// Heading.
     /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Heading.project(double, double)</c>.</remarks>
     /// <param name="angle">heading in degrees (0 = north, 90 = east)</param>
     /// <param name="distance">distance</param>
     /// <returns>the JTS Coordinate</returns>
-    /// <remarks>Ported from Java <c>com.geodesk.geom.Heading.project(double, double)</c>.</remarks>
     public static Coordinate Project(double angle, double distance)
     {
         var radians = angle * PI / 180;
@@ -162,8 +162,8 @@ internal sealed class Heading
     /// <summary>
     /// Returns this heading as a compass bearing in degrees.
     /// </summary>
-    /// <returns>0 = north, 90 = east, etc.</returns>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Heading.toDegrees()</c>.</remarks>
+    /// <returns>0 = north, 90 = east, etc.</returns>
     public int ToDegrees()
     {
         return _degrees;

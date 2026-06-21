@@ -22,6 +22,7 @@ internal class ContainsPointFilter : IFilter
     readonly int _px;
     readonly int _py;
 
+    /// <summary>Creates a filter that accepts features containing the point at (x, y).</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ContainsPointFilter(int, int)</c>.</remarks>
     public ContainsPointFilter(int x, int y)
     {
@@ -30,9 +31,14 @@ internal class ContainsPointFilter : IFilter
         _bounds = Box.AtXY(x, y);
     }
 
+    /// <summary>The degenerate bounding box at the query point.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ContainsPointFilter.bounds()</c>.</remarks>
     public IBounds Bounds => _bounds;
 
+    /// <summary>
+    /// Returns true if the feature is an area that contains the query point (via a
+    /// point-in-polygon test for ways and relations, or coordinate equality for nodes).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ContainsPointFilter.accept(Feature)</c>.</remarks>
     public bool Accept(IFeature feature)
     {
@@ -45,6 +51,10 @@ internal class ContainsPointFilter : IFilter
         return _px == feature.X && _py == feature.Y;
     }
 
+    /// <summary>
+    /// Returns true if the query point lies inside the given area relation, accumulating
+    /// ray-crossings over its outer and inner ring members.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ContainsPointFilter.isInsideRelation(StoredRelation)</c>.</remarks>
     bool IsInsideRelation(StoredRelation rel)
     {

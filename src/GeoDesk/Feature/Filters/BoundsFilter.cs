@@ -19,12 +19,14 @@ internal class BoundsFilter : IFilter
 
     readonly IBounds _bounds;
 
+    /// <summary>Creates a filter that accepts features intersecting the given bounds.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.BoundsFilter(Bounds)</c>.</remarks>
     public BoundsFilter(IBounds bounds)
     {
         _bounds = bounds;
     }
 
+    /// <summary>Returns true if the feature's bounding box intersects the filter's bounds.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.BoundsFilter.accept(Feature)</c>.</remarks>
     public bool Accept(IFeature feature)
     {

@@ -37,15 +37,16 @@ internal static class Mercator
 
     // Java Math.round(double): returns floor(a + 0.5). .NET Math.Round uses banker's rounding by
     // default, so we replicate Java's semantics explicitly. (Port-only helper, no Java counterpart.)
+    /// <summary>Rounds to the nearest long using Java's <c>Math.round</c> semantics (floor of a + 0.5).</summary>
     static long JavaRound(double a) => (long)Floor(a + 0.5);
 
     /// <summary>
     /// Converts a longitude (in degrees) to a Mercator X coordinate in imps, throwing if the
     /// longitude is outside the valid -180 to 180 range.
     /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.xFromLon(double)</c>.</remarks>
     /// <param name="lon">longitude (in degrees)</param>
     /// <returns>equivalent imps</returns>
-    /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.xFromLon(double)</c>.</remarks>
     public static int XFromLon(double lon)
     {
         if (lon < -180 || lon > 180)
@@ -57,9 +58,9 @@ internal static class Mercator
     /// <summary>
     /// Converts a longitude expressed in 100-nanodegree increments to a Mercator X coordinate in imps.
     /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.xFromLon100nd(int)</c>.</remarks>
     /// <param name="lon">longitude (in 100-nanodegree increments)</param>
     /// <returns>equivalent imps</returns>
-    /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.xFromLon100nd(int)</c>.</remarks>
     public static int XFromLon100nd(int lon)
     {
         return XFromLon((double)lon / 10_000_000);
@@ -70,9 +71,9 @@ internal static class Mercator
     /// the Web Mercator limits (<see cref="MinLat"/>/<see cref="MaxLat"/>); values outside -90 to 90
     /// throw.
     /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.yFromLat(double)</c>.</remarks>
     /// <param name="lat">latitude (in degrees)</param>
     /// <returns>equivalent imps</returns>
-    /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.yFromLat(double)</c>.</remarks>
     public static int YFromLat(double lat)
     {
         if (lat < MinLat)
@@ -98,9 +99,9 @@ internal static class Mercator
     /// <summary>
     /// Converts a latitude expressed in 100-nanodegree increments to a Mercator Y coordinate in imps.
     /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.yFromLat100nd(int)</c>.</remarks>
     /// <param name="lat">latitude (in 100-nanodegree increments)</param>
     /// <returns>equivalent imps</returns>
-    /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.yFromLat100nd(int)</c>.</remarks>
     public static int YFromLat100nd(int lat)
     {
         return YFromLat((double)lat / 10_000_000);
@@ -119,9 +120,9 @@ internal static class Mercator
     /// <summary>
     /// Converts a projected X coordinate (in imps) back to a WGS-84 longitude in degrees.
     /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.lonFromX(double)</c>.</remarks>
     /// <param name="x">projected longitude (in imps)</param>
     /// <returns>equivalent WGS-84 longitude in degrees</returns>
-    /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.lonFromX(double)</c>.</remarks>
     public static double LonFromX(double x)
     {
         return x * 360 / MapWidth;
@@ -131,9 +132,9 @@ internal static class Mercator
     /// Converts a projected X coordinate (in imps) to a WGS-84 longitude in degrees, rounded to
     /// 7 decimal places (the precision OSM uses).
     /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.lonPrecision7fromX(double)</c>.</remarks>
     /// <param name="x">projected longitude (in imps)</param>
     /// <returns>equivalent WGS-84 longitude in degrees</returns>
-    /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.lonPrecision7fromX(double)</c>.</remarks>
     public static double LonPrecision7FromX(double x)
     {
         return (double)JavaRound(LonFromX(x) * 10000000) / 10000000;
@@ -142,9 +143,9 @@ internal static class Mercator
     /// <summary>
     /// Converts a projected Y coordinate (in imps) back to a WGS-84 latitude in degrees.
     /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.latFromY(double)</c>.</remarks>
     /// <param name="y">projected latitude (in imps)</param>
     /// <returns>equivalent WGS-84 latitude in degrees</returns>
-    /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.latFromY(double)</c>.</remarks>
     public static double LatFromY(double y)
     {
         return Atan(Exp(y * PI * 2 / MapWidth)) * 360 / PI - 90;
@@ -154,9 +155,9 @@ internal static class Mercator
     /// Converts a projected Y coordinate (in imps) to a WGS-84 latitude in degrees, rounded to
     /// 7 decimal places (the precision OSM uses).
     /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.latPrecision7fromY(double)</c>.</remarks>
     /// <param name="y">projected latitude (in imps)</param>
     /// <returns>equivalent WGS-84 latitude in degrees</returns>
-    /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.latPrecision7fromY(double)</c>.</remarks>
     public static double LatPrecision7FromY(double y)
     {
         return (double)JavaRound(LatFromY(y) * 10000000) / 10000000;
@@ -176,8 +177,8 @@ internal static class Mercator
     /// Calculates the Euclidean distance between two projected points. A simple method that is
     /// sufficiently accurate only for short distances.
     /// </summary>
-    /// <returns>distance in meters</returns>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.distance(double, double, double, double)</c>.</remarks>
+    /// <returns>distance in meters</returns>
     public static double Distance(double x1, double y1, double x2, double y2)
     {
         var xDelta = Abs(x1 - x2);
@@ -190,8 +191,8 @@ internal static class Mercator
     /// Calculates the Euclidean distance between two projected points. A simple method that is
     /// sufficiently accurate only for short distances.
     /// </summary>
-    /// <returns>distance in meters</returns>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.distance(Coordinate, Coordinate)</c>.</remarks>
+    /// <returns>distance in meters</returns>
     public static double Distance(Coordinate c1, Coordinate c2)
     {
         return Distance(c1.X, c1.Y, c2.X, c2.Y);
@@ -201,8 +202,8 @@ internal static class Mercator
     /// Calculates the Euclidean distance between two Geometry objects (with Mercator-projected
     /// coordinates). A simple method that is sufficiently accurate only for short distances.
     /// </summary>
-    /// <returns>distance in meters</returns>
     /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.distance(Geometry, Geometry)</c>.</remarks>
+    /// <returns>distance in meters</returns>
     public static double Distance(Geometry a, Geometry b)
     {
         var nearestPoints = DistanceOp.NearestPoints(a, b);
@@ -213,10 +214,10 @@ internal static class Mercator
     /// Calculates the equivalent number of imps that are equal to the given distance in meters at a
     /// planar-projected latitude.
     /// </summary>
+    /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.deltaFromMeters(double, double)</c>.</remarks>
     /// <param name="meters">distance in meters</param>
     /// <param name="atY">the projected latitude (i.e. in imps, not degrees)</param>
     /// <returns>the distance in imps</returns>
-    /// <remarks>Ported from Java <c>com.geodesk.geom.Mercator.deltaFromMeters(double, double)</c>.</remarks>
     public static double DeltaFromMeters(double meters, double atY)
     {
         return meters * MapWidth / EarthCircumference * Scale(atY);
