@@ -9,10 +9,17 @@ using System.Globalization;
 
 namespace GeoDesk.Common.Text;
 
+/// <summary>
+/// Text formatting helpers for human-readable output.
+/// </summary>
 /// <remarks>Ported from Java <c>com.clarisma.common.text.Format</c>.</remarks>
 internal static class Format
 {
 
+    /// <summary>
+    /// Formats a duration in milliseconds into a compact human-readable span, choosing the unit pair
+    /// (ms, s+ms, m+s, h+m, or d+h) appropriate to the magnitude and rounding where applicable.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Format.formatTimespan(long)</c>.</remarks>
     public static string FormatTimespan(long ms)
     {

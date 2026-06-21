@@ -11,6 +11,11 @@ using System.IO;
 
 namespace GeoDesk.Common.Fab;
 
+/// <summary>
+/// Writer that emits a FAB document. Key/value pairs are accumulated as a tree of
+/// <see cref="Item"/> nodes while the document is being built, then formatted with aligned columns
+/// and tab-based indentation when the document is finished.
+/// </summary>
 /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabWriter</c>.</remarks>
 internal class FabWriter
 {
@@ -22,6 +27,10 @@ internal class FabWriter
 
     // Public because the public KeyValue methods return it (in Java this is a private
     // nested class, but Java permits public methods to return package-private types).
+    /// <summary>
+    /// One node in the FAB document tree being built: a key with an optional value and comment, and
+    /// an optional list of child items forming a nested block.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabWriter.Item</c>.</remarks>
     public sealed class Item
     {
@@ -31,6 +40,9 @@ internal class FabWriter
         public string? comment;
         public List<Item>? children;
 
+        /// <summary>
+        /// Creates an item with the given key, value, and comment (any of which may be null).
+        /// </summary>
         /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabWriter.Item(String, String, String)</c>.</remarks>
         public Item(string? k, string? v, string? c)
         {
@@ -39,6 +51,9 @@ internal class FabWriter
             comment = c;
         }
 
+        /// <summary>
+        /// Appends a child item, lazily allocating the child list on first use.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabWriter.Item.add(Item)</c>.</remarks>
         public void Add(Item item)
         {
@@ -48,6 +63,9 @@ internal class FabWriter
 
     }
 
+    /// <summary>
+    /// Creates a writer that will emit the formatted FAB document to the given text writer.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabWriter(Appendable)</c>.</remarks>
     public FabWriter(TextWriter @out)
     {
@@ -56,12 +74,19 @@ internal class FabWriter
         stack = new Stack<Item>();
     }
 
+    /// <summary>
+    /// Opens a nested block under the given key with no value or comment.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabWriter.beginKey(String)</c>.</remarks>
     public void BeginKey(string key)
     {
         BeginKey(key, null, null);
     }
 
+    /// <summary>
+    /// Opens a nested block under the given key, optionally carrying a value and comment; subsequent
+    /// writes are nested until <see cref="EndKey"/> is called.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabWriter.beginKey(String, String, String)</c>.</remarks>
     public void BeginKey(string key, string? value, string? comment)
     {
@@ -70,12 +95,19 @@ internal class FabWriter
         current = item;
     }
 
+    /// <summary>
+    /// Adds a leaf key/value pair (no comment) to the current block and returns the created item.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabWriter.keyValue(String, String)</c>.</remarks>
     public Item KeyValue(string key, string? value)
     {
         return KeyValue(key, value, null);
     }
 
+    /// <summary>
+    /// Adds a leaf key/value pair with an optional comment to the current block and returns the
+    /// created item.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabWriter.keyValue(String, String, String)</c>.</remarks>
     public Item KeyValue(string key, string? value, string? comment)
     {
@@ -84,18 +116,28 @@ internal class FabWriter
         return item;
     }
 
+    /// <summary>
+    /// Closes the most recently opened block, returning subsequent writes to its parent.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabWriter.endKey()</c>.</remarks>
     public void EndKey()
     {
         current = stack.Pop();
     }
 
+    /// <summary>
+    /// Writes the given number of tab characters for indentation.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabWriter.indent(int)</c>.</remarks>
     void Indent(int count)
     {
         for (var i = 0; i < count; i++) @out.Write('\t');
     }
 
+    /// <summary>
+    /// Recursively formats and writes a list of items at the given nesting level, computing key and
+    /// value column widths so that values and comments align on tab stops.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabWriter.writeItems(int, List)</c>.</remarks>
     void WriteItems(int level, List<Item> items)
     {
@@ -146,6 +188,10 @@ internal class FabWriter
         }
     }
 
+    /// <summary>
+    /// Flushes the accumulated document tree to the output, writing all top-level items and their
+    /// descendants, then clears the buffered children.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabWriter.endDocument()</c>.</remarks>
     public void EndDocument()
     {

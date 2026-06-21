@@ -16,6 +16,12 @@ namespace GeoDesk.Common.Pbf;
 //  and InputStream the same way
 
 // TODO: maybe maintain start pos so we can reset the buffer?
+/// <summary>
+/// A cursor over a byte-array window for reading Protocol Buffers (PBF) data. Tracks a current and
+/// end position and decodes tags, varints, signed (zig-zag) varints, fixed 32/64-bit integers,
+/// floats, doubles, and length-prefixed strings, as well as skipping fields and reading nested
+/// messages. Reads past the window raise <see cref="PbfException"/>.
+/// </summary>
 /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer</c>.</remarks>
 internal class PbfBuffer
 {
@@ -26,6 +32,9 @@ internal class PbfBuffer
 
     public static readonly PbfBuffer Empty = new PbfBuffer();
 
+    /// <summary>
+    /// Creates an empty buffer with no backing array; useful as a placeholder.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer()</c>.</remarks>
     public PbfBuffer()
     {
@@ -34,12 +43,19 @@ internal class PbfBuffer
         endPos = 0;
     }
 
+    /// <summary>
+    /// Creates a buffer wrapping the entire given byte array.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer(byte[])</c>.</remarks>
     public PbfBuffer(byte[] data)
     {
         Wrap(data);
     }
 
+    /// <summary>
+    /// Creates a buffer over a window of the given byte array, starting at <paramref name="start"/>
+    /// and spanning <paramref name="len"/> bytes.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer(byte[], int, int)</c>.</remarks>
     public PbfBuffer(byte[] data, int start, int len)
     {
@@ -48,6 +64,9 @@ internal class PbfBuffer
         endPos = start + len;
     }
 
+    /// <summary>
+    /// Resets this buffer to wrap the entire given byte array, positioning the cursor at the start.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.wrap(byte[])</c>.</remarks>
     public void Wrap(byte[] data)
     {
@@ -56,18 +75,35 @@ internal class PbfBuffer
         endPos = data.Length;
     }
 
+    /// <summary>
+    /// The underlying backing byte array, or null if the buffer is empty.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.buf()</c>.</remarks>
     public byte[]? Buf => buf;
 
+    /// <summary>
+    /// The current read position within the backing array.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.pos()</c>.</remarks>
     public int Pos => pos;
 
+    /// <summary>
+    /// The number of bytes between the current position and the end of the window.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.bytesRemaining()</c>.</remarks>
     public int BytesRemaining => endPos - pos;
 
+    /// <summary>
+    /// The exclusive end position of the readable window.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.endPos()</c>.</remarks>
     public int EndPos => endPos;
 
+    /// <summary>
+    /// Allocates a fresh backing array of <paramref name="len"/> bytes and reads that many bytes from
+    /// the stream into it, returning true if the full length was read. Wraps I/O errors in a
+    /// <see cref="PbfException"/>.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.load(InputStream, int)</c>.</remarks>
     public bool Load(Stream @in, int len)
     {
@@ -86,6 +122,9 @@ internal class PbfBuffer
     }
 
     // TODO: does not respect the original window
+    /// <summary>
+    /// Re-points this buffer at a new byte array, resetting the cursor to the start.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.reset(byte[])</c>.</remarks>
     public void Reset(byte[] data)
     {
@@ -94,6 +133,9 @@ internal class PbfBuffer
         endPos = data.Length;
     }
 
+    /// <summary>
+    /// Reads a single byte and advances the cursor, throwing <see cref="PbfException"/> past the end.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.readByte()</c>.</remarks>
     public byte ReadByte()
     {
@@ -107,12 +149,19 @@ internal class PbfBuffer
         }
     }
 
+    /// <summary>
+    /// Reads a field tag (a varint combining field number and wire type) and returns it as an int.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.readTag()</c>.</remarks>
     public int ReadTag()
     {
         return (int)ReadVarint();
     }
 
+    /// <summary>
+    /// Reads a variable-length unsigned integer, advancing the cursor. Throws
+    /// <see cref="PbfException"/> on a malformed varint or read past the end.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.readVarint()</c>.</remarks>
     public long ReadVarint()
     {
@@ -172,6 +221,10 @@ internal class PbfBuffer
         return CountVarInts(pos);
     }
 
+    /// <summary>
+    /// Counts the varint values between <paramref name="start"/> and the end of the window without
+    /// moving the cursor, by counting bytes that lack the continuation bit.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.countVarInts(int)</c>.</remarks>
     public int CountVarInts(int start)
     {
@@ -185,6 +238,10 @@ internal class PbfBuffer
 
     // TODO: can this fail if a non-canonical encoding is used?
     //  e.g. 0x81 0x00 instead of 0x01
+    /// <summary>
+    /// Counts varint values starting at <paramref name="start"/> until a zero byte terminator (or the
+    /// end of the window) is reached, without moving the cursor.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.countVarIntsUntilZero(int)</c>.</remarks>
     public int CountVarIntsUntilZero(int start)
     {
@@ -197,6 +254,9 @@ internal class PbfBuffer
         return count;
     }
 
+    /// <summary>
+    /// Reads a zig-zag-encoded signed varint and decodes it back to a signed value.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.readSignedVarint()</c>.</remarks>
     public long ReadSignedVarint()
     {
@@ -204,6 +264,9 @@ internal class PbfBuffer
         return (val >> 1) ^ -(val & 1);
     }
 
+    /// <summary>
+    /// Reads a fixed-width 32-bit integer in little-endian byte order, advancing the cursor by 4 bytes.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.readFixed32()</c>.</remarks>
     public int ReadFixed32()
     {
@@ -222,6 +285,9 @@ internal class PbfBuffer
         }
     }
 
+    /// <summary>
+    /// Reads a fixed-width 64-bit integer in little-endian byte order as two fixed 32-bit halves.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.readFixed64()</c>.</remarks>
     public long ReadFixed64()
     {
@@ -229,12 +295,18 @@ internal class PbfBuffer
             ((long)ReadFixed32() << 32);
     }
 
+    /// <summary>
+    /// Reads a single-precision float from its fixed 32-bit IEEE-754 bit pattern.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.readFloat()</c>.</remarks>
     public float ReadFloat()
     {
         return BitConverter.Int32BitsToSingle(ReadFixed32());
     }
 
+    /// <summary>
+    /// Reads a double-precision float from its fixed 64-bit IEEE-754 bit pattern.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.readDouble()</c>.</remarks>
     public double ReadDouble()
     {
@@ -264,6 +336,9 @@ internal class PbfBuffer
         }
     }
 
+    /// <summary>
+    /// Reads a length-prefixed UTF-8 string: a varint byte count followed by that many UTF-8 bytes.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.readString()</c>.</remarks>
     public string ReadString()
     {
@@ -271,6 +346,10 @@ internal class PbfBuffer
         return ReadString(len);
     }
 
+    /// <summary>
+    /// Reads exactly <paramref name="len"/> bytes and decodes them as a UTF-8 string, advancing the
+    /// cursor. Wraps decoding errors in a <see cref="PbfException"/>.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.readString(int)</c>.</remarks>
     public string ReadString(int len)
     {
@@ -287,18 +366,29 @@ internal class PbfBuffer
         return val;
     }
 
+    /// <summary>
+    /// True if the cursor has not yet reached the end of the window.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.hasMore()</c>.</remarks>
     public bool HasMore()
     {
         return pos < endPos;
     }
 
+    /// <summary>
+    /// Advances the cursor forward by <paramref name="len"/> bytes without reading them.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.skip(int)</c>.</remarks>
     public void Skip(int len)
     {
         pos += len;
     }
 
+    /// <summary>
+    /// Skips over the value of a field given its tag <paramref name="marker"/>, consuming the
+    /// appropriate number of bytes based on its wire type. Throws <see cref="PbfException"/> for an
+    /// unknown wire type.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.skipEntity(int)</c>.</remarks>
     public void SkipEntity(int marker)
     {
@@ -322,12 +412,19 @@ internal class PbfBuffer
         }
     }
 
+    /// <summary>
+    /// Moves the cursor to the end of the window, marking the buffer as fully consumed.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.end()</c>.</remarks>
     public void End()
     {
         pos = endPos;
     }
 
+    /// <summary>
+    /// Prints the bytes in the range <paramref name="from"/>..<paramref name="to"/> to the console in
+    /// both decimal and hexadecimal form, for debugging.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.dump(int, int)</c>.</remarks>
     public void Dump(int from, int to)
     {
@@ -344,6 +441,10 @@ internal class PbfBuffer
         Console.WriteLine("         as hex: " + bHex.ToString());
     }
 
+    /// <summary>
+    /// Reads a length-prefixed nested message and returns a new <see cref="PbfBuffer"/> windowed over
+    /// its bytes, advancing this buffer's cursor past the message.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.readMessage()</c>.</remarks>
     public PbfBuffer ReadMessage()
     {
@@ -353,12 +454,19 @@ internal class PbfBuffer
         return msg;
     }
 
+    /// <summary>
+    /// Moves the cursor to the given absolute position within the backing array.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.seek(int)</c>.</remarks>
     public void Seek(int newPos)
     {
         pos = newPos;
     }
 
+    /// <summary>
+    /// Returns the unsigned value of the byte at the current position without advancing, or 0 if the
+    /// cursor is at the end.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.peek()</c>.</remarks>
     public int Peek()
     {
@@ -366,6 +474,9 @@ internal class PbfBuffer
         return 0;
     }
 
+    /// <summary>
+    /// Returns the unsigned value of the byte at absolute position <paramref name="p"/>.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfBuffer.getByte(int)</c>.</remarks>
     public int GetByte(int p)
     {

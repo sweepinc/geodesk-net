@@ -14,6 +14,12 @@ using GeoDesk.Common.Util;
 namespace GeoDesk.Common.Fab;
 
 // TODO: Use simple = instead of := for literal values without comments and sub-keys
+/// <summary>
+/// Parser for the indentation-based FAB configuration format: a hierarchy of key/value pairs whose
+/// nesting is determined by leading whitespace, supporting multi-line values, <c>//</c> comments,
+/// and literal (<c>:=</c>) mode. Subclasses override the <c>BeginKey</c>/<c>KeyValue</c>/<c>EndKey</c>
+/// callbacks to build a result; this base prints parsed pairs for debugging.
+/// </summary>
 /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader</c>.</remarks>
 internal class FabReader
 {
@@ -55,6 +61,9 @@ internal class FabReader
     /// </summary>
     bool _literalMode;
 
+    /// <summary>
+    /// Initializes the reader's internal buffers and indentation stack.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader()</c>.</remarks>
     public FabReader()
     {
@@ -63,6 +72,10 @@ internal class FabReader
         _valueIndent = -1;
     }
 
+    /// <summary>
+    /// Callback invoked when a key that also carries an immediate value opens a nested block. The
+    /// default forwards to <see cref="BeginKey(string)"/> and emits the value under a <c>value</c> key.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader.beginKey(String, String)</c>.</remarks>
     protected virtual void BeginKey(string key, string value)
     {
@@ -70,22 +83,35 @@ internal class FabReader
         KeyValue("value", value);
     }
 
+    /// <summary>
+    /// Callback invoked when a key opens a nested block of child keys. The default does nothing.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader.beginKey(String)</c>.</remarks>
     protected virtual void BeginKey(string key)
     {
     }
 
+    /// <summary>
+    /// Callback invoked for a leaf key/value pair. The default prints the pair for debugging.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader.keyValue(String, String)</c>.</remarks>
     protected virtual void KeyValue(string key, string value)
     {
         System.Console.Out.Write(JavaFormat.Format("VALUE [%s] = [%s]\n", key, value));
     }
 
+    /// <summary>
+    /// Callback invoked when a nested block opened by <c>BeginKey</c> is closed. The default does nothing.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader.endKey()</c>.</remarks>
     protected virtual void EndKey()
     {
     }
 
+    /// <summary>
+    /// Reports a parse error at the current file and line. The default throws a <see cref="FabException"/>;
+    /// subclasses may override to report errors differently.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader.error(String)</c>.</remarks>
     protected virtual void Error(string msg)
     {
@@ -95,12 +121,19 @@ internal class FabReader
             lineNumber, msg));
     }
 
+    /// <summary>
+    /// Formats the message with the given arguments and reports it via <see cref="Error(string)"/>.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader.error(String, Object...)</c>.</remarks>
     protected void Error(string msg, params object?[] args)
     {
         Error(JavaFormat.Format(msg, args));
     }
 
+    /// <summary>
+    /// Parses a string as an integer, reporting an <see cref="Error(string)"/> and returning 0 if it
+    /// is not a valid number.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader.toInt(String)</c>.</remarks>
     protected int ToInt(string s)
     {
@@ -115,6 +148,10 @@ internal class FabReader
         }
     }
 
+    /// <summary>
+    /// Parses a single input line into its indentation, key, and value components, tracking literal
+    /// mode and comment handling. Populates the reader's per-line state fields.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader.parseLine(String)</c>.</remarks>
     void ParseLine(string line)
     {
@@ -212,6 +249,9 @@ internal class FabReader
         }
     }
 
+    /// <summary>
+    /// Pushes the current key indentation onto the nesting stack as a new block is entered.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader.pushIndent()</c>.</remarks>
     void PushIndent()
     {
@@ -219,6 +259,10 @@ internal class FabReader
         _currentNestingLevel++;
     }
 
+    /// <summary>
+    /// Pops nested blocks (invoking <see cref="EndKey"/> for each) until the key indentation matches
+    /// <paramref name="targetIndent"/>, reporting an error if no matching level is found.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader.popIndent(int)</c>.</remarks>
     void PopIndent(int targetIndent)
     {
@@ -269,6 +313,10 @@ internal class FabReader
         }
     }
 
+    /// <summary>
+    /// Reads and parses the entire FAB document from the given reader line by line, dispatching keys
+    /// and values to the callbacks and resolving block nesting from indentation.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader.read(BufferedReader)</c>.</remarks>
     public void Read(TextReader @in)
     {
@@ -322,12 +370,18 @@ internal class FabReader
         PopIndent(0);
     }
 
+    /// <summary>
+    /// Reads and parses the FAB document from the given byte stream by wrapping it in a reader.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader.read(InputStream)</c>.</remarks>
     public void Read(Stream @in)
     {
         Read(new StreamReader(@in));
     }
 
+    /// <summary>
+    /// Opens the named file and reads and parses the FAB document it contains.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.fab.FabReader.readFile(String)</c>.</remarks>
     public void ReadFile(string fileName)
     {

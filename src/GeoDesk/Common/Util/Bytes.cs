@@ -11,6 +11,10 @@ using GeoDesk.Buffers;
 
 namespace GeoDesk.Common.Util;
 
+/// <summary>
+/// Low-level byte-array helpers: little-endian reads and writes of 16-, 32-, and 64-bit integers, a
+/// KMP byte-pattern search, and reading or comparing length-prefixed UTF-8 strings stored in a buffer.
+/// </summary>
 /// <remarks>Ported from Java <c>com.clarisma.common.util.Bytes</c>.</remarks>
 internal static class Bytes
 {
@@ -70,6 +74,9 @@ internal static class Bytes
         return failure;
     }
 
+    /// <summary>
+    /// Reads a little-endian 32-bit integer from the byte array at the given position.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.util.Bytes.getInt(byte[], int)</c>.</remarks>
     public static int GetInt(byte[] ba, int pos)
     {
@@ -80,6 +87,9 @@ internal static class Bytes
                 ((ba[pos + 3] & 0xff) << 24);
     }
 
+    /// <summary>
+    /// Writes a 32-bit integer in little-endian byte order to the byte array at the given position.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.util.Bytes.putInt(byte[], int, int)</c>.</remarks>
     public static void PutInt(byte[] ba, int pos, int v)
     {
@@ -89,6 +99,10 @@ internal static class Bytes
         ba[pos + 3] = (byte)(v >> 24);
     }
 
+    /// <summary>
+    /// Writes the low 16 bits of a value in little-endian byte order to the byte array at the given
+    /// position.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.util.Bytes.putShort(byte[], int, int)</c>.</remarks>
     public static void PutShort(byte[] ba, int pos, int v)
     {
@@ -96,12 +110,18 @@ internal static class Bytes
         ba[pos + 1] = (byte)(v >> 8);
     }
 
+    /// <summary>
+    /// Reads a little-endian 64-bit integer from the byte array at the given position.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.util.Bytes.getLong(byte[], int)</c>.</remarks>
     public static long GetLong(byte[] ba, int pos)
     {
         return ((long)GetInt(ba, pos) & 0xffff_ffffL) | ((long)GetInt(ba, pos + 4) << 32);
     }
 
+    /// <summary>
+    /// Writes a 64-bit integer in little-endian byte order to the byte array at the given position.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.util.Bytes.putLong(byte[], int, long)</c>.</remarks>
     public static void PutLong(byte[] ba, int pos, long v)
     {
@@ -158,6 +178,10 @@ internal static class Bytes
         return true;
     }
 
+    /// <summary>
+    /// Reads the length-prefixed UTF-8 string at the given buffer position and returns whether it
+    /// equals <paramref name="s"/>.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.util.Bytes.stringEquals(ByteBuffer, int, String)</c>.</remarks>
     public static bool StringEquals(NioBufferReader buf, int p, string s)
     {

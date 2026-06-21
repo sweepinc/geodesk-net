@@ -11,6 +11,11 @@ using GeoDesk.Common.Text;
 
 namespace GeoDesk.Common.Util;
 
+/// <summary>
+/// An <see cref="IProgressListener"/> that prints a live percentage to standard error as work
+/// progresses and a final summary (with elapsed time) when the task finishes. Configured with the
+/// total unit count and human-readable verbs and noun for the messages.
+/// </summary>
 /// <remarks>Ported from Java <c>com.clarisma.common.util.ProgressReporter</c>.</remarks>
 internal class ProgressReporter : IProgressListener
 {
@@ -23,6 +28,10 @@ internal class ProgressReporter : IProgressListener
     long _unitsProcessed;
     int _percentageReported;
 
+    /// <summary>
+    /// Creates a reporter for <paramref name="totalUnits"/> units of work, using the given noun and
+    /// progress/result verbs in its messages, and records the start time.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.util.ProgressReporter(long, String, String, String)</c>.</remarks>
     public ProgressReporter(long totalUnits, string? unitsNoun, string? progressVerb, string? resultVerb)
     {
@@ -33,6 +42,10 @@ internal class ProgressReporter : IProgressListener
         _startTime = CurrentTimeMillis();
     }
 
+    /// <summary>
+    /// Accumulates completed units and, when the integer percentage changes, rewrites the live
+    /// progress line on standard error.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.util.ProgressReporter.progress(int)</c>.</remarks>
     public void Progress(int units)
     {
@@ -51,6 +64,10 @@ internal class ProgressReporter : IProgressListener
         }
     }
 
+    /// <summary>
+    /// Prints the final summary line (result verb, total units, noun, and elapsed time) to standard
+    /// error if a result verb was configured.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.util.ProgressReporter.finished()</c>.</remarks>
     public void Finished()
     {
@@ -63,6 +80,10 @@ internal class ProgressReporter : IProgressListener
     }
 
     // Port-only helper standing in for Java's System.currentTimeMillis().
+    /// <summary>
+    /// Returns the current time as Unix epoch milliseconds, standing in for Java's
+    /// <c>System.currentTimeMillis()</c>.
+    /// </summary>
     static long CurrentTimeMillis()
     {
         return DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();

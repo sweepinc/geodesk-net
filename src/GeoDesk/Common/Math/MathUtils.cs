@@ -9,6 +9,10 @@ namespace GeoDesk.Common.Math;
 
 // TODO: these are really parsing methods rather than "math"
 
+/// <summary>
+/// Numeric helpers for fast powers of ten and lenient parsing of numbers from strings (tolerating
+/// leading whitespace and partial input), used when decoding tag values.
+/// </summary>
 /// <remarks>Ported from Java <c>com.clarisma.common.math.MathUtils</c>.</remarks>
 internal static class MathUtils
 {
@@ -18,12 +22,20 @@ internal static class MathUtils
         1, 10, 100, 1000, 10_000, 100_000, 1_000_000, 10_000_000, 100_000_000, 1_000_000_000
     };
 
+    /// <summary>
+    /// Returns ten raised to the power <paramref name="exp"/>, using a precomputed lookup table for
+    /// small non-negative exponents and <see cref="System.Math.Pow"/> otherwise.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.math.MathUtils.pow10(int)</c>.</remarks>
     public static double Pow10(int exp)
     {
         return exp >= 0 && exp < Pow10Table.Length ? Pow10Table[exp] : System.Math.Pow(10, exp);
     }
 
+    /// <summary>
+    /// Leniently parses a leading number from the string, skipping leading whitespace and stopping at
+    /// the first non-numeric character. Returns <see cref="double.NaN"/> if no digits are found.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.math.MathUtils.doubleFromString(String)</c>.</remarks>
     public static double DoubleFromString(string s)
     {

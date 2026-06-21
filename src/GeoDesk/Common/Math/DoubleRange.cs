@@ -9,6 +9,10 @@ using System;
 
 namespace GeoDesk.Common.Math;
 
+/// <summary>
+/// An immutable interval of <see cref="double"/> values defined by a start and end bound, each of
+/// which may be inclusive or exclusive. Ranges are comparable and support intersection.
+/// </summary>
 /// <remarks>Ported from Java <c>com.clarisma.common.math.DoubleRange</c>.</remarks>
 internal class DoubleRange : IComparable<DoubleRange>
 {
@@ -18,6 +22,11 @@ internal class DoubleRange : IComparable<DoubleRange>
     readonly bool _includeStart;
     readonly bool _includeEnd;
 
+    /// <summary>
+    /// Creates a range from <paramref name="start"/> to <paramref name="end"/>, with each bound
+    /// inclusive or exclusive as specified by <paramref name="includeStart"/> and
+    /// <paramref name="includeEnd"/>.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.math.DoubleRange(double, double, boolean, boolean)</c>.</remarks>
     public DoubleRange(double start, double end, bool includeStart, bool includeEnd)
     {
@@ -27,18 +36,33 @@ internal class DoubleRange : IComparable<DoubleRange>
         _includeEnd = includeEnd;
     }
 
+    /// <summary>
+    /// The lower bound of the range.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.math.DoubleRange.start()</c>.</remarks>
     public double Start => _start;
 
+    /// <summary>
+    /// The upper bound of the range.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.math.DoubleRange.end()</c>.</remarks>
     public double End => _end;
 
+    /// <summary>
+    /// True if the lower bound is inclusive.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.math.DoubleRange.includeStart()</c>.</remarks>
     public bool IncludeStart => _includeStart;
 
+    /// <summary>
+    /// True if the upper bound is inclusive.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.math.DoubleRange.includeEnd()</c>.</remarks>
     public bool IncludeEnd => _includeEnd;
 
+    /// <summary>
+    /// Value equality: two ranges are equal when their bounds and inclusiveness flags all match.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.math.DoubleRange.equals(Object)</c>.</remarks>
     public override bool Equals(object? other)
     {
@@ -47,12 +71,20 @@ internal class DoubleRange : IComparable<DoubleRange>
             _end == o._end && _includeEnd == o._includeEnd;
     }
 
+    /// <summary>
+    /// Returns a hash code derived from both bounds and their inclusiveness flags, consistent with
+    /// <see cref="Equals(object?)"/>.
+    /// </summary>
     /// <remarks>Port-only override paired with <c>Equals</c> (Java's DoubleRange does not override hashCode).</remarks>
     public override int GetHashCode()
     {
         return HashCode.Combine(_start, _end, _includeStart, _includeEnd);
     }
 
+    /// <summary>
+    /// Orders ranges by start bound, then by start inclusiveness, then by end bound, then by end
+    /// inclusiveness. A null other sorts first.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.math.DoubleRange.compareTo(DoubleRange)</c>.</remarks>
     public int CompareTo(DoubleRange? other)
     {
@@ -68,6 +100,10 @@ internal class DoubleRange : IComparable<DoubleRange>
         return 0;
     }
 
+    /// <summary>
+    /// Renders the range in interval notation, using square brackets for inclusive bounds and
+    /// parentheses for exclusive ones (for example <c>[1.0,2.0)</c>).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.math.DoubleRange.toString()</c>.</remarks>
     public override string ToString()
     {
@@ -76,6 +112,10 @@ internal class DoubleRange : IComparable<DoubleRange>
             _end, _includeEnd ? ']' : ')');
     }
 
+    /// <summary>
+    /// Returns the overlap of two ranges as a new range, correctly combining the inclusiveness of
+    /// coinciding bounds, or null if the ranges do not intersect.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.math.DoubleRange.intersection(DoubleRange, DoubleRange)</c>.</remarks>
     public static DoubleRange? Intersection(DoubleRange a, DoubleRange b)
     {

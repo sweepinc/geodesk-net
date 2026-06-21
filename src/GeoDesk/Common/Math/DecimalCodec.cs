@@ -7,6 +7,12 @@
 
 namespace GeoDesk.Common.Math;
 
+/// <summary>
+/// Encodes a fixed-point decimal number into a single <see cref="long"/>: the low 4 bits hold the
+/// scale (number of fractional digits, 0..15) and the remaining bits hold the signed mantissa. This
+/// compact representation supports exact decimal values without floating-point error. The sentinel
+/// <see cref="Invalid"/> marks an unparseable or out-of-range value.
+/// </summary>
 /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal</c>.</remarks>
 internal static class DecimalCodec
 {
@@ -15,6 +21,11 @@ internal static class DecimalCodec
 
     const long Overflow = unchecked((long)0xf800_0000_0000_0000L);
 
+    /// <summary>
+    /// Parses a decimal number string into the packed mantissa/scale encoding, returning
+    /// <see cref="Invalid"/> on malformed input. When <paramref name="strict"/> is true, leading
+    /// zeroes, a leading <c>+</c>, trailing non-numeric characters, and negative zero are rejected.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.parse(String, boolean)</c>.</remarks>
     public static long Parse(string s, bool strict)
     {
@@ -115,12 +126,18 @@ internal static class DecimalCodec
         return result | scale;
     }
 
+    /// <summary>
+    /// Extracts the scale (number of fractional digits) from a packed decimal value.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.scale(long)</c>.</remarks>
     public static int Scale(long d)
     {
         return (int)d & 15;
     }
 
+    /// <summary>
+    /// Extracts the signed mantissa (the unscaled integer digits) from a packed decimal value.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.mantissa(long)</c>.</remarks>
     public static long Mantissa(long d)
     {
@@ -128,6 +145,10 @@ internal static class DecimalCodec
     }
 
     // TODO: use LUT instead of loop
+    /// <summary>
+    /// Converts a packed decimal value to a <see cref="long"/> by dividing out its scale (truncating
+    /// any fractional part). Returns <see cref="Invalid"/> unchanged.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.toLong(long)</c>.</remarks>
     public static long ToLong(long d)
     {
@@ -151,6 +172,10 @@ internal static class DecimalCodec
     }
 
     // TODO: use LUT instead of loop
+    /// <summary>
+    /// Converts a packed decimal value to a <see cref="double"/> by dividing the mantissa by ten
+    /// raised to the scale. Returns <see cref="double.NaN"/> for <see cref="Invalid"/>.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.toDouble(long)</c>.</remarks>
     public static double ToDouble(long d)
     {
@@ -175,6 +200,9 @@ internal static class DecimalCodec
         return (double)mantissa / div;
     }
 
+    /// <summary>
+    /// Builds a packed decimal value from an explicit mantissa and scale (which must be 0..15).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.of(long, int)</c>.</remarks>
     public static long Of(long mantissa, int scale)
     {
@@ -182,6 +210,10 @@ internal static class DecimalCodec
         return (mantissa << 4) | scale;
     }
 
+    /// <summary>
+    /// Renders a packed decimal value as its decimal string, inserting the decimal point and any
+    /// needed leading zeroes according to the scale. Returns <c>"invalid"</c> for <see cref="Invalid"/>.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.math.Decimal.toString(long)</c>.</remarks>
     public static string ToString(long d)
     {

@@ -82,6 +82,10 @@ internal class Parser : IFileLocation
     public static readonly Regex DEFAULT_IDENTIFIER_PATTERN =
         new Regex(@"[a-zA-Z_]\w*", RegexOptions.ECMAScript);
 
+    /// <summary>
+    /// Initializes the parser with the default identifier pattern and token tables and registers the
+    /// default whitespace and quotation tokens.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.Parser()</c>.</remarks>
     public Parser()
     {
@@ -122,30 +126,46 @@ internal class Parser : IFileLocation
         }
     }
 
+    /// <summary>
+    /// Registers a string and its token, throwing if the string is already mapped (use
+    /// <see cref="ReplaceToken"/> to override).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.Parser.addToken(String, Object)</c>.</remarks>
     public void AddToken(string str, object? token)
     {
         AddToken(str, token, false);
     }
 
+    /// <summary>
+    /// Registers a string/token mapping, replacing any existing mapping for the same string.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.Parser.replaceToken(String, Object)</c>.</remarks>
     public void ReplaceToken(string str, object? token)
     {
         AddToken(str, token, true);
     }
 
+    /// <summary>
+    /// Registers a token using its own string representation as the matching string.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.Parser.addToken(Object)</c>.</remarks>
     public void AddToken(object token)
     {
         AddToken(token.ToString()!, token, false);
     }
 
+    /// <summary>
+    /// Registers several tokens at once, each keyed by its own string representation.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.Parser.addTokens(Object...)</c>.</remarks>
     public void AddTokens(params object[] tokens)
     {
         foreach (var t in tokens) AddToken(t.ToString()!, t, false);
     }
 
+    /// <summary>
+    /// Registers the built-in whitespace and quotation-mark tokens recognized by every parser.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.Parser.addDefaultTokens()</c>.</remarks>
     protected void AddDefaultTokens()
     {
@@ -157,6 +177,11 @@ internal class Parser : IFileLocation
         AddToken("\'", QUOTATION_MARK);
     }
 
+    /// <summary>
+    /// Builds the lexer acceleration tables: keyword tokens (those matching the identifier pattern)
+    /// are routed into a keyword map, and other tokens are indexed by their initial ASCII character.
+    /// Runs once; subsequent calls are no-ops.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.Parser.initLexer()</c>.</remarks>
     protected void InitLexer()
     {
@@ -182,6 +207,9 @@ internal class Parser : IFileLocation
         }
     }
 
+    /// <summary>
+    /// Replaces the regex used to recognize identifiers and returns the previous pattern.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.Parser.setIdentifierPattern(Pattern)</c>.</remarks>
     public Regex SetIdentifierPattern(Regex pattern)
     {
@@ -215,6 +243,10 @@ internal class Parser : IFileLocation
         return !ReferenceEquals(tokenType, END);
     }
 
+    /// <summary>
+    /// Returns the number of leading characters at the current position that match the given string
+    /// (a full match equals the string's length).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.Parser.matchString(String)</c>.</remarks>
     protected int MatchString(string s)
     {
@@ -229,6 +261,10 @@ internal class Parser : IFileLocation
         return i;
     }
 
+    /// <summary>
+    /// Advances the buffer position past the current token's characters, updating the line and column
+    /// counters (handling newlines and tab stops).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.Parser.consumeToken()</c>.</remarks>
     void ConsumeToken()
     {
@@ -319,12 +355,19 @@ internal class Parser : IFileLocation
         }
     }
 
+    /// <summary>
+    /// Returns true if the current token equals the given token, without consuming it.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.Parser.accept(Object)</c>.</remarks>
     protected bool Accept(object? tok)
     {
         return ReferenceEquals(tokenType, tok);
     }
 
+    /// <summary>
+    /// If the current token equals the given token, advances past it and returns true; otherwise
+    /// returns false.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.Parser.acceptAndConsume(Object)</c>.</remarks>
     protected bool AcceptAndConsume(object? tok)
     {
@@ -351,6 +394,9 @@ internal class Parser : IFileLocation
     }
 
     // TODO: rename?
+    /// <summary>
+    /// Clears the current token state and re-reads the next token from the current position.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.Parser.resetLexer()</c>.</remarks>
     protected void ResetLexer()
     {
@@ -359,6 +405,10 @@ internal class Parser : IFileLocation
         NextToken();
     }
 
+    /// <summary>
+    /// Reports a parse error at the current file, line, and column by throwing a
+    /// <see cref="ParserException"/>. Subclasses may override.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.Parser.error(String)</c>.</remarks>
     protected virtual void Error(string msg)
     {
@@ -368,12 +418,18 @@ internal class Parser : IFileLocation
         throw new ParserException(msg);
     }
 
+    /// <summary>
+    /// Formats the message with the given arguments and reports it via <see cref="Error(string)"/>.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.Parser.error(String, Object...)</c>.</remarks>
     protected void Error(string msg, params object?[] args)
     {
         Error(JavaFormat.Format(msg, args));
     }
 
+    /// <summary>
+    /// Returns the raw literal text of the current token.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.Parser.stringValue()</c>.</remarks>
     protected string StringValue()
     {
@@ -391,24 +447,37 @@ internal class Parser : IFileLocation
         return Strings.Unescape(tokenValue, true);
     }
 
+    /// <summary>
+    /// Parses the current token's text as an <see cref="int"/>.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.Parser.intValue()</c>.</remarks>
     protected int IntValue()
     {
         return int.Parse(tokenValue, CultureInfo.InvariantCulture);
     }
 
+    /// <summary>
+    /// Parses the current token's text as a <see cref="long"/>.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.Parser.longValue()</c>.</remarks>
     protected long LongValue()
     {
         return long.Parse(tokenValue, CultureInfo.InvariantCulture);
     }
 
+    /// <summary>
+    /// Parses the current token's text as a <see cref="double"/>.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.Parser.doubleValue()</c>.</remarks>
     protected double DoubleValue()
     {
         return double.Parse(tokenValue, CultureInfo.InvariantCulture);
     }
 
+    /// <summary>
+    /// Attempts to match an identifier at the current position. On success sets the token to the
+    /// matching keyword token or to the identifier token and returns it; otherwise returns null.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.Parser.identifier()</c>.</remarks>
     public object? Identifier()
     {
@@ -423,6 +492,10 @@ internal class Parser : IFileLocation
     }
 
     // TODO: should accept whitespace between minus sign and first number
+    /// <summary>
+    /// Attempts to match a numeric literal (optionally signed, optionally fractional) at the current
+    /// position. On success sets the token to the number token and returns it; otherwise returns null.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.Parser.number()</c>.</remarks>
     public object? Number()
     {
@@ -458,6 +531,11 @@ internal class Parser : IFileLocation
         return tokenType;
     }
 
+    /// <summary>
+    /// Matches a quoted string literal at the current position, handling escape sequences and the
+    /// matching closing quote. Sets the token to the string token, or to an invalid-string token if
+    /// the literal is malformed or unterminated.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.Parser.matchQuoted()</c>.</remarks>
     public void MatchQuoted()
     {

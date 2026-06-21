@@ -7,6 +7,11 @@
 
 namespace GeoDesk.Common.Ast;
 
+/// <summary>
+/// Abstract base for all expression nodes in the AST — the subset of <see cref="Ast"/> nodes that
+/// produce a value when evaluated. Concrete subclasses include literals, variables, calls, and
+/// binary, unary, and conditional operators.
+/// </summary>
 /// <remarks>Ported from Java <c>com.clarisma.common.ast.Expression</c>.</remarks>
 internal abstract class Expression : Ast
 {

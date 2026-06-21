@@ -38,6 +38,10 @@ namespace GeoDesk.Extensions;
 internal static partial class FileStreamLockExtensions
 {
 
+    /// <summary>
+    /// The kind of byte-range lock request passed to the platform back-ends: a shared (reader)
+    /// lock, an exclusive (writer) lock, or a release of an existing lock.
+    /// </summary>
     // Lock request kind, common to all back-ends.
     internal enum LockOp { Shared, Exclusive, Unlock }
 
@@ -89,7 +93,10 @@ internal static partial class FileStreamLockExtensions
         throw new PlatformNotSupportedException("Byte-range file locking is not supported on this platform.");
     }
 
-    /// <summary>Releases a previously acquired lock on the given range (best-effort).</summary>
+    /// <summary>
+    /// Releases a previously acquired lock on the given byte range. Best-effort: the underlying
+    /// unlock is not guaranteed to report failure.
+    /// </summary>
     public static void UnlockRange(this FileStream stream, long position, long length)
     {
         if (OperatingSystem.IsWindows())

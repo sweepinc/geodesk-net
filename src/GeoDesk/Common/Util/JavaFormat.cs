@@ -23,6 +23,11 @@ namespace GeoDesk.Common.Util;
 internal static class JavaFormat
 {
 
+    /// <summary>
+    /// Formats a string using Java-style <c>printf</c> conversion specifiers, parsing optional flags,
+    /// width, and precision and substituting the supplied arguments. Supports the
+    /// <c>%s %d %f %x %X %c %b %% %n</c> specifiers used by the codebase.
+    /// </summary>
     /// <remarks>Port-only: emulates Java's <c>String.format(String, Object...)</c> for the used specifiers.</remarks>
     public static string Format(string format, params object?[] args)
     {
@@ -163,6 +168,10 @@ internal static class JavaFormat
         return sb.ToString();
     }
 
+    /// <summary>
+    /// Coerces a boxed numeric (or null) argument to a <see cref="long"/> for the integer and
+    /// hexadecimal specifiers.
+    /// </summary>
     /// <remarks>Port-only: coerces a boxed numeric argument to <c>long</c> for integer specifiers.</remarks>
     static long ToLong(object? arg)
     {
@@ -178,6 +187,9 @@ internal static class JavaFormat
         };
     }
 
+    /// <summary>
+    /// Coerces a boxed numeric (or null) argument to a <see cref="double"/> for the <c>%f</c> specifier.
+    /// </summary>
     /// <remarks>Port-only: coerces a boxed numeric argument to <c>double</c> for the <c>%f</c> specifier.</remarks>
     static double ToDouble(object? arg)
     {

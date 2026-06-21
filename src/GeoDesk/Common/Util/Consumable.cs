@@ -14,6 +14,9 @@ namespace GeoDesk.Common.Util;
 internal interface IConsumable
 {
 
+    /// <summary>
+    /// Returns true if no further elements remain to be consumed.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.util.Consumable.isEmpty()</c>.</remarks>
     bool IsEmpty();
 

@@ -7,6 +7,7 @@
 
 using System;
 using System.Globalization;
+
 using NetTopologySuite.Geometries;
 
 namespace GeoDesk.Geom;
@@ -155,7 +156,8 @@ public class Box : IBounds
     /// <remarks>Ported from Java <c>com.geodesk.geom.Bounds.contains(int, int)</c>.</remarks>
     public bool Contains(int x, int y)
     {
-        if (_maxX < _minX) return (x >= _minX || x <= _maxX) && y >= _minY && y <= _maxY;
+        if (_maxX < _minX)
+            return (x >= _minX || x <= _maxX) && y >= _minY && y <= _maxY;
         return x >= _minX && x <= _maxX && y >= _minY && y <= _maxY;
     }
 
@@ -207,10 +209,14 @@ public class Box : IBounds
     // TODO: turns 180-crossing box into regular box
     public void ExpandToInclude(int x, int y)
     {
-        if (x < _minX) _minX = x;
-        if (x > _maxX) _maxX = x;
-        if (y < _minY) _minY = y;
-        if (y > _maxY) _maxY = y;
+        if (x < _minX)
+            _minX = x;
+        if (x > _maxX)
+            _maxX = x;
+        if (y < _minY)
+            _minY = y;
+        if (y > _maxY)
+            _maxY = y;
     }
 
     /// <summary>
@@ -223,10 +229,14 @@ public class Box : IBounds
         var otherMinY = b.MinY;
         var otherMaxX = b.MaxX;
         var otherMaxY = b.MaxY;
-        if (otherMinX < _minX) _minX = otherMinX;
-        if (otherMinY < _minY) _minY = otherMinY;
-        if (otherMaxX > _maxX) _maxX = otherMaxX;
-        if (otherMaxY > _maxY) _maxY = otherMaxY;
+        if (otherMinX < _minX)
+            _minX = otherMinX;
+        if (otherMinY < _minY)
+            _minY = otherMinY;
+        if (otherMaxX > _maxX)
+            _maxX = otherMaxX;
+        if (otherMaxY > _maxY)
+            _maxY = otherMaxY;
     }
 
     /// <summary>
@@ -235,10 +245,14 @@ public class Box : IBounds
     /// <remarks>Ported from Java <c>com.geodesk.geom.Box.expandToInclude(int, int, int, int)</c>.</remarks>
     public void ExpandToInclude(int otherMinX, int otherMinY, int otherMaxX, int otherMaxY)
     {
-        if (otherMinX < _minX) _minX = otherMinX;
-        if (otherMinY < _minY) _minY = otherMinY;
-        if (otherMaxX > _maxX) _maxX = otherMaxX;
-        if (otherMaxY > _maxY) _maxY = otherMaxY;
+        if (otherMinX < _minX)
+            _minX = otherMinX;
+        if (otherMinY < _minY)
+            _minY = otherMinY;
+        if (otherMaxX > _maxX)
+            _maxX = otherMaxX;
+        if (otherMaxY > _maxY)
+            _maxY = otherMaxY;
     }
 
     /// <summary>
@@ -247,7 +261,8 @@ public class Box : IBounds
     /// <remarks>Ported from Java <c>com.geodesk.geom.Box.expandToInclude(int[])</c>.</remarks>
     public void ExpandToInclude(int[] coords)
     {
-        for (var i = 0; i < coords.Length; i += 2) ExpandToInclude(coords[i], coords[i + 1]);
+        for (var i = 0; i < coords.Length; i += 2)
+            ExpandToInclude(coords[i], coords[i + 1]);
     }
 
     /// <summary>
@@ -265,7 +280,8 @@ public class Box : IBounds
     /// <remarks>Ported from Java <c>com.geodesk.geom.Box.equals(Object)</c>.</remarks>
     public override bool Equals(object? other)
     {
-        if (other is not IBounds o) return false;
+        if (other is not IBounds o)
+            return false;
         return _minX == o.MinX && _maxX == o.MaxX && _minY == o.MinY && _maxY == o.MaxY;
     }
 
@@ -290,7 +306,8 @@ public class Box : IBounds
         var y1 = _minY > o.MinY ? _minY : o.MinY;
         var x2 = _maxX < o.MaxX ? _maxX : o.MaxX;
         var y2 = _maxY < o.MaxY ? _maxY : o.MaxY;
-        if (x2 < x1 || y2 < y1) return new Box(); // no intersection
+        if (x2 < x1 || y2 < y1)
+            return new Box(); // no intersection
         return new Box(x1, y1, x2, y2);
     }
 
@@ -305,7 +322,8 @@ public class Box : IBounds
         var y1 = System.Math.Max(a.MinY, b.MinY);
         var x2 = System.Math.Min(a.MaxX, b.MaxX);
         var y2 = System.Math.Min(a.MaxY, b.MaxY);
-        if (x2 < x1 || y2 < y1) return new Box(); // no intersection
+        if (x2 < x1 || y2 < y1)
+            return new Box(); // no intersection
         return new Box(x1, y1, x2, y2);
     }
 
@@ -326,7 +344,8 @@ public class Box : IBounds
     static int TrimmedSubtract(int x, int y)
     {
         var r = x - y;
-        if (((x ^ y) & (x ^ r)) < 0) return int.MinValue;
+        if (((x ^ y) & (x ^ r)) < 0)
+            return int.MinValue;
         return r;
     }
 
@@ -336,7 +355,8 @@ public class Box : IBounds
     static int TrimmedAdd(int x, int y)
     {
         var r = x + y;
-        if (((x ^ r) & (y ^ r)) < 0) return int.MaxValue;
+        if (((x ^ r) & (y ^ r)) < 0)
+            return int.MaxValue;
         return r;
     }
 
@@ -360,7 +380,8 @@ public class Box : IBounds
         {
             _minY = TrimmedAdd(_minY, -b);
             _maxY = TrimmedSubtract(_maxY, -b);
-            if (_maxY < _minY) SetNull();
+            if (_maxY < _minY)
+                SetNull();
             // TODO: check if width flipped
         }
     }
@@ -414,8 +435,7 @@ public class Box : IBounds
     /// <remarks>Ported from Java <c>com.geodesk.geom.Box.ofWSEN(double, double, double, double)</c>.</remarks>
     public static Box OfWSEN(double west, double south, double east, double north)
     {
-        return new Box(Mercator.XFromLon(west), Mercator.YFromLat(south),
-            Mercator.XFromLon(east), Mercator.YFromLat(north));
+        return new Box(Mercator.XFromLon(west), Mercator.YFromLat(south), Mercator.XFromLon(east), Mercator.YFromLat(north));
     }
 
     /// <summary>

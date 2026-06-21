@@ -9,10 +9,18 @@ using System.Numerics;
 
 namespace GeoDesk.Common.Pbf;
 
+/// <summary>
+/// Low-level helpers for writing Protocol Buffers (PBF) primitives, specifically encoding 64-bit
+/// values as variable-length integers (varints).
+/// </summary>
 /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfEncoder</c>.</remarks>
 internal static class PbfEncoder
 {
 
+    /// <summary>
+    /// Writes <paramref name="val"/> as a varint into <paramref name="buf"/> starting at
+    /// <paramref name="pos"/> and returns the number of bytes written.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfEncoder.writeVarint(byte[], int, long)</c>.</remarks>
     public static int WriteVarint(byte[] buf, int pos, long val)
     {
@@ -28,6 +36,9 @@ internal static class PbfEncoder
         return len;
     }
 
+    /// <summary>
+    /// Returns the number of bytes a varint encoding of the given 32-bit value would occupy.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.pbf.PbfEncoder.varintLength(int)</c>.</remarks>
     public static int VarintLength(int val)
     {

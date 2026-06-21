@@ -33,6 +33,10 @@ internal class TagsParser : Parser
     public static readonly Regex KEY_PATTERN =
         new Regex(@"[a-zA-Z0-9_][a-zA-Z0-9_\-:\.]*");
 
+    /// <summary>
+    /// Creates a tags parser, registering the comma, equals, and boolean keyword tokens and the
+    /// identifier (key) pattern.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.TagsParser()</c>.</remarks>
     public TagsParser()
     {
@@ -43,6 +47,10 @@ internal class TagsParser : Parser
         SetIdentifierPattern(KEY_PATTERN);
     }
 
+    /// <summary>
+    /// Parses a tag key (a quoted string or an identifier) at the current token and advances. Reports
+    /// an error and returns null if neither is present.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.TagsParser.key()</c>.</remarks>
     public string? Key()
     {
@@ -62,6 +70,11 @@ internal class TagsParser : Parser
         return null;
     }
 
+    /// <summary>
+    /// Parses a tag value at the current token and advances: a string, identifier (as string), number
+    /// (long or double depending on a decimal point), or the boolean keywords. Reports an error and
+    /// returns null otherwise.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.TagsParser.value()</c>.</remarks>
     public object? Value()
     {
@@ -105,6 +118,10 @@ internal class TagsParser : Parser
         return null;
     }
 
+    /// <summary>
+    /// Parses the full comma-separated sequence of <c>key=value</c> tags into a dictionary mapping
+    /// each key to its parsed value.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.TagsParser.tags()</c>.</remarks>
     public Dictionary<string, object?> Tags()
     {
@@ -123,6 +140,10 @@ internal class TagsParser : Parser
         return map;
     }
 
+    /// <summary>
+    /// Parses the comma-separated <c>key=value</c> tags into a flat list alternating keys and their
+    /// string-rendered values.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.TagsParser.tagsAsList()</c>.</remarks>
     public List<string> TagsAsList()
     {
@@ -141,6 +162,9 @@ internal class TagsParser : Parser
         return list;
     }
 
+    /// <summary>
+    /// Parses the tags into a flat array alternating keys and string-rendered values.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.parser.TagsParser.tagsAsArray()</c>.</remarks>
     public string[] TagsAsArray()
     {

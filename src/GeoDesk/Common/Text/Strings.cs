@@ -12,6 +12,11 @@ using System.Text;
 
 namespace GeoDesk.Common.Text;
 
+/// <summary>
+/// Assorted string utilities: escaping and unescaping (including for JSON), number-type detection,
+/// identifier and ASCII checks, accent stripping and key normalization, joining, character counting,
+/// longest-common-substring length, and control-character cleanup.
+/// </summary>
 /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings</c>.</remarks>
 internal static class Strings
 {
@@ -79,6 +84,10 @@ internal static class Strings
         return char.MaxValue;
     }
 
+    /// <summary>
+    /// Returns a copy of the string with every special character backslash-escaped using
+    /// <see cref="Escape(char)"/>.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.escape(String)</c>.</remarks>
     public static string Escape(string s)
     {
@@ -100,6 +109,10 @@ internal static class Strings
         return buf.ToString();
     }
 
+    /// <summary>
+    /// Returns a copy of the string with backslash escape sequences resolved to their literal
+    /// characters, optionally stripping one leading and trailing quote character first.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.unescape(String, boolean)</c>.</remarks>
     public static string Unescape(string s, bool trimQuotes)
     {
@@ -167,12 +180,19 @@ internal static class Strings
         return decimalSeen ? typeof(double) : typeof(long);
     }
 
+    /// <summary>
+    /// Returns true if the character is an ASCII letter (a-z or A-Z).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.isAsciiLetter(char)</c>.</remarks>
     public static bool IsAsciiLetter(char ch)
     {
         return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z');
     }
 
+    /// <summary>
+    /// Returns true if the string is a valid identifier: an ASCII letter or underscore followed by
+    /// ASCII letters, digits, or underscores.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.isIdentifier(String)</c>.</remarks>
     public static bool IsIdentifier(string s)
     {
@@ -193,6 +213,10 @@ internal static class Strings
         return true;
     }
 
+    /// <summary>
+    /// Null-safe string equality: two nulls are equal, a null and non-null are not, otherwise compares
+    /// by value.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.equals(String, String)</c>.</remarks>
     public static bool Equals(string? a, string? b)
     {
@@ -255,6 +279,9 @@ internal static class Strings
         return buf.ToString();
     }
 
+    /// <summary>
+    /// Returns true if every character in the string is in the ASCII range (below 128).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.isAscii(String)</c>.</remarks>
     public static bool IsAscii(string s)
     {
@@ -265,6 +292,10 @@ internal static class Strings
         return true;
     }
 
+    /// <summary>
+    /// Removes diacritics and transliterates common non-ASCII letters (such as ä, æ, ß) to their
+    /// ASCII equivalents, returning the original string unchanged if it is already ASCII.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.stripAccents(String)</c>.</remarks>
     public static string StripAccents(string original)
     {
@@ -314,6 +345,10 @@ internal static class Strings
         return buf.ToString();
     }
 
+    /// <summary>
+    /// Returns the length of the longest contiguous substring common to both strings, computed with a
+    /// dynamic-programming table.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.longestCommonSubstring(String, String)</c>.</remarks>
     public static int LongestCommonSubstring(string a, string b)
     {
@@ -346,6 +381,10 @@ internal static class Strings
     }
 
     // TODO: remove
+    /// <summary>
+    /// Joins the items into a single string separated by <paramref name="delimiter"/>, rendering each
+    /// via <c>ToString</c> (or <c>"null"</c>).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.join(String, Iterable)</c>.</remarks>
     public static string Join<T>(string delimiter, IEnumerable<T> items)
     {
@@ -361,6 +400,10 @@ internal static class Strings
     }
 
     // TODO: remove
+    /// <summary>
+    /// Joins the items into a single string separated by <paramref name="delimiter"/>, rendering each
+    /// through the supplied <paramref name="formatter"/> (or <c>"null"</c>).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.join(String, Iterable, Function)</c>.</remarks>
     public static string Join<T>(string delimiter, IEnumerable<T> items, Func<T, object?> formatter)
     {
@@ -376,6 +419,10 @@ internal static class Strings
         return joiner.ToString();
     }
 
+    /// <summary>
+    /// Returns the index of the first character in <paramref name="s"/> that also appears in
+    /// <paramref name="any"/>, or -1 if none does.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.indexOfAny(String, String)</c>.</remarks>
     public static int IndexOfAny(string s, string any)
     {
@@ -386,6 +433,9 @@ internal static class Strings
         return -1;
     }
 
+    /// <summary>
+    /// Returns the number of times the given character occurs in the string.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.countChar(String, char)</c>.</remarks>
     public static int CountChar(string s, char ch)
     {
@@ -397,6 +447,9 @@ internal static class Strings
         return count;
     }
 
+    /// <summary>
+    /// Returns the string with its first character upper-cased; an empty string is returned unchanged.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Strings.uppercaseFirst(String)</c>.</remarks>
     public static string UppercaseFirst(string s)
     {

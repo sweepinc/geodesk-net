@@ -15,6 +15,12 @@ namespace GeoDesk.Common.Text;
 
 // TODO: don't shrink column to less than header text width!
 
+/// <summary>
+/// Builds and renders a fixed-width text table. Columns are declared (optionally with headers and
+/// numeric formats), cells are added row by row, and the table is laid out so its total width fits
+/// within a configurable maximum, shrinking the most variable text columns and truncating overflow
+/// with an ellipsis.
+/// </summary>
 /// <remarks>Ported from Java <c>com.clarisma.common.text.Table</c>.</remarks>
 internal class Table
 {
@@ -27,12 +33,20 @@ internal class Table
     int _maxWidth = 100;
     bool _ready;
 
+    /// <summary>
+    /// Sets the maximum total rendered width of the table; columns are shrunk during layout to fit.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Table.maxWidth(int)</c>.</remarks>
     public void MaxWidth(int maxWidth)
     {
         _maxWidth = maxWidth;
     }
 
+    /// <summary>
+    /// Describes one column of the table: its header, optional numeric format, gap to the next
+    /// column, and the width-tracking state used during layout. Columns sort by descending width
+    /// variance so the most over-wide ones are trimmed first.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Table.Column</c>.</remarks>
     public class Column : IComparable<Column>
     {
@@ -49,6 +63,10 @@ internal class Table
         internal int averageWidth;
         internal int widthVariance;
 
+        /// <summary>
+        /// Sets the numeric format pattern used to render values added to this column, and returns
+        /// this column for fluent chaining.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.clarisma.common.text.Table.Column.format(String)</c>.</remarks>
         public Column Format(string format)
         {
@@ -56,6 +74,10 @@ internal class Table
             return this;
         }
 
+        /// <summary>
+        /// Sets the number of padding spaces after this column, and returns this column for fluent
+        /// chaining.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.clarisma.common.text.Table.Column.gap(int)</c>.</remarks>
         public Column Gap(int gap)
         {
@@ -63,6 +85,10 @@ internal class Table
             return this;
         }
 
+        /// <summary>
+        /// Orders columns by descending width variance so that the columns with the most slack are
+        /// considered first when shrinking to fit.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.clarisma.common.text.Table.Column.compareTo(Column)</c>.</remarks>
         public int CompareTo(Column? other)
         {
@@ -72,6 +98,9 @@ internal class Table
 
     }
 
+    /// <summary>
+    /// Appends a new, unnamed column to the table and returns it for further configuration.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Table.column()</c>.</remarks>
     public Column AddColumn()
     {
@@ -80,6 +109,9 @@ internal class Table
         return c;
     }
 
+    /// <summary>
+    /// Appends a new column with the given header text and returns it.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Table.column(String)</c>.</remarks>
     public Column AddColumn(string header)
     {
@@ -88,6 +120,9 @@ internal class Table
         return c;
     }
 
+    /// <summary>
+    /// Appends a new column with the given header and numeric format and returns it.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Table.column(String, String)</c>.</remarks>
     public Column AddColumn(string header, string format)
     {
@@ -97,17 +132,27 @@ internal class Table
         return c;
     }
 
+    /// <summary>
+    /// Reserved no-op for skipping a column position; currently does nothing.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Table.skipColumn()</c>.</remarks>
     public void SkipColumn()
     {
     }
 
+    /// <summary>
+    /// Starts a new value row by appending an empty row-type marker to the value list.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Table.beginRow()</c>.</remarks>
     void BeginRow()
     {
         _values.Add("");
     }
 
+    /// <summary>
+    /// Adds a string value to the next cell, starting a new row if needed and widening the column to
+    /// fit the value.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Table.add(String)</c>.</remarks>
     public void Add(string s)
     {
@@ -123,6 +168,9 @@ internal class Table
         }
     }
 
+    /// <summary>
+    /// Widens the given column to at least <paramref name="w"/> characters if it is currently narrower.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Table.adjustColumnSize(int, int)</c>.</remarks>
     void AdjustColumnSize(int col, int w)
     {
@@ -130,6 +178,9 @@ internal class Table
         if (c.width < w) c.width = w;
     }
 
+    /// <summary>
+    /// Adds a numeric value to the next cell, rendering it with the current column's format.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Table.add(double)</c>.</remarks>
     public void Add(double v)
     {
@@ -137,6 +188,10 @@ internal class Table
         Add(v.ToString(c.format, CultureInfo.InvariantCulture));
     }
 
+    /// <summary>
+    /// Sets the value of the cell at the given row and column directly, growing the value list as
+    /// needed and widening the column to fit.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Table.cell(int, int, String)</c>.</remarks>
     public void Cell(int row, int col, string value)
     {
@@ -146,9 +201,16 @@ internal class Table
         AdjustColumnSize(col, value.Length);
     }
 
+    /// <summary>
+    /// The index of the row currently being filled.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Table.currentRow()</c>.</remarks>
     public int CurrentRow => _currentRow;
 
+    /// <summary>
+    /// Finishes the current row by padding out any remaining cells with empty strings, and returns
+    /// the completed row index.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Table.newRow()</c>.</remarks>
     public int NewRow()
     {
@@ -156,6 +218,9 @@ internal class Table
         return _currentRow;
     }
 
+    /// <summary>
+    /// Inserts a full-width divider row rendered by repeating the given string across the table width.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Table.divider(String)</c>.</remarks>
     public void Divider(string div)
     {
@@ -164,6 +229,10 @@ internal class Table
         _currentRow++;
     }
 
+    /// <summary>
+    /// Computes the final column widths: completes the last row, sums column widths and gaps, and
+    /// shrinks columns if the total exceeds the configured maximum width. Marks the table ready to print.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Table.layout()</c>.</remarks>
     protected void Layout()
     {
@@ -180,6 +249,11 @@ internal class Table
         _ready = true;
     }
 
+    /// <summary>
+    /// Reduces the total table width to the maximum by trimming the non-numeric ("elastic") columns,
+    /// prioritizing those whose actual width most exceeds their average cell width so that trimming
+    /// degrades the layout as little as possible.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Table.shrinkColumns()</c>.</remarks>
     void ShrinkColumns()
     {
@@ -284,6 +358,12 @@ internal class Table
         return trimmed;
     }
 
+    /// <summary>
+    /// Renders the table to the given writer, laying it out first if necessary: each row's cells are
+    /// padded to their column width (right-aligned for formatted numeric columns, otherwise
+    /// left-aligned), truncated with an ellipsis if too long, and divider rows are repeated across the
+    /// full width.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Table.print(Appendable)</c>.</remarks>
     public void Print(TextWriter @out)
     {
@@ -333,6 +413,9 @@ internal class Table
         }
     }
 
+    /// <summary>
+    /// Renders the entire table to a string.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.text.Table.toString()</c>.</remarks>
     public override string ToString()
     {
@@ -344,6 +427,9 @@ internal class Table
         return buf.ToString();
     }
 
+    /// <summary>
+    /// Returns the given string repeated <paramref name="times"/> times (empty if non-positive).
+    /// </summary>
     /// <remarks>Port-only helper for Java's <c>String.repeat(int)</c>.</remarks>
     static string Repeat(string s, int times)
     {

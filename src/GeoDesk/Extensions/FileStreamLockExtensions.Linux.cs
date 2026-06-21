@@ -35,6 +35,10 @@ internal static partial class FileStreamLockExtensions
     const short F_WRLCK_LINUX = 1;
     const short F_UNLCK_LINUX = 2;
 
+    /// <summary>
+    /// Mirrors the C <c>struct flock</c> passed to <c>fcntl</c> on Linux, describing the type, origin,
+    /// and extent of a byte-range lock request. <c>l_pid</c> must be zero for OFD locks.
+    /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     struct FlockLinux
     {
@@ -47,6 +51,12 @@ internal static partial class FileStreamLockExtensions
 
     }
 
+    /// <summary>
+    /// Applies, blocks for, or releases an OFD byte-range lock on the given file handle via
+    /// <c>fcntl</c>. Returns true when the lock is granted or released, false when a non-blocking
+    /// request conflicts, and throws <see cref="IOException"/> on any other failure. Retries
+    /// automatically if interrupted by a signal during a blocking wait.
+    /// </summary>
     [SupportedOSPlatform("linux")]
     static bool LinuxSetLock(SafeFileHandle handle, long position, long length, LockOp op, bool wait)
     {
@@ -93,6 +103,10 @@ internal static partial class FileStreamLockExtensions
         }
     }
 
+    /// <summary>
+    /// P/Invoke into libc's <c>fcntl</c> with a <see cref="FlockLinux"/> argument, used to set or query
+    /// OFD byte-range locks. Returns 0 on success or -1 with <c>errno</c> set.
+    /// </summary>
     [DllImport("libc", SetLastError = true, EntryPoint = "fcntl")]
     static extern int FcntlLinux(int fd, int cmd, ref FlockLinux lockArg);
 

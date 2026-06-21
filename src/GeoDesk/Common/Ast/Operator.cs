@@ -7,6 +7,11 @@
 
 namespace GeoDesk.Common.Ast;
 
+/// <summary>
+/// Describes an operator usable in expressions: its internal name, optional textual symbol, and
+/// precedence level. Common operators are exposed as shared static singletons grouped into
+/// arithmetic, comparison, and logical categories.
+/// </summary>
 /// <remarks>Ported from Java <c>com.clarisma.common.ast.Operator</c>.</remarks>
 internal class Operator
 {
@@ -15,6 +20,10 @@ internal class Operator
     readonly string? _symbol;
     readonly float _precedence;
 
+    /// <summary>
+    /// Creates an operator with the given internal <paramref name="name"/>, display
+    /// <paramref name="symbol"/> (may be null), and <paramref name="precedence"/> level.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.ast.Operator(String, String, float)</c>.</remarks>
     public Operator(string name, string? symbol, float precedence)
     {
@@ -23,15 +32,27 @@ internal class Operator
         _precedence = precedence;
     }
 
+    /// <summary>
+    /// The internal name of this operator (for example <c>"add"</c> or <c>"eq"</c>).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.ast.Operator.name()</c>.</remarks>
     public string Name => _name;
 
+    /// <summary>
+    /// The textual symbol used to render this operator (for example <c>"+"</c>), or null if it has none.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.ast.Operator.symbol()</c>.</remarks>
     public string? Symbol => _symbol;
 
+    /// <summary>
+    /// The binding precedence of this operator; higher values bind more tightly during parsing.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.ast.Operator.precedence()</c>.</remarks>
     public float Precedence => _precedence;
 
+    /// <summary>
+    /// Returns a hash code derived from the operator symbol.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.ast.Operator.hashCode()</c>.</remarks>
     public override int GetHashCode()
     {
@@ -39,6 +60,9 @@ internal class Operator
     }
 
     // TODO: operator should always be treated as singleton
+    /// <summary>
+    /// Value equality: two operators are equal when their name and symbol match.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.ast.Operator.equals(Object)</c>.</remarks>
     public override bool Equals(object? obj)
     {
@@ -51,6 +75,9 @@ internal class Operator
         return false;
     }
 
+    /// <summary>
+    /// Returns the operator's symbol, or an empty string if it has none.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.ast.Operator.toString()</c>.</remarks>
     public override string ToString()
     {
