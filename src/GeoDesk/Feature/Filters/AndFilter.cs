@@ -18,6 +18,11 @@ namespace GeoDesk.Feature.Filters;
 internal class AndFilter : IFilter
 {
 
+    /// <summary>
+    /// Combines two filters into one that accepts features only when both accept,
+    /// merging their strategies, accepted types, and bounding boxes. Returns
+    /// <see cref="FalseFilter"/> when the combination can never match.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.AndFilter.create(Filter, Filter)</c>.</remarks>
     public static IFilter Create(IFilter left, IFilter right)
     {
@@ -66,6 +71,10 @@ internal class AndFilter : IFilter
     readonly int _acceptedTypes;
     readonly IBounds _bounds;
 
+    /// <summary>
+    /// Creates the combined filter from its two operands and their pre-computed merged
+    /// strategy, bounds, and accepted types.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.AndFilter(Filter, Filter, int, Bounds, int)</c>.</remarks>
     public AndFilter(IFilter left, IFilter right, int strategy, IBounds bounds, int acceptedTypes)
     {
@@ -76,6 +85,10 @@ internal class AndFilter : IFilter
         _bounds = bounds;
     }
 
+    /// <summary>
+    /// Returns true if both filters accept the feature, materializing its geometry
+    /// only when the combined strategy requires it.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.AndFilter.accept(Feature)</c>.</remarks>
     public bool Accept(IFeature feature)
     {
@@ -83,21 +96,33 @@ internal class AndFilter : IFilter
         return Accept(feature, null!);
     }
 
+    /// <summary>
+    /// Returns true if both filters accept the feature with the given materialized
+    /// geometry.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.AndFilter.accept(Feature, Geometry)</c>.</remarks>
     public bool Accept(IFeature feature, Geometry geom)
     {
         return _left.Accept(feature, geom) && _right.Accept(feature, geom);
     }
 
+    /// <summary>The merged filter strategy flags.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.AndFilter.strategy()</c>.</remarks>
     public int Strategy => _strategy;
 
+    /// <summary>The intersection of the two filters' accepted feature types.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.AndFilter.acceptedTypes()</c>.</remarks>
     public int AcceptedTypes => _acceptedTypes;
 
+    /// <summary>The combined bounding box that candidates must fall within.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.AndFilter.bounds()</c>.</remarks>
     public IBounds Bounds => _bounds;
 
+    /// <summary>
+    /// Returns a per-tile specialization of this filter by specializing both operands;
+    /// collapses to false, to a single operand, or to a new combined filter as
+    /// appropriate.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.AndFilter.filterForTile(int, Polygon)</c>.</remarks>
     public IFilter? FilterForTile(int tile, Polygon tileGeometry)
     {

@@ -27,12 +27,14 @@ internal class ContainsFilter : IFilter
     readonly Geometry _testGeom;
     readonly Box _bounds;
 
+    /// <summary>Creates a filter using the given feature's geometry as the test geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ContainsFilter(Feature)</c>.</remarks>
     public ContainsFilter(IFeature feature)
         : this(feature.ToGeometry())
     {
     }
 
+    /// <summary>Creates a filter that accepts features whose geometry contains the given test geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ContainsFilter(Geometry)</c>.</remarks>
     public ContainsFilter(Geometry geom)
     {
@@ -40,23 +42,30 @@ internal class ContainsFilter : IFilter
         _bounds = Box.FromEnvelope(geom.EnvelopeInternal);
     }
 
+    /// <summary>Creates a filter from a prepared geometry, using its underlying geometry as the test.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ContainsFilter(PreparedGeometry)</c>.</remarks>
     public ContainsFilter(IPreparedGeometry prepared)
         : this(prepared.Geometry)
     {
     }
 
+    /// <summary>The filter strategy flags: uses a bounding box and restricts types.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ContainsFilter.strategy()</c>.</remarks>
     public int Strategy => FilterStrategy.UsesBbox | FilterStrategy.RestrictsTypes;
 
     // TODO: needs acceptedTypes() ???
 
+    /// <summary>Returns true if the given geometry contains the test geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ContainsFilter.containedBy(Geometry)</c>.</remarks>
     bool ContainedBy(Geometry g)
     {
         return g.Contains(_testGeom);
     }
 
+    /// <summary>
+    /// Returns true if every component of the feature's geometry contains the test
+    /// geometry, after a quick bounding-box pre-check.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ContainsFilter.accept(Feature, Geometry)</c>.</remarks>
     public bool Accept(IFeature feature, Geometry geom)
     {
@@ -83,6 +92,7 @@ internal class ContainsFilter : IFilter
         return true;
     }
 
+    /// <summary>The bounding box of the test geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.ContainsFilter.bounds()</c>.</remarks>
     public IBounds Bounds => _bounds;
 

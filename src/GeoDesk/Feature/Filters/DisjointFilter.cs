@@ -21,18 +21,21 @@ internal class DisjointFilter : IFilter
     readonly IPreparedGeometry _prepared;
     readonly int _testDimension;
 
+    /// <summary>Creates a filter using the given feature's geometry as the test geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.DisjointFilter(Feature)</c>.</remarks>
     public DisjointFilter(IFeature feature)
         : this(feature.ToGeometry())
     {
     }
 
+    /// <summary>Creates a filter that accepts features disjoint from the given geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.DisjointFilter(Geometry)</c>.</remarks>
     public DisjointFilter(Geometry geom)
         : this(PreparedGeometryFactory.Prepare(geom))
     {
     }
 
+    /// <summary>Creates a filter from an already-prepared reference geometry, caching its dimension.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.DisjointFilter(PreparedGeometry)</c>.</remarks>
     public DisjointFilter(IPreparedGeometry prepared)
     {
@@ -42,9 +45,14 @@ internal class DisjointFilter : IFilter
             AbstractRelateFilter.MixedDimension : (int)geom.Dimension;
     }
 
+    /// <summary>The filter strategy flags: tile acceleration and needs geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.DisjointFilter.strategy()</c>.</remarks>
     public int Strategy => FilterStrategy.FastTileFilter | FilterStrategy.NeedsGeometry;
 
+    /// <summary>
+    /// Specializes the filter per tile: waives the test for tiles disjoint from the
+    /// reference geometry and rejects tiles it properly contains.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.DisjointFilter.filterForTile(int, Polygon)</c>.</remarks>
     public IFilter? FilterForTile(int tile, Polygon tileGeometry)
     {
@@ -53,6 +61,7 @@ internal class DisjointFilter : IFilter
         return this;
     }
 
+    /// <summary>Returns true if the feature's geometry is disjoint from the reference geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.DisjointFilter.accept(Feature, Geometry)</c>.</remarks>
     public bool Accept(IFeature feature, Geometry geom)
     {

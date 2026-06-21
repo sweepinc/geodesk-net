@@ -32,6 +32,10 @@ internal abstract class AbstractRelateFilter : IFilter
     protected readonly int acceptedTypes;
     protected readonly int testDimension;
 
+    /// <summary>
+    /// Creates the filter from a prepared reference geometry, caching its bounding box
+    /// and dimension and recording the accepted feature types.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.AbstractRelateFilter(PreparedGeometry, int)</c>.</remarks>
     public AbstractRelateFilter(IPreparedGeometry prepared, int acceptedTypes)
     {
@@ -42,13 +46,23 @@ internal abstract class AbstractRelateFilter : IFilter
         this.acceptedTypes = acceptedTypes;
     }
 
+    /// <summary>
+    /// The filter strategy flags: tile acceleration, needs geometry, uses a bounding
+    /// box, and restricts types.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.AbstractRelateFilter.strategy()</c>.</remarks>
     public virtual int Strategy => FilterStrategy.FastTileFilter | FilterStrategy.NeedsGeometry | FilterStrategy.UsesBbox |
             FilterStrategy.RestrictsTypes;
 
+    /// <summary>The feature types this filter accepts.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.AbstractRelateFilter.acceptedTypes()</c>.</remarks>
     public int AcceptedTypes => acceptedTypes;
 
+    /// <summary>
+    /// Returns a per-tile specialization: rejects tiles disjoint from the reference
+    /// geometry, and waives the test (via a fast tile filter) for tiles properly
+    /// contained within a 2-D reference geometry.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.AbstractRelateFilter.filterForTile(int, Polygon)</c>.</remarks>
     public virtual IFilter? FilterForTile(int tile, Polygon tileGeometry)
     {
@@ -57,9 +71,14 @@ internal abstract class AbstractRelateFilter : IFilter
         return this;
     }
 
+    /// <summary>
+    /// Tests whether the feature's geometry satisfies this filter's DE-9IM predicate;
+    /// implemented by subclasses.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.AbstractRelateFilter.accept(Feature, Geometry)</c>.</remarks>
     public abstract bool Accept(IFeature feature, Geometry geom);
 
+    /// <summary>The bounding box of the reference geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.AbstractRelateFilter.bounds()</c>.</remarks>
     public IBounds Bounds => bounds;
 

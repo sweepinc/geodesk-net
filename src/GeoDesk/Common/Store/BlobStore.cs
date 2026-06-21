@@ -62,6 +62,7 @@ internal class BlobStore : Store
     protected internal int pageSizeShift = 12; // 4KB default page
     protected Downloader? downloader;
 
+    /// <summary>Performs an unsigned (logical) right shift of <paramref name="v"/> by <paramref name="n"/> bits.</summary>
     static int Ushr(int v, int n) => (int)((uint)v >> n);
 
     /// <summary>

@@ -19,27 +19,35 @@ namespace GeoDesk.Feature.Filters;
 internal class IntersectsFilter : AbstractRelateFilter
 {
 
+    /// <summary>Creates a filter using the given feature's geometry as the test geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.IntersectsFilter(Feature)</c>.</remarks>
     public IntersectsFilter(IFeature feature)
         : this(feature.ToGeometry())
     {
     }
 
+    /// <summary>Creates a filter that accepts features intersecting the given geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.IntersectsFilter(Geometry)</c>.</remarks>
     public IntersectsFilter(Geometry geom)
         : this(PreparedGeometryFactory.Prepare(geom))
     {
     }
 
+    /// <summary>Creates a filter from an already-prepared reference geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.IntersectsFilter(PreparedGeometry)</c>.</remarks>
     public IntersectsFilter(IPreparedGeometry prepared)
         : base(prepared, TypeBits.ALL)
     {
     }
 
+    /// <summary>The filter strategy flags: tile acceleration, needs geometry, uses a bounding box.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.IntersectsFilter.strategy()</c>.</remarks>
     public override int Strategy => FilterStrategy.FastTileFilter | FilterStrategy.NeedsGeometry | FilterStrategy.UsesBbox;
 
+    /// <summary>
+    /// Specializes the filter per tile: rejects disjoint tiles and waives the test for
+    /// tiles properly contained in a 2-D reference geometry.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.IntersectsFilter.filterForTile(int, Polygon)</c>.</remarks>
     public override IFilter? FilterForTile(int tile, Polygon tileGeometry)
     {
@@ -48,6 +56,7 @@ internal class IntersectsFilter : AbstractRelateFilter
         return this;
     }
 
+    /// <summary>Returns true if the feature's geometry intersects the reference geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.IntersectsFilter.accept(Feature, Geometry)</c>.</remarks>
     public override bool Accept(IFeature feature, Geometry geom)
     {

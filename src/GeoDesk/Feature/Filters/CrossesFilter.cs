@@ -24,24 +24,31 @@ namespace GeoDesk.Feature.Filters;
 internal class CrossesFilter : AbstractRelateFilter
 {
 
+    /// <summary>Creates a filter using the given feature's geometry as the test geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.CrossesFilter(Feature)</c>.</remarks>
     public CrossesFilter(IFeature feature)
         : this(feature.ToGeometry())
     {
     }
 
+    /// <summary>Creates a filter that accepts features crossing the given geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.CrossesFilter(Geometry)</c>.</remarks>
     public CrossesFilter(Geometry geom)
         : this(PreparedGeometryFactory.Prepare(geom))
     {
     }
 
+    /// <summary>Creates a filter from an already-prepared reference geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.CrossesFilter(PreparedGeometry)</c>.</remarks>
     public CrossesFilter(IPreparedGeometry prepared)
         : base(prepared, AcceptedType(prepared))
     {
     }
 
+    /// <summary>
+    /// Determines which feature types can possibly cross the given test geometry,
+    /// based on its dimension.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.CrossesFilter.acceptedType(PreparedGeometry)</c>.</remarks>
     static int AcceptedType(IPreparedGeometry prepared)
     {
@@ -52,6 +59,7 @@ internal class CrossesFilter : AbstractRelateFilter
         return TypeBits.ALL;
     }
 
+    /// <summary>Returns true if the feature's geometry crosses the reference geometry.</summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.filter.CrossesFilter.accept(Feature, Geometry)</c>.</remarks>
     public override bool Accept(IFeature feature, Geometry geom)
     {
