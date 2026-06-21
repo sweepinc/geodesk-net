@@ -21,6 +21,9 @@ namespace GeoDesk.Util;
 internal class JavaScript
 {
 
+    /// <summary>
+    /// Writes the given dictionary to the output as a JavaScript object literal (<c>{key:value,…}</c>).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.util.JavaScript.writeMap(Appendable, Map)</c>.</remarks>
     public static void WriteMap(TextWriter outp, IDictionary v)
     {
@@ -39,6 +42,9 @@ internal class JavaScript
         outp.Write('}');
     }
 
+    /// <summary>
+    /// Writes the given array object to the output as a JavaScript array literal (<c>[…]</c>).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.util.JavaScript.writeArray(Appendable, Object)</c>.</remarks>
     public static void WriteArray(TextWriter outp, object v)
     {
@@ -53,6 +59,9 @@ internal class JavaScript
         outp.Write(']');
     }
 
+    /// <summary>
+    /// Writes the given string to the output as a quoted, escaped JavaScript string literal.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.util.JavaScript.writeString(Appendable, String)</c>.</remarks>
     public static void WriteString(TextWriter outp, string s)
     {
@@ -61,6 +70,10 @@ internal class JavaScript
         outp.Write('"');
     }
 
+    /// <summary>
+    /// Writes an arbitrary value to the output as JavaScript, dispatching by runtime type: <c>null</c>,
+    /// a quoted string, a nested object literal, an array literal, or the value's <c>ToString()</c> form.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.util.JavaScript.writeValue(Appendable, Object)</c>.</remarks>
     public static void WriteValue(TextWriter outp, object? v)
     {

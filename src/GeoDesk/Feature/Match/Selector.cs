@@ -31,48 +31,76 @@ internal class Selector : Expression
     Selector? _next;
     TagClause? _firstClause;
 
+    /// <summary>
+    /// Creates a selector that matches the given feature-type bits and starts with an empty clause list.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.Selector(int)</c>.</remarks>
     public Selector(int matchTypes)
     {
         _matchTypes = matchTypes;
     }
 
+    /// <summary>
+    /// Returns the bitmask of feature types (node/way/area/relation) this selector matches.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.Selector.matchTypes()</c>.</remarks>
     public int MatchTypes()
     {
         return _matchTypes;
     }
 
+    /// <summary>
+    /// Returns the bitmask describing which kinds of tag clause this selector contains: local versus
+    /// global key, and required versus optional.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.Selector.clauseTypes()</c>.</remarks>
     public int ClauseTypes()
     {
         return _clauseTypes;
     }
 
+    /// <summary>
+    /// Returns the spatial-index category bits required by this selector's clauses, used to decide which
+    /// tile index buckets must be scanned.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.Selector.indexBits()</c>.</remarks>
     public int IndexBitsValue()
     {
         return _indexBits;
     }
 
+    /// <summary>
+    /// Returns the next selector in the chain — selectors are linked together to represent a query that
+    /// spans multiple feature types — or null if this is the last.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.Selector.next()</c>.</remarks>
     public Selector? Next()
     {
         return _next;
     }
 
+    /// <summary>
+    /// Links the given selector after this one in the chain.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.Selector.setNext(Selector)</c>.</remarks>
     public void SetNext(Selector? sel)
     {
         _next = sel;
     }
 
+    /// <summary>
+    /// Returns the first tag clause in this selector's sorted clause list, or null if it has no clauses.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.Selector.firstClause()</c>.</remarks>
     internal TagClause? FirstClause()
     {
         return _firstClause;
     }
 
+    /// <summary>
+    /// Inserts a tag clause into this selector, keeping the clause list sorted by key, merging clauses
+    /// with an equal key, and updating the clause-type and spatial-index-bit summaries accordingly.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.Selector.add(TagClause)</c>.</remarks>
     public void Add(TagClause clause)
     {
@@ -148,6 +176,9 @@ internal class Selector : Expression
         return other;
     }
 
+    /// <summary>
+    /// Dispatches this selector to the given AST visitor's expression-visit method.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.Selector.accept(AstVisitor)</c>.</remarks>
     public override R Accept<R>(IAstVisitor<R> visitor)
     {

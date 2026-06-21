@@ -45,6 +45,9 @@ internal abstract class Marker
         return this;
     }
 
+    /// <summary>
+    /// Associates this marker with the map that will render it.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.util.Marker.setMap(MapMaker)</c>.</remarks>
     internal void SetMap(MapMaker map)
     {
@@ -80,18 +83,28 @@ internal abstract class Marker
         return Option("color", color);
     }
 
+    /// <summary>
+    /// Returns the tooltip text to display when none was set explicitly; the base implementation
+    /// returns null (no default).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.util.Marker.defaultTooltip()</c>.</remarks>
     public virtual string? DefaultTooltip()
     {
         return null;
     }
 
+    /// <summary>
+    /// Returns whether this marker should be rendered on the map; the base implementation returns true.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.util.Marker.isVisible()</c>.</remarks>
     public virtual bool IsVisible()
     {
         return true;
     }
 
+    /// <summary>
+    /// Writes the opening of a Leaflet circle-marker constructor for the given point to the output.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.util.Marker.writePoint(Appendable, double, double)</c>.</remarks>
     protected void WritePoint(TextWriter outp, double x, double y)
     {
@@ -99,6 +112,9 @@ internal abstract class Marker
         map!.WriteXY(outp, x, y);
     }
 
+    /// <summary>
+    /// Writes the given coordinate sequence to the output as a Leaflet array of map coordinates.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.util.Marker.writeCoordinates(Appendable, CoordinateSequence)</c>.</remarks>
     protected void WriteCoordinates(TextWriter outp, CoordinateSequence coords)
     {
@@ -112,12 +128,24 @@ internal abstract class Marker
         outp.Write("]");
     }
 
+    /// <summary>
+    /// Returns the bounding box this marker occupies on the map.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.util.Marker.bounds()</c>.</remarks>
     public abstract IBounds Bounds();
 
+    /// <summary>
+    /// Writes the marker-type-specific Leaflet constructor call (without options); supplied by each
+    /// concrete marker subclass.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.util.Marker.writeStub(Appendable)</c>.</remarks>
     protected abstract void WriteStub(TextWriter outp);
 
+    /// <summary>
+    /// Writes the complete Leaflet statement for this marker: its constructor (via
+    /// <see cref="WriteStub"/>), any options, an optional tooltip and click-through URL, and the
+    /// trailing <c>.addTo(map)</c>.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.util.Marker.write(Appendable)</c>.</remarks>
     public virtual void Write(TextWriter outp)
     {

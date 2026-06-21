@@ -93,6 +93,11 @@ internal sealed class TileScanner
         return res;
     }
 
+    /// <summary>
+    /// Walks the index buckets of one spatial index (at <paramref name="ppTree"/>) and forks a parallel
+    /// task to search the R-tree of each bucket whose key bits the matcher accepts, collecting the tasks
+    /// into <paramref name="branches"/> to be awaited and merged.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.TileQueryTask.searchRTree(int, Matcher, RTreeQueryTask)</c>.</remarks>
     void ForkBuckets(List<Task<QueryResults>> branches, int ppTree, bool nodes)
     {
@@ -117,6 +122,10 @@ internal sealed class TileScanner
         }
     }
 
+    /// <summary>
+    /// Searches the R-tree rooted at one index bucket (runs on a worker thread), descending from its
+    /// root trunk and collecting matching features into a fresh <see cref="QueryResults"/>.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.RTreeQueryTask.exec()</c>.</remarks>
     QueryResults SearchBranch(int p, bool nodes)
     {
@@ -135,6 +144,10 @@ internal sealed class TileScanner
         return (_buf.GetInt(pBounds) > _maxX || _buf.GetInt(pBounds + 4) > _maxY || _buf.GetInt(pBounds + 8) < _minX || _buf.GetInt(pBounds + 12) < _minY) == false;
     }
 
+    /// <summary>
+    /// Recursively descends an R-tree trunk node, pruning children whose bounding box does not
+    /// intersect the query box and recursing into child trunks or scanning leaf nodes for the rest.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.RTreeQueryTask.searchTrunk(int)</c>.</remarks>
     void SearchTrunk(QueryResults results, int p, bool nodes)
     {
@@ -164,6 +177,11 @@ internal sealed class TileScanner
         }
     }
 
+    /// <summary>
+    /// Scans a leaf node of way/area/relation entries, testing each against the bbox flags, query box,
+    /// type mask, matcher, and optional filter, and adding the survivors (with their type bits) to the
+    /// results.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.RTreeQueryTask.searchLeaf(int)</c>.</remarks>
     void SearchLeaf(QueryResults results, int p)
     {
@@ -190,6 +208,10 @@ internal sealed class TileScanner
         }
     }
 
+    /// <summary>
+    /// Scans a leaf node of node-feature entries, testing each node's coordinates against the query box
+    /// and then the matcher and optional filter, and adding the survivors to the results.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.RTreeQueryTask.Nodes.searchLeaf(int)</c>.</remarks>
     void SearchLeafNodes(QueryResults results, int p)
     {

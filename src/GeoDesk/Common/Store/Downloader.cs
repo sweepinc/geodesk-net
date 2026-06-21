@@ -94,6 +94,9 @@ internal class Downloader
         internal readonly List<Action<Ticket>> Consumers = new List<Action<Ticket>>();
         readonly object _mutex = new object();
 
+        /// <summary>
+        /// Creates a ticket tracking the download of the blob with the given id.
+        /// </summary>
         internal Ticket(int id)
         {
             Id = id;

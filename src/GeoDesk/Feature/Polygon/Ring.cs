@@ -9,6 +9,10 @@ using GeoDesk.Geom;
 
 namespace GeoDesk.Feature.Polygons;
 
+/// <summary>
+/// One ring of a (multi)polygon being assembled from way segments: a closed loop holding its segment
+/// chain, coordinate count, bounding box, and the inner rings (holes) it encloses.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.polygon.Ring</c>.</remarks>
 internal class Ring
 {
@@ -20,6 +24,10 @@ internal class Ring
     internal Ring? firstInner;
     internal Ring? next;
 
+    /// <summary>
+    /// Creates a ring with the given number within its polygon, built from the given segment chain and
+    /// coordinate count, and linked ahead of the given next ring.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.polygon.Ring(int, Segment, int, Ring)</c>.</remarks>
     public Ring(int number, Segment firstSegment, int coordinateCount, Ring? next)
     {
@@ -29,6 +37,9 @@ internal class Ring
         this.next = next;
     }
 
+    /// <summary>
+    /// Computes and caches this ring's bounding box by expanding over the bounds of all its segments.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.polygon.Ring.calculateBounds()</c>.</remarks>
     public void CalculateBounds()
     {
@@ -103,6 +114,9 @@ internal class Ring
         return ContainsPoint(x, y);
     }
 
+    /// <summary>
+    /// Adds the given ring as an inner ring (hole) of this ring, prepending it to the inner-ring list.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.polygon.Ring.addInner(Ring)</c>.</remarks>
     public void AddInner(Ring inner)
     {

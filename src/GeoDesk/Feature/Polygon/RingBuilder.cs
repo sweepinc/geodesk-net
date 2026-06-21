@@ -11,6 +11,10 @@ using GeoDesk.Geom;
 
 namespace GeoDesk.Feature.Polygons;
 
+/// <summary>
+/// Assembles way segments into closed rings by matching shared endpoints (via an endpoint hash table),
+/// producing the rings from which polygon and multipolygon geometry is built.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.polygon.RingBuilder</c>.</remarks>
 internal class RingBuilder
 {
@@ -80,6 +84,9 @@ internal class RingBuilder
         return null;
     }
 
+    /// <summary>
+    /// Re-links the segments of a completed ring into a properly ordered, closed chain.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.polygon.RingBuilder.relinkSegments(Ring)</c>.</remarks>
     static void RelinkSegments(Ring ring)
     {
@@ -136,6 +143,10 @@ internal class RingBuilder
         return null;
     }
 
+    /// <summary>
+    /// Marks every segment of a ring (starting at the given one) as assigned and returns the ring's
+    /// total coordinate count.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.polygon.RingBuilder.markAndCount(Segment)</c>.</remarks>
     static int MarkAndCount(Segment segment)
     {
@@ -149,6 +160,10 @@ internal class RingBuilder
         }
     }
 
+    /// <summary>
+    /// Adds a segment to the endpoint hash table under the slot derived from the given x/y endpoint,
+    /// chaining it ahead of any candidate already in that slot.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.polygon.RingBuilder.addToTable(Candidate[], Segment, int, int)</c>.</remarks>
     static void AddToTable(Candidate?[] table, Segment segment, int x, int y)
     {
@@ -244,6 +259,10 @@ internal class RingBuilder
         return rings;
     }
 
+    /// <summary>
+    /// A hash-table entry that links a segment to others sharing the same endpoint, used to find the
+    /// segment that continues a ring.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.polygon.RingBuilder.Candidate</c>.</remarks>
     class Candidate
     {
@@ -251,6 +270,9 @@ internal class RingBuilder
         internal readonly Segment segment;
         internal readonly Candidate? next;
 
+        /// <summary>
+        /// Creates a candidate wrapping the given segment, chained ahead of the given next candidate.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.feature.polygon.RingBuilder.Candidate(Segment, Candidate)</c>.</remarks>
         internal Candidate(Segment segment, Candidate? next)
         {

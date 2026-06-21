@@ -75,9 +75,12 @@ internal class Query : IEnumerator<IFeature>, IAsyncEnumerator<IFeature>, IBound
     {
     }
 
-    // Async consumers construct with prefetch:false so the constructor does NOT block on the first
-    // batch — MoveNextAsync drives the fetching instead. externalCt links the `await foreach`
-    // cancellation token into this query's cancellation source.
+    /// <summary>
+    /// Core constructor. When <paramref name="prefetch"/> is false the constructor does not block on
+    /// the first batch — async consumers let <see cref="MoveNextAsync"/> drive the fetching — and
+    /// <paramref name="externalCt"/> links an <c>await foreach</c> cancellation token into this query's
+    /// cancellation source.
+    /// </summary>
     internal Query(WorldView view, bool prefetch, CancellationToken externalCt = default)
     {
         _store = view.store;
@@ -154,6 +157,11 @@ internal class Query : IEnumerator<IFeature>, IAsyncEnumerator<IFeature>, IBound
         Start(filter, prefetch: true);
     }
 
+    /// <summary>
+    /// Starts the background tile-scanning producer and, for synchronous consumers
+    /// (<paramref name="prefetch"/> true), prefetches the first feature. Async consumers pass false so
+    /// the constructor never blocks; <see cref="MoveNextAsync"/> drives the fetching instead.
+    /// </summary>
     void Start(IFilter? filter, bool prefetch)
     {
         _currentResults = QueryResults.Empty;
@@ -240,8 +248,11 @@ internal class Query : IEnumerator<IFeature>, IAsyncEnumerator<IFeature>, IBound
         }
     }
 
-    // The async counterpart of TakeBatch: awaits the next tile's results instead of blocking the
-    // calling thread, so a web request enumerating a query releases its thread between tiles.
+    /// <summary>
+    /// The async counterpart of <see cref="TakeBatch"/>: awaits the next tile's results instead of
+    /// blocking the calling thread, so a web request enumerating a query releases its thread between
+    /// tiles. Returns null when the channel completes; a producer fault is stashed in the error field.
+    /// </summary>
     async ValueTask<QueryResults?> TakeBatchAsync(CancellationToken ct)
     {
         try
@@ -295,8 +306,11 @@ internal class Query : IEnumerator<IFeature>, IAsyncEnumerator<IFeature>, IBound
         }
     }
 
-    // The async counterpart of FetchNext: identical batch-walking, but awaits the next tile's
-    // results at a batch boundary instead of blocking. Within a batch it completes synchronously.
+    /// <summary>
+    /// The async counterpart of <see cref="FetchNext"/>: walks the result batches the same way, but
+    /// awaits the next tile's results at a batch boundary instead of blocking. Within a batch it
+    /// completes synchronously.
+    /// </summary>
     async ValueTask FetchNextAsync(CancellationToken ct)
     {
         _currentPos++;
@@ -327,8 +341,10 @@ internal class Query : IEnumerator<IFeature>, IAsyncEnumerator<IFeature>, IBound
         }
     }
 
-    // Materializes the feature at the current batch position into _nextFeature. The low two bits of
-    // the stored pointer encode the feature type (0 = node, 1 = way, 2 = relation).
+    /// <summary>
+    /// Materializes the feature at the current batch position into the next-feature field. The low two
+    /// bits of the stored pointer encode the feature type (0 = node, 1 = way, 2 = relation).
+    /// </summary>
     void BuildFeatureAtCurrentPos()
     {
         var buf = _currentResults.buf;
@@ -380,10 +396,20 @@ internal class Query : IEnumerator<IFeature>, IAsyncEnumerator<IFeature>, IBound
 
     // --- IEnumerator<Feature> adapter over the Java Iterator surface ---
 
+    /// <summary>
+    /// The feature at the current position of the synchronous enumeration.
+    /// </summary>
     public IFeature Current => _enumeratorCurrent!;
 
+    /// <summary>
+    /// Non-generic current-element accessor, returning the current feature boxed as <see cref="object"/>.
+    /// </summary>
     object IEnumerator.Current => _enumeratorCurrent!;
 
+    /// <summary>
+    /// Advances the synchronous enumerator to the next feature, returning false once the query is
+    /// exhausted. This may block while the next tile's results are produced.
+    /// </summary>
     public bool MoveNext()
     {
         if (!HasNext())
@@ -392,6 +418,10 @@ internal class Query : IEnumerator<IFeature>, IAsyncEnumerator<IFeature>, IBound
         return true;
     }
 
+    /// <summary>
+    /// Not supported — a streaming query cursor cannot be rewound; always throws
+    /// <see cref="NotSupportedException"/>.
+    /// </summary>
     public void Reset()
     {
         throw new NotSupportedException();
@@ -400,6 +430,10 @@ internal class Query : IEnumerator<IFeature>, IAsyncEnumerator<IFeature>, IBound
     // --- IAsyncEnumerator<Feature>: the non-blocking consumer path. MoveNextAsync awaits the next
     // batch only at tile boundaries; within a tile's results it completes synchronously. ---
 
+    /// <summary>
+    /// Advances the async cursor to the next feature, awaiting the next tile's results only at a batch
+    /// boundary. Returns false when the query is exhausted, and rethrows any producer fault.
+    /// </summary>
     public async ValueTask<bool> MoveNextAsync()
     {
         await FetchNextAsync(_cts.Token).ConfigureAwait(false);
@@ -416,6 +450,10 @@ internal class Query : IEnumerator<IFeature>, IAsyncEnumerator<IFeature>, IBound
 
     // PORT: async counterpart of Dispose — awaits the background producer (after cancelling) rather
     // than blocking on it, so the store can safely unmap buffers once all cursors are disposed.
+    /// <summary>
+    /// Asynchronously disposes the cursor: cancels and then awaits the background producer (rather than
+    /// blocking on it), so the store can safely unmap its buffers once all cursors are disposed.
+    /// </summary>
     public async ValueTask DisposeAsync()
     {
         _cts.Cancel();
@@ -432,6 +470,10 @@ internal class Query : IEnumerator<IFeature>, IAsyncEnumerator<IFeature>, IBound
 
     // PORT: stops the background producer and waits for any in-flight tile scans to finish before
     // returning, so the store can safely unmap buffers once all cursors are disposed.
+    /// <summary>
+    /// Disposes the cursor: cancels the background producer and blocks until any in-flight tile scans
+    /// finish, so the store can safely unmap its buffers once all cursors are disposed.
+    /// </summary>
     public void Dispose()
     {
         _cts.Cancel();
@@ -446,14 +488,19 @@ internal class Query : IEnumerator<IFeature>, IAsyncEnumerator<IFeature>, IBound
         _cts.Dispose();
     }
 
-    // The data a tile scan needs, extracted from the (single-threaded) tile walk so the parallel
-    // scan bodies never touch the stateful walker.
+    /// <summary>
+    /// The data a single tile scan needs (page, bbox flags, filter), extracted from the
+    /// single-threaded tile walk so the parallel scan bodies never touch the stateful walker.
+    /// </summary>
     readonly struct TileRef
     {
         public readonly int Page;
         public readonly int Flags;
         public readonly IFilter? Filter;
 
+        /// <summary>
+        /// Captures the page, bbox flags, and filter for one tile to be scanned.
+        /// </summary>
         public TileRef(int page, int flags, IFilter? filter)
         {
             Page = page;

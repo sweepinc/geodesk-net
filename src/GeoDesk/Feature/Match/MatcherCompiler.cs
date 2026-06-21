@@ -26,6 +26,10 @@ internal class MatcherCompiler
     readonly int _valueNo;
     readonly Dictionary<string, Matcher> _matchers = new Dictionary<string, Matcher>();
 
+    /// <summary>
+    /// Creates a compiler over the given global string table and key-to-category map, resolving the
+    /// code for the special value <c>"no"</c> (which must be present) and building the query parser.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherCompiler(ObjectIntMap, String[], IntIntMap)</c>.</remarks>
     public MatcherCompiler(IReadOnlyDictionary<string, int> stringsToCodes, string[] codesToStrings,
         IReadOnlyDictionary<int, int> keysToCategories)
@@ -49,6 +53,10 @@ internal class MatcherCompiler
         return matcher;
     }
 
+    /// <summary>
+    /// Parses the query string and builds a fresh matcher for it — the uncached path invoked by
+    /// <see cref="GetMatcher"/> on a cache miss.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherCompiler.createMatcher(String)</c>.</remarks>
     Matcher CreateMatcher(string query)
     {

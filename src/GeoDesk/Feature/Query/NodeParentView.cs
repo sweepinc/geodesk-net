@@ -53,12 +53,19 @@ internal class NodeParentView : ParentRelationView
         return new NodeParentView(store, buf, node, ptr, types, matcher, filter);
     }
 
+    /// <summary>
+    /// Returns an iterator that yields the node's parent relations followed by its parent ways.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.NodeParentView.iterator()</c>.</remarks>
     public override IEnumerator<IFeature> GetEnumerator()
     {
         return new NodeParentIter(this);
     }
 
+    /// <summary>
+    /// Iterator that first walks the node's parent relations (through the base parent-relation
+    /// iterator), then switches to a query over its parent ways.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.NodeParentView.Iter</c>.</remarks>
     class NodeParentIter : Iter
     {
@@ -68,6 +75,9 @@ internal class NodeParentView : ParentRelationView
         IFeature? _nextFeature;
         int _phase;
 
+        /// <summary>
+        /// Creates the iterator, starting the parent-ways query and pre-fetching the first parent.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.feature.query.NodeParentView.Iter()</c>.</remarks>
         public NodeParentIter(NodeParentView view)
             : base(view)
@@ -79,6 +89,9 @@ internal class NodeParentView : ParentRelationView
             FetchNext();
         }
 
+        /// <summary>
+        /// Advances to the next parent: parent relations first (phase 0), then parent ways (phase 1).
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.feature.query.NodeParentView.Iter.fetchNext()</c>.</remarks>
         void FetchNext()
         {
@@ -91,12 +104,18 @@ internal class NodeParentView : ParentRelationView
             _nextFeature = _wayQuery.Next();
         }
 
+        /// <summary>
+        /// Returns true if a pre-fetched parent feature is available.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.feature.query.NodeParentView.Iter.hasNext()</c>.</remarks>
         public override bool HasNext()
         {
             return _nextFeature != null;
         }
 
+        /// <summary>
+        /// Returns the current parent feature and pre-fetches the next.
+        /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.feature.query.NodeParentView.Iter.next()</c>.</remarks>
         public override IFeature? Next()
         {

@@ -14,6 +14,10 @@ using NetTopologySuite.Geometries;
 
 namespace GeoDesk.Feature.Polygons;
 
+/// <summary>
+/// Assembles JTS polygon and multipolygon geometry from the rings of an OSM area way or multipolygon
+/// relation, handling outer rings, holes, and overlapping inner rings.
+/// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.polygon.PolygonBuilder</c>.</remarks>
 internal class PolygonBuilder
 {
@@ -59,12 +63,19 @@ internal class PolygonBuilder
         return coords;
     }
 
+    /// <summary>
+    /// Builds a JTS <see cref="LinearRing"/> from the coordinates of the given ring.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.polygon.PolygonBuilder.createLinearRing(GeometryFactory, Ring)</c>.</remarks>
     static LinearRing CreateLinearRing(GeometryFactory factory, Ring ring)
     {
         return factory.CreateLinearRing(new WayCoordinateSequence(GetRingCoordinates(ring)));
     }
 
+    /// <summary>
+    /// Returns true if the given inner ring's bounding box intersects that of any ring following it in
+    /// the inner-ring list.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.polygon.PolygonBuilder.overlapsFollowing(Ring)</c>.</remarks>
     static bool OverlapsFollowing(Ring inner)
     {
@@ -77,6 +88,9 @@ internal class PolygonBuilder
         return false;
     }
 
+    /// <summary>
+    /// Returns true if any two rings in the inner-ring list have intersecting bounding boxes.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.polygon.PolygonBuilder.ringsOverlap(Ring)</c>.</remarks>
     static bool RingsOverlap(Ring firstInner)
     {
@@ -87,6 +101,11 @@ internal class PolygonBuilder
         return false;
     }
 
+    /// <summary>
+    /// Builds the array of hole linear rings for an outer ring, or null if it has none. When the inner
+    /// rings overlap (or there are many), they are merged via a zero-width buffer before being turned
+    /// into holes.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.polygon.PolygonBuilder.createHoles(GeometryFactory, Ring)</c>.</remarks>
     static LinearRing[]? CreateHoles(GeometryFactory factory, Ring outer)
     {
@@ -130,12 +149,19 @@ internal class PolygonBuilder
         return holes;
     }
 
+    /// <summary>
+    /// Builds a JTS <see cref="Polygon"/> from an outer ring and its holes.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.polygon.PolygonBuilder.createPolygon(GeometryFactory, Ring)</c>.</remarks>
     static Polygon CreatePolygon(GeometryFactory factory, Ring outer)
     {
         return factory.CreatePolygon(CreateLinearRing(factory, outer), CreateHoles(factory, outer));
     }
 
+    /// <summary>
+    /// Builds a single <see cref="Polygon"/> from one outer ring, or a <c>MultiPolygon</c> from a chain
+    /// of outer rings.
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.polygon.PolygonBuilder.createPolygonals(GeometryFactory, Ring)</c>.</remarks>
     static Geometry CreatePolygonals(GeometryFactory factory, Ring rings)
     {
@@ -154,6 +180,11 @@ internal class PolygonBuilder
         return factory.CreateMultiPolygon(polygons);
     }
 
+    /// <summary>
+    /// Builds the JTS geometry for a polygonal relation: collects its <c>outer</c> and <c>inner</c> way
+    /// members as segments, assembles them into rings, assigns each inner ring to its containing outer
+    /// ring, and returns the resulting (multi)polygon (an empty polygon if no outer ring can be built).
+    /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.polygon.PolygonBuilder.build(GeometryFactory, Relation)</c>.</remarks>
     public static Geometry Build(GeometryFactory factory, IRelation rel)
     {
