@@ -6,6 +6,7 @@
  */
 
 using System.Collections.Generic;
+using GeoDesk.Common.Store;
 using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Store;
 using NioBuffer = GeoDesk.Buffers.NioBufferReader;
@@ -26,8 +27,8 @@ internal class ParentRelationView : TableView
     /// accepting all relations with no additional filter.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.ParentRelationView(FeatureStore, ByteBuffer, int)</c>.</remarks>
-    public ParentRelationView(FeatureStore store, NioBuffer buf, int ptr)
-        : this(store, buf, ptr, TypeBits.RELATIONS, Matcher.ALL, null)
+    public ParentRelationView(FeatureStore store, Segment segment, int pTable)
+        : this(store, segment, pTable, TypeBits.RELATIONS, Matcher.ALL, null)
     {
     }
 
@@ -36,8 +37,8 @@ internal class ParentRelationView : TableView
     /// the supplied feature types, matcher, and optional filter.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.ParentRelationView(FeatureStore, ByteBuffer, int, int, Matcher, Filter)</c>.</remarks>
-    public ParentRelationView(FeatureStore store, NioBuffer buf, int ptr, int types, Matcher matcher, IFilter? filter)
-        : base(store, buf, ptr, types, matcher, filter)
+    public ParentRelationView(FeatureStore store, Segment segment, int pTable, int types, Matcher matcher, IFilter? filter)
+        : base(store, segment, pTable, types, matcher, filter)
     {
     }
 
@@ -48,7 +49,7 @@ internal class ParentRelationView : TableView
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.ParentRelationView.newWith(int, Matcher, Filter)</c>.</remarks>
     internal override IFeatureQuery NewWith(int types, Matcher matcher, IFilter? filter)
     {
-        return new ParentRelationView(store, buf, ptr, types, matcher, filter);
+        return new ParentRelationView(store, segment, pTable, types, matcher, filter);
     }
 
     /// <summary>
@@ -88,7 +89,7 @@ internal class ParentRelationView : TableView
         protected readonly ParentRelationView view;
         protected int tip = FeatureConstants.START_TIP;
         protected int tex = FeatureConstants.RELATIONS_START_TEX;
-        protected NioBuffer foreignBuf;
+        protected Segment? foreignSegment;
         int _pExports;
         int _p;
         int _rel;
@@ -102,7 +103,7 @@ internal class ParentRelationView : TableView
         public Iter(ParentRelationView view)
         {
             this.view = view;
-            _p = view.ptr;
+            _p = view.pTable;
             FetchNext();
         }
 
@@ -114,9 +115,10 @@ internal class ParentRelationView : TableView
         /// <remarks>Ported from Java <c>com.geodesk.feature.query.ParentRelationView.Iter.fetchNext()</c>.</remarks>
         void FetchNext()
         {
+            var buf = new NioBuffer(view.segment.Memory);
             for (; ; )
             {
-                NioBuffer relBuf;
+                Segment relSegment;
                 int pRel;
                 if ((_rel & LastFlag) != 0)
                 {
@@ -124,7 +126,7 @@ internal class ParentRelationView : TableView
                     return;
                 }
                 var pCurrent = _p;
-                _rel = view.buf.GetInt(pCurrent);
+                _rel = buf.GetInt(pCurrent);
                 _p += 4;
                 if ((_rel & ForeignFlag) != 0)
                 {
@@ -136,11 +138,11 @@ internal class ParentRelationView : TableView
                     tex += _rel >> 4;
                     if ((_rel & DifferentTileFlag) != 0)
                     {
-                        int tipDelta = view.buf.GetShort(_p);
+                        int tipDelta = buf.GetShort(_p);
                         if ((tipDelta & 1) != 0)
                         {
                             // wide TIP delta
-                            tipDelta = view.buf.GetInt(_p);
+                            tipDelta = buf.GetInt(_p);
                             _p += 2;
                         }
                         tipDelta >>= 1;     // signed
@@ -149,23 +151,24 @@ internal class ParentRelationView : TableView
                         var entry = view.store.TileIndexEntry(tip);
                         if (!FeatureStore.IsTileLoadedAndCurrent(entry)) throw new MissingTileException(tip);
                         var tilePage = FeatureStore.PageFromEntry(entry);
-                        foreignBuf = new NioBuffer(view.store.SegmentOfPage(tilePage).Memory);
+                        foreignSegment = view.store.SegmentOfPage(tilePage);
                         var ppExports = view.store.OffsetOfPage(tilePage) + 24;
-                        _pExports = ppExports + foreignBuf.GetInt(ppExports);
+                        _pExports = ppExports + new NioBuffer(foreignSegment.Memory).GetInt(ppExports);
                     }
-                    relBuf = foreignBuf;
+                    var foreignBuf = new NioBuffer(foreignSegment!.Memory);
+                    relSegment = foreignSegment!;
                     var ppExported = _pExports + (tex << 2);
                     pRel = ppExported + foreignBuf.GetInt(ppExported);
                 }
                 else
                 {
-                    relBuf = view.buf;
+                    relSegment = view.segment;
                     pRel = (int)((uint)pCurrent & 0xffff_fffe) + ((_rel >> 2) << 1);
                         // TODO: simplify alignment rules!
                 }
-                if (view.matcher.Accept(relBuf, pRel))
+                if (view.matcher.Accept(relSegment, pRel))
                 {
-                    var r = new StoredRelation(view.store, relBuf, pRel);
+                    var r = new StoredRelation(view.store, relSegment, pRel);
                     if (view.filter == null || view.filter.Accept(r))
                     {
                         _current = r;

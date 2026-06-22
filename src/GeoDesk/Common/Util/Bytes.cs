@@ -5,6 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+using System;
 using System.Text;
 
 using GeoDesk.Buffers;
@@ -153,6 +154,29 @@ internal static class Bytes
         var chars = new byte[len];
         buf.Get(p, chars);
         return Encoding.UTF8.GetString(chars);
+    }
+
+    /// <summary>
+    /// Span overload of <see cref="ReadString(NioBufferReader, int)"/>: reads a length-prefixed
+    /// (one- or two-byte, multi-byte-encoded) UTF-8 string directly from a byte span. Only lengths up
+    /// to 32K are supported.
+    /// </summary>
+    /// <remarks>Ported from Java <c>com.clarisma.common.util.Bytes.readString(ByteBuffer, int)</c>.</remarks>
+    public static string ReadString(ReadOnlySpan<byte> buf, int p)
+    {
+        int len = buf.GetCharLE(p);
+        if ((len & 0x80) != 0)
+        {
+            len = (len & 0x7f) | (len >> 1) & 0xff80;
+            p += 2;
+        }
+        else
+        {
+            len &= 0x7f;
+            p++;
+        }
+
+        return Encoding.UTF8.GetString(buf.Slice(p, len));
     }
 
     /// <summary>Compares an ASCII string stored in a buffer to a match string.</summary>

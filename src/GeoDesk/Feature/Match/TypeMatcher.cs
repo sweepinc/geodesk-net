@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-using NioBuffer = GeoDesk.Buffers.NioBufferReader;
+using GeoDesk.Common.Store;
 
 namespace GeoDesk.Feature.Match;
 
@@ -34,12 +34,14 @@ internal class TypeMatcher : Matcher
     /// Rejects the feature if its type is not in the accepted set, otherwise defers to the inner matcher.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.TypeMatcher.accept(ByteBuffer, int)</c>.</remarks>
-    public override bool Accept(NioBuffer buf, int pos)
+    public override bool Accept(Segment segment, int pFeature)
     {
-        int flags = (sbyte)buf.Get(pos);
+        int flags = (sbyte)segment.Memory.Span[pFeature];
         var type = 1 << ((int)((uint)flags >> 1) & 0x1f);
-        if ((type & acceptedTypes) == 0) return false;
-        return _matcher.Accept(buf, pos);
+        if ((type & acceptedTypes) == 0)
+            return false;
+
+        return _matcher.Accept(segment, pFeature);
     }
 
     /// <summary>
@@ -47,9 +49,9 @@ internal class TypeMatcher : Matcher
     /// matcher.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.TypeMatcher.acceptTyped(int, ByteBuffer, int)</c>.</remarks>
-    public override bool AcceptTyped(int types, NioBuffer buf, int pos)
+    public override bool AcceptTyped(int types, Segment segment, int pFeature)
     {
-        return _matcher.AcceptTyped(types & acceptedTypes, buf, pos);
+        return _matcher.AcceptTyped(types & acceptedTypes, segment, pFeature);
     }
 
     /// <summary>

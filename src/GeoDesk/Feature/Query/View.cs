@@ -209,7 +209,7 @@ public abstract class View : IFeatureQuery
             if (!f.BelongsToRelation)
                 return EmptyView.Any;
 
-            return new ParentRelationView(store, f.Buffer(), f.GetRelationTablePtr(), types, matcher, filter);
+            return new ParentRelationView(store, f.Segment, f.GetRelationTablePtr(), types, matcher, filter);
         }
     }
 
@@ -248,7 +248,7 @@ public abstract class View : IFeatureQuery
                 return EmptyView.Any;
             }
 
-            return new WayNodeView(store, way.Buffer(), way.Pointer(), types, matcher, filter);
+            return new WayNodeView(store, way.Segment, way.Pointer(), types, matcher, filter);
         }
 
         // TODO: nodesOf() for relations

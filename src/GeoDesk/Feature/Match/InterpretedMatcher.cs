@@ -13,10 +13,9 @@ using System.Text.RegularExpressions;
 
 using GeoDesk.Common.Ast;
 using GeoDesk.Common.Math;
-using GeoDesk.Common.Util;
+using GeoDesk.Common.Store;
 using GeoDesk.Feature.Store;
-
-using NioBuffer = GeoDesk.Buffers.NioBufferReader;
+using GeoDesk.Feature.Store.Format;
 
 namespace GeoDesk.Feature.Match;
 
@@ -79,9 +78,9 @@ internal class InterpretedMatcher : TagMatcher
     }
 
     /// <remarks>Port-only: implements <c>Matcher.accept(ByteBuffer, int)</c> by interpreting the query.</remarks>
-    public override bool Accept(NioBuffer buf, int pos)
+    public override bool Accept(Segment segment, int pFeature)
     {
-        var tags = ReadTags(buf, pos);
+        var tags = ReadTags(segment.Memory.Span, pFeature);
         for (var sel = _first; sel != null; sel = sel.Next())
             if (MatchSelector(sel, tags))
                 return true;
@@ -229,78 +228,20 @@ internal class InterpretedMatcher : TagMatcher
     // === Tag-table reading (format from STagTable / MatcherCoder) ===
 
     /// <remarks>Port-only: reads a feature's tag table into entries (the layout MatcherCoder reads).</remarks>
-    List<TagEntry> ReadTags(NioBuffer buf, int pos)
+    List<TagEntry> ReadTags(ReadOnlySpan<byte> segment, int pFeature)
     {
         var entries = new List<TagEntry>();
-        var pPtr = pos + 8;
-        var taggedPtr = buf.GetInt(pPtr);
-        var hasLocalKeys = (taggedPtr & 1) != 0;
-        var tagTablePtr = pPtr + (taggedPtr & ~1);
-
-        // Global (common) keys: forward from the anchor
-        var p = tagTablePtr;
-        for (; ; )
+        var reader = new TagTableReader(segment, pFeature);
+        while (reader.MoveNext())
         {
-            int key16 = buf.GetChar(p);
-            var keyCode = (key16 >> 2) & 0x1fff;
-            if (keyCode == 0)
-                break; // empty-table marker / no global keys
-            var kind = key16 & 3;
-            var wide = (kind & 2) != 0;
-            var e = new TagEntry(buf, globalStrings) { Kind = kind, KeyCode = keyCode, KeyString = globalStrings[keyCode] };
-            int next;
-            if (wide)
+            entries.Add(new TagEntry(globalStrings)
             {
-                var w = buf.GetInt(p + 2);
-                if (kind == TagValues.LOCAL_STRING)
-                    e.ValueStringLoc = (p + 2) + w;
-                else
-                    e.ValueCode = w;
-                next = p + 6;
-            }
-            else
-            {
-                e.ValueCode = buf.GetChar(p + 2);
-                next = p + 4;
-            }
-            entries.Add(e);
-            if ((key16 & 0x8000) != 0)
-                break; // last tag
-            p = next;
-        }
-
-        // Local (uncommon) keys: backward from the anchor
-        if (hasLocalKeys)
-        {
-            var origin = tagTablePtr & ~3;
-            p = tagTablePtr - 4;
-            for (; ; )
-            {
-                var keyPtr = buf.GetInt(p);
-                var kind = keyPtr & 3;
-                var wide = (kind & 2) != 0;
-                var valueSize = wide ? 4 : 2;
-                var valuePos = p - valueSize;
-                var e = new TagEntry(buf, globalStrings) { Kind = kind, KeyCode = 0 };
-                if (wide)
-                {
-                    var w = buf.GetInt(valuePos);
-                    if (kind == TagValues.LOCAL_STRING)
-                        e.ValueStringLoc = valuePos + w;
-                    else
-                        e.ValueCode = w;
-                }
-                else
-                {
-                    e.ValueCode = buf.GetChar(valuePos);
-                }
-                var relPtr = (keyPtr & ~7) >> 1;
-                e.KeyString = Bytes.ReadString(buf, origin + relPtr);
-                entries.Add(e);
-                if ((keyPtr & 4) != 0)
-                    break; // first uncommon key
-                p = valuePos - 4;
-            }
+                Kind = reader.Kind,
+                KeyCode = reader.KeyCode,
+                KeyString = reader.KeyCode != 0 ? globalStrings[reader.KeyCode] : reader.KeyString,
+                ValueCode = reader.ValueCode,
+                ValueString = reader.ValueString,
+            });
         }
 
         return entries;
@@ -310,19 +251,17 @@ internal class InterpretedMatcher : TagMatcher
     sealed class TagEntry
     {
 
-        readonly NioBuffer _buf;
         readonly string[] _globalStrings;
 
         public int KeyCode;
         public string KeyString = "";
         public int Kind;          // TagValues.NARROW_NUMBER/GLOBAL_STRING/WIDE_NUMBER/LOCAL_STRING
         public int ValueCode;     // narrow number / global string code / wide number code
-        public int ValueStringLoc; // for LOCAL_STRING
+        public string ValueString = ""; // eagerly decoded for LOCAL_STRING
 
-        /// <remarks>Port-only: captures the buffer and global-string table for lazy value decoding.</remarks>
-        public TagEntry(NioBuffer buf, string[] globalStrings)
+        /// <remarks>Port-only: captures the global-string table for value decoding.</remarks>
+        public TagEntry(string[] globalStrings)
         {
-            _buf = buf;
             _globalStrings = globalStrings;
         }
 
@@ -338,7 +277,7 @@ internal class InterpretedMatcher : TagMatcher
                 case TagValues.WIDE_NUMBER:
                     return TagValues.WideNumberToString(ValueCode)!;
                 default: // LOCAL_STRING
-                    return Bytes.ReadString(_buf, ValueStringLoc);
+                    return ValueString;
             }
         }
 

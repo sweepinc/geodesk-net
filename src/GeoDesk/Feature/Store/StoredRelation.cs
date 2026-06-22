@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+using GeoDesk.Common.Store;
 using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Polygons;
 using GeoDesk.Feature.Query;
@@ -33,10 +34,10 @@ internal class StoredRelation : StoredFeature, IRelation
     /// relation's record.
     /// </summary>
     /// <param name="store">the feature store the relation was read from</param>
-    /// <param name="buf">the buffer containing the relation's record</param>
-    /// <param name="ptr">the pointer to the relation's record</param>
-    public StoredRelation(FeatureStore store, NioBuffer buf, int ptr) :
-        base(store, buf, ptr)
+    /// <param name="segment">the segment containing the relation's record</param>
+    /// <param name="pFeature">the pointer to the relation's record</param>
+    public StoredRelation(FeatureStore store, GeoDesk.Common.Store.Segment segment, int pFeature) :
+        base(store, segment, pFeature)
     {
 
     }
@@ -62,9 +63,9 @@ internal class StoredRelation : StoredFeature, IRelation
     /// <summary>
     /// Resolves the absolute pointer to a relation's member table from its record.
     /// </summary>
-    public static int BodyPointer(NioBuffer buf, int ptr)
+    public static int BodyPointer(NioBuffer buf, int pFeature)
     {
-        int ppMembers = ptr + 12;
+        int ppMembers = pFeature + 12;
         return ppMembers + buf.GetInt(ppMembers);
     }
 
@@ -93,11 +94,11 @@ internal class StoredRelation : StoredFeature, IRelation
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredRelation.iterator()</c>.</remarks>
     public override IEnumerator<IFeature> GetEnumerator()
     {
-        int ppMembers = ptr + 12;
+        int ppMembers = pFeature + 12;
         int pMembers = ppMembers + buf.GetInt(ppMembers);
         if (IsEmpty(pMembers))
             return Enumerable.Empty<IFeature>().GetEnumerator();
-        return new MemberIterator(store, buf, pMembers, TypeBits.ALL, Matcher.ALL, null);
+        return new MemberIterator(store, segment, pMembers, TypeBits.ALL, Matcher.ALL, null);
     }
 
     /// <summary>
@@ -107,11 +108,11 @@ internal class StoredRelation : StoredFeature, IRelation
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredRelation.iterator(int, Matcher)</c>.</remarks>
     public IEnumerator<IFeature> GetEnumerator(int types, Matcher matcher)
     {
-        int ppMembers = ptr + 12;
+        int ppMembers = pFeature + 12;
         int pMembers = ppMembers + buf.GetInt(ppMembers);
         if (IsEmpty(pMembers))
             return Enumerable.Empty<IFeature>().GetEnumerator();
-        return new MemberIterator(store, buf, pMembers, types, matcher, null);
+        return new MemberIterator(store, segment, pMembers, types, matcher, null);
     }
 
     /// <summary>
@@ -216,11 +217,11 @@ internal class StoredRelation : StoredFeature, IRelation
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredRelation.members(int, Matcher, Filter)</c>.</remarks>
     public IFeatureQuery Members(int types, Matcher matcher, IFilter? filter)
     {
-        int ppMembers = ptr + 12;
+        int ppMembers = pFeature + 12;
         int pMembers = ppMembers + buf.GetInt(ppMembers);
         if (IsEmpty(pMembers))
             return EmptyView.Any;
-        return new MemberView(store, buf, pMembers, types, matcher, filter);
+        return new MemberView(store, segment, pMembers, types, matcher, filter);
     }
 
     /// <summary>

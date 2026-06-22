@@ -5,6 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+using GeoDesk.Common.Store;
 using GeoDesk.Common.Util;
 using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Store;
@@ -33,7 +34,7 @@ internal class MemberIterator : FeatureIterator
     const int MfWideTex = 16;
 
     readonly FeatureStore _store;
-    readonly NioBuffer _buf;
+    readonly Segment _segment;
     readonly int _types;
     readonly Matcher _matcher;
     readonly IFilter? _filter;
@@ -43,7 +44,7 @@ internal class MemberIterator : FeatureIterator
     string? _roleString;
     int _tip = FeatureConstants.START_TIP;
     int _tex = FeatureConstants.MEMBERS_START_TEX;
-    NioBuffer _foreignBuf;
+    Segment? _foreignSegment;
     int _pExports;
     int _member;
     IFeature? _memberFeature;
@@ -54,10 +55,10 @@ internal class MemberIterator : FeatureIterator
     /// supplied matcher and optional filter, and pre-fetches the first member.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.MemberIterator(FeatureStore, ByteBuffer, int, int, Matcher, Filter)</c>.</remarks>
-    public MemberIterator(FeatureStore store, NioBuffer buf, int pTable, int types, Matcher matcher, IFilter? filter)
+    public MemberIterator(FeatureStore store, Segment segment, int pTable, int types, Matcher matcher, IFilter? filter)
     {
         _store = store;
-        _buf = buf;
+        _segment = segment;
         _pCurrent = pTable;
         _types = types;
         _matcher = matcher;
@@ -76,6 +77,7 @@ internal class MemberIterator : FeatureIterator
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.MemberIterator.fetchNext()</c>.</remarks>
     int FetchNext()
     {
+        var buf = new NioBuffer(_segment.Memory);
         for (; ; )
         {
             var p = _pCurrent;
@@ -84,7 +86,7 @@ internal class MemberIterator : FeatureIterator
                 _member = 0;
                 return 0;
             }
-            _member = _buf.GetInt(p);
+            _member = buf.GetInt(p);
             p += 4;
             if ((_member & MfForeign) != 0)
             {
@@ -97,11 +99,11 @@ internal class MemberIterator : FeatureIterator
                 {
                     // TODO: test wide tip delta
                     _pExports = -1;
-                    int tipDelta = _buf.GetShort(p);
+                    int tipDelta = buf.GetShort(p);
                     if ((tipDelta & 1) != 0)
                     {
                         // wide TIP delta
-                        tipDelta = _buf.GetInt(p);
+                        tipDelta = buf.GetInt(p);
                         p += 2;
                     }
                     tipDelta >>= 1;     // signed
@@ -112,7 +114,7 @@ internal class MemberIterator : FeatureIterator
             }
             if ((_member & MfDifferentRole) != 0)
             {
-                int rawRole = _buf.GetChar(p);
+                int rawRole = buf.GetChar(p);
                 if ((rawRole & 1) != 0)
                 {
                     // common role
@@ -122,9 +124,9 @@ internal class MemberIterator : FeatureIterator
                 }
                 else
                 {
-                    rawRole = _buf.GetInt(p);
+                    rawRole = buf.GetInt(p);
                     _role = -1;
-                    _roleString = Bytes.ReadString(_buf, p + (rawRole >> 1)); // signed
+                    _roleString = Bytes.ReadString(buf, p + (rawRole >> 1)); // signed
                     p += 4;
                 }
                 _currentMatcher = _matcher.AcceptRole(_role, _roleString);
@@ -151,7 +153,7 @@ internal class MemberIterator : FeatureIterator
                 _memberFeature = null;
                 return;
             }
-            NioBuffer featureBuf;
+            Segment featureSegment;
             int pFeature;
             if ((_member & MfForeign) != 0)
             {
@@ -160,23 +162,24 @@ internal class MemberIterator : FeatureIterator
                     var entry = _store.TileIndexEntry(_tip);
                     if (!FeatureStore.IsTileLoadedAndCurrent(entry)) throw new MissingTileException(_tip);
                     var tilePage = FeatureStore.PageFromEntry(entry);
-                    _foreignBuf = new NioBuffer(_store.SegmentOfPage(tilePage).Memory);
+                    _foreignSegment = _store.SegmentOfPage(tilePage);
                     var ppExports = _store.OffsetOfPage(tilePage) + 24;
-                    _pExports = ppExports + _foreignBuf.GetInt(ppExports);
+                    _pExports = ppExports + new NioBuffer(_foreignSegment.Memory).GetInt(ppExports);
                 }
-                featureBuf = _foreignBuf;
+                var foreignBuf = new NioBuffer(_foreignSegment!.Memory);
+                featureSegment = _foreignSegment!;
                 var ppExported = _pExports + (_tex << 2);
-                pFeature = ppExported + _foreignBuf.GetInt(ppExported);
+                pFeature = ppExported + foreignBuf.GetInt(ppExported);
             }
             else
             {
-                featureBuf = _buf;
+                featureSegment = _segment;
                 pFeature = (int)((uint)_pCurrent & 0xffff_fffc) + ((_member >> 3) << 2);
             }
             _pCurrent = pNext;
-            if (_currentMatcher!.AcceptTyped(_types, featureBuf, pFeature))
+            if (_currentMatcher!.AcceptTyped(_types, featureSegment, pFeature))
             {
-                var f = _store.GetFeature(featureBuf, pFeature);
+                var f = _store.GetFeature(featureSegment, pFeature);
                 // TODO: allow any negative instead of -1?
                 f.SetRole(_role == -1 ? _roleString : _store.StringFromCode(_role));
                 _memberFeature = f;

@@ -5,7 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-using NioBuffer = GeoDesk.Buffers.NioBufferReader;
+using GeoDesk.Buffers;
+using GeoDesk.Common.Store;
 
 namespace GeoDesk.Feature.Match;
 
@@ -17,8 +18,9 @@ namespace GeoDesk.Feature.Match;
 internal class IdMatcher : Matcher
 {
 
-    readonly long _idBits;
     const long TypeIdMask = unchecked((long)0xffff_ffff_ffff_f018UL);
+
+    readonly long _idBits;
 
     /// <summary>
     /// Creates a matcher for the feature with the given type code and id, packing them into the bit
@@ -33,12 +35,12 @@ internal class IdMatcher : Matcher
     }
 
     /// <summary>
-    /// Accepts the feature whose header at <paramref name="pos"/> matches the target type and id bits.
+    /// Accepts the feature whose header at <paramref name="pFeature"/> matches the target type and id bits.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.IdMatcher.accept(ByteBuffer, int)</c>.</remarks>
-    public override bool Accept(NioBuffer buf, int pos)
+    public override bool Accept(Segment segment, int pFeature)
     {
-        return (buf.GetLong(pos) & TypeIdMask) == _idBits;
+        return (segment.Memory.Span.GetLongLE(pFeature) & TypeIdMask) == _idBits;
     }
 
 }

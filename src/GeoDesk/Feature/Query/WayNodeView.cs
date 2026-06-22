@@ -9,6 +9,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
+using GeoDesk.Common.Store;
 using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Store;
 using GeoDesk.Geom;
@@ -35,8 +36,8 @@ internal class WayNodeView : TableView
     /// nodes with no additional filter.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.WayNodeView(FeatureStore, ByteBuffer, int)</c>.</remarks>
-    public WayNodeView(FeatureStore store, NioBuffer buf, int ptr)
-        : this(store, buf, ptr, TypeBits.NODES, Matcher.ALL, null)
+    public WayNodeView(FeatureStore store, Segment segment, int pTable)
+        : this(store, segment, pTable, TypeBits.NODES, Matcher.ALL, null)
     {
     }
 
@@ -46,10 +47,10 @@ internal class WayNodeView : TableView
     /// included only when the matcher imposes no constraint.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.WayNodeView(FeatureStore, ByteBuffer, int, int, Matcher, Filter)</c>.</remarks>
-    public WayNodeView(FeatureStore store, NioBuffer buf, int ptr, int types, Matcher matcher, IFilter? filter)
-        : base(store, buf, ptr, types, matcher, filter)
+    public WayNodeView(FeatureStore store, Segment segment, int pTable, int types, Matcher matcher, IFilter? filter)
+        : base(store, segment, pTable, types, matcher, filter)
     {
-        _flags = (buf.Get(ptr) & 0xff) | ((matcher == Matcher.ALL) ? IncludeGeometryNodes : 0);
+        _flags = (buf.Get(pTable) & 0xff) | ((matcher == Matcher.ALL) ? IncludeGeometryNodes : 0);
     }
 
     /// <summary>
@@ -59,7 +60,7 @@ internal class WayNodeView : TableView
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.WayNodeView.newWith(int, Matcher, Filter)</c>.</remarks>
     internal override IFeatureQuery NewWith(int types, Matcher matcher, IFilter? filter)
     {
-        return new WayNodeView(store, buf, ptr, types, matcher, filter);
+        return new WayNodeView(store, segment, pTable, types, matcher, filter);
     }
 
     /// <summary>
@@ -69,7 +70,7 @@ internal class WayNodeView : TableView
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.WayNodeView.bodyPtr()</c>.</remarks>
     int BodyPtr()
     {
-        var ppBody = ptr + 12;
+        var ppBody = pTable + 12;
         return buf.GetInt(ppBody) + ppBody;
     }
 
@@ -81,7 +82,7 @@ internal class WayNodeView : TableView
     public override IEnumerator<IFeature> GetEnumerator()
     {
         if ((_flags & IncludeGeometryNodes) == 0)
-            return new StoredWay.Iter(store, buf, BodyPtr() - 4 - (_flags & FeatureFlags.RELATION_MEMBER_FLAG), matcher);
+            return new StoredWay.Iter(store, segment, BodyPtr() - 4 - (_flags & FeatureFlags.RELATION_MEMBER_FLAG), matcher);
 
         return new AllNodesIter(this, BodyPtr());
     }
@@ -110,12 +111,12 @@ internal class WayNodeView : TableView
         /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.feature.query.WayNodeView.AllNodesIter(int)</c>.</remarks>
         public AllNodesIter(WayNodeView owner, int pBody)
-            : base(owner.buf, pBody, owner.buf.GetInt(owner.ptr - 16), owner.buf.GetInt(owner.ptr - 12), owner._flags)
+            : base(owner.buf, pBody, owner.buf.GetInt(owner.pTable - 16), owner.buf.GetInt(owner.pTable - 12), owner._flags)
         {
             _owner = owner;
             if ((owner._flags & FeatureFlags.WAYNODE_FLAG) != 0)
             {
-                _featureNodeIter = new StoredWay.Iter(owner.store, owner.buf, pBody - 4 - (owner._flags & FeatureFlags.RELATION_MEMBER_FLAG), Matcher.ALL);
+                _featureNodeIter = new StoredWay.Iter(owner.store, owner.segment, pBody - 4 - (owner._flags & FeatureFlags.RELATION_MEMBER_FLAG), Matcher.ALL);
                 // TODO: filters must apply to anonymous nodes as well!
                 if (_featureNodeIter.HasNext())
                     _nextFeatureNode = _featureNodeIter.Next();

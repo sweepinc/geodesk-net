@@ -5,7 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-using NioBuffer = GeoDesk.Buffers.NioBufferReader;
+using GeoDesk.Buffers;
+using GeoDesk.Common.Store;
 
 namespace GeoDesk.Feature.Match;
 
@@ -41,11 +42,11 @@ internal class Matcher
     /// <summary>
     /// Checks whether a feature meets the conditions of this Matcher.
     /// </summary>
-    /// <param name="buf">the Buffer of the feature</param>
-    /// <param name="pos">the anchor position of the feature in the Buffer</param>
+    /// <param name="segment">the mapped segment containing the feature</param>
+    /// <param name="pFeature">the anchor position of the feature within the segment</param>
     /// <returns><c>true</c> if the feature matches the filter condition</returns>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.Matcher.accept(ByteBuffer, int)</c>.</remarks>
-    public virtual bool Accept(NioBuffer buf, int pos)
+    public virtual bool Accept(Segment segment, int pFeature)
     {
         return true;
     }
@@ -54,13 +55,13 @@ internal class Matcher
     /// Accepts this feature only if its type matches the given type mask.
     /// </summary>
     /// <param name="types">the type mask to match (must not be 0)</param>
-    /// <param name="buf">the Buffer of the feature</param>
-    /// <param name="pos">the anchor position of the feature in the Buffer</param>
+    /// <param name="segment">the mapped segment containing the feature</param>
+    /// <param name="pFeature">the anchor position of the feature within the segment</param>
     /// <returns><c>true</c> if the feature matches the filter condition</returns>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.Matcher.acceptTyped(int, ByteBuffer, int)</c>.</remarks>
-    public virtual bool AcceptTyped(int types, NioBuffer buf, int pos)
+    public virtual bool AcceptTyped(int types, Segment segment, int pFeature)
     {
-        return (types & (1 << ((sbyte)buf.Get(pos) >> 1))) != 0;
+        return (types & (1 << ((sbyte)segment.Memory.Span[pFeature] >> 1))) != 0;
     }
 
     /// <summary>

@@ -10,6 +10,7 @@ using System.Linq;
 using System.Numerics;
 
 using GeoDesk.Common.Pbf;
+using GeoDesk.Common.Store;
 using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Query;
 using GeoDesk.Geom;
@@ -34,8 +35,8 @@ internal class StoredWay : StoredFeature, IWay
     /// way's record.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay(FeatureStore, ByteBuffer, int)</c>.</remarks>
-    public StoredWay(FeatureStore store, NioBuffer buf, int ptr) :
-        base(store, buf, ptr)
+    public StoredWay(FeatureStore store, Segment segment, int pFeature) :
+        base(store, segment, pFeature)
     {
 
     }
@@ -149,7 +150,7 @@ internal class StoredWay : StoredFeature, IWay
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.toXY()</c>.</remarks>
     public override int[] ToXY()
     {
-        int flags = buf.GetInt(ptr);
+        int flags = buf.GetInt(pFeature);
         XYIterator iter = IterXY(flags);
         int[] coords = new int[(iter.remaining + 1) * 2];
         for (int i = 0; i < coords.Length; i += 2)
@@ -180,10 +181,10 @@ internal class StoredWay : StoredFeature, IWay
     /// </summary>
     public XYIterator IterXY(int flags)
     {
-        int ppBody = ptr + 12;
+        int ppBody = pFeature + 12;
         int pBody = buf.GetInt(ppBody) + ppBody;
-        int minX = buf.GetInt(ptr - 16);
-        int minY = buf.GetInt(ptr - 12);
+        int minX = buf.GetInt(pFeature - 16);
+        int minY = buf.GetInt(pFeature - 12);
         return new XYIterator(buf, pBody, minX, minY, flags);
     }
 
@@ -193,7 +194,7 @@ internal class StoredWay : StoredFeature, IWay
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.iterXY()</c>.</remarks>
     public XYIterator IterXY()
     {
-        return IterXY(buf.GetInt(ptr));
+        return IterXY(buf.GetInt(pFeature));
     }
 
     /// <summary>
@@ -231,7 +232,7 @@ internal class StoredWay : StoredFeature, IWay
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.nodes()</c>.</remarks>
     public IFeatureQuery Nodes()
     {
-        return new WayNodeView(store, buf, ptr);
+        return new WayNodeView(store, segment, pFeature);
     }
 
     /// <summary>
@@ -241,12 +242,12 @@ internal class StoredWay : StoredFeature, IWay
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.nodes(String)</c>.</remarks>
     public IFeatureQuery Nodes(string query)
     {
-        if ((buf.Get(ptr) & FeatureFlags.WAYNODE_FLAG) == 0)
+        if ((buf.Get(pFeature) & FeatureFlags.WAYNODE_FLAG) == 0)
             return EmptyView.Any;
         Matcher matcher = store.GetMatcher(query);
         if ((matcher.AcceptedTypes & TypeBits.NODES) == 0)
             return EmptyView.Any;
-        return new WayNodeView(store, buf, ptr, TypeBits.NODES, matcher, null);
+        return new WayNodeView(store, segment, pFeature, TypeBits.NODES, matcher, null);
     }
 
     /// <summary>
@@ -255,12 +256,12 @@ internal class StoredWay : StoredFeature, IWay
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.iterator()</c>.</remarks>
     public override IEnumerator<IFeature> GetEnumerator()
     {
-        int flags = buf.GetInt(ptr);
+        int flags = buf.GetInt(pFeature);
         if ((flags & FeatureFlags.WAYNODE_FLAG) == 0)
             return Enumerable.Empty<IFeature>().GetEnumerator();
-        int ppBody = ptr + 12;
+        int ppBody = pFeature + 12;
         int pBody = buf.GetInt(ppBody) + ppBody;
-        return new Iter(store, buf, pBody - 4 -
+        return new Iter(store, segment, pBody - 4 -
             (flags & FeatureFlags.RELATION_MEMBER_FLAG), Matcher.ALL);
     }
 
@@ -271,11 +272,11 @@ internal class StoredWay : StoredFeature, IWay
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.fastFeatureNodeIterator(Matcher)</c>.</remarks>
     internal FeatureIterator FastFeatureNodeIterator(Matcher matcher)
     {
-        int flags = buf.GetInt(ptr);
+        int flags = buf.GetInt(pFeature);
         System.Diagnostics.Debug.Assert((flags & FeatureFlags.WAYNODE_FLAG) != 0);
-        int ppBody = ptr + 12;
+        int ppBody = pFeature + 12;
         int pBody = buf.GetInt(ppBody) + ppBody;
-        return new Iter(store, buf, pBody - 4 -
+        return new Iter(store, segment, pBody - 4 -
             (flags & FeatureFlags.RELATION_MEMBER_FLAG), matcher);
     }
 
@@ -296,13 +297,13 @@ internal class StoredWay : StoredFeature, IWay
         const int NfWideTex = 8;
 
         readonly FeatureStore _store;
-        readonly NioBuffer _buf;
+        readonly Segment _segment;
         readonly Matcher _filter;
         int _pNext;
         IFeature? _featureNode;
         int _tip = FeatureConstants.START_TIP;
         int _tex = FeatureConstants.WAYNODES_START_TEX;
-        NioBuffer _foreignBuf;
+        Segment? _foreignSegment;
         int _pExports;
 
         /// <summary>
@@ -310,10 +311,10 @@ internal class StoredWay : StoredFeature, IWay
         /// position and pre-fetches the first matching feature-node.
         /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.Iter(FeatureStore, ByteBuffer, int, Matcher)</c>.</remarks>
-        public Iter(FeatureStore store, NioBuffer buf, int pFirst, Matcher filter)
+        public Iter(FeatureStore store, Segment segment, int pFirst, Matcher filter)
         {
             _store = store;
-            _buf = buf;
+            _segment = segment;
             _pNext = pFirst;
             _filter = filter;
             FetchNext();
@@ -327,11 +328,12 @@ internal class StoredWay : StoredFeature, IWay
         /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.Iter.fetchNext()</c>.</remarks>
         void FetchNext()
         {
+            var buf = new NioBuffer(_segment.Memory);
             while (_pNext != 0)
             {
-                NioBuffer nodeBuf;
+                Segment nodeSegment;
                 int pNode;
-                var node = _buf.GetInt(_pNext);
+                var node = buf.GetInt(_pNext);
                 if ((node & (NfForeign << 16)) != 0)
                 {
                     if ((node & (NfWideTex << 16)) == 0)
@@ -350,12 +352,12 @@ internal class StoredWay : StoredFeature, IWay
                     {
                         // TODO: test wide tip delta
                         _pNext -= 2;
-                        int tipDelta = _buf.GetShort(_pNext);
+                        int tipDelta = buf.GetShort(_pNext);
                         if ((tipDelta & 1) != 0)
                         {
                             // wide TIP delta
                             _pNext -= 2;
-                            tipDelta = (_buf.GetShort(_pNext) << 15) | ((tipDelta >> 1) & 0x7fff);
+                            tipDelta = (buf.GetShort(_pNext) << 15) | ((tipDelta >> 1) & 0x7fff);
                         }
                         else
                         {
@@ -368,28 +370,29 @@ internal class StoredWay : StoredFeature, IWay
                             throw new MissingTileException(_tip);
 
                         var tilePage = FeatureStore.PageFromEntry(entry);
-                        _foreignBuf = new NioBuffer(_store.SegmentOfPage(tilePage).Memory);
+                        _foreignSegment = _store.SegmentOfPage(tilePage);
 
                         var ppExports = _store.OffsetOfPage(tilePage) + 24;
-                        _pExports = ppExports + _foreignBuf.GetInt(ppExports);
+                        _pExports = ppExports + new NioBuffer(_foreignSegment.Memory).GetInt(ppExports);
                     }
 
-                    nodeBuf = _foreignBuf;
+                    var foreignBuf = new NioBuffer(_foreignSegment!.Memory);
+                    nodeSegment = _foreignSegment!;
                     var ppExported = _pExports + (_tex << 2);
-                    pNode = ppExported + _foreignBuf.GetInt(ppExported);
+                    pNode = ppExported + foreignBuf.GetInt(ppExported);
                 }
                 else
                 {
                     node = (int)BitOperations.RotateLeft((uint)node, 16);
-                    nodeBuf = _buf;
+                    nodeSegment = _segment;
                     pNode = _pNext + (node >> 1) + 2;
                 }
 
                 _pNext -= 4;
                 _pNext &= -1 + (node & NfLast);     // set _pNext to 0 if this is the last node
-                if (_filter.Accept(nodeBuf, pNode))
+                if (_filter.Accept(nodeSegment, pNode))
                 {
-                    _featureNode = new StoredNode(_store, nodeBuf, pNode);
+                    _featureNode = new StoredNode(_store, nodeSegment, pNode);
                     return;
                 }
             }

@@ -5,6 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+using GeoDesk.Common.Store;
 using GeoDesk.Feature.Filters;
 using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Store;
@@ -20,20 +21,26 @@ namespace GeoDesk.Feature.Query;
 internal abstract class TableView : View
 {
 
-    protected readonly NioBuffer buf;
-    protected readonly int ptr;
+    protected readonly Segment segment;
+    protected readonly int pTable;
 
     /// <summary>
     /// Creates a table view over the table at the given pointer, constrained by the
     /// supplied feature types, matcher, and optional filter.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.TableView(FeatureStore, ByteBuffer, int, int, Matcher, Filter)</c>.</remarks>
-    public TableView(FeatureStore store, NioBuffer buf, int ptr, int types, Matcher matcher, IFilter? filter)
+    public TableView(FeatureStore store, Segment segment, int pTable, int types, Matcher matcher, IFilter? filter)
         : base(store, types, matcher, filter)
     {
-        this.buf = buf;
-        this.ptr = ptr;
+        this.segment = segment;
+        this.pTable = pTable;
     }
+
+    /// <summary>
+    /// A reader over the table's segment, derived on demand. <see cref="NioBuffer"/> is a cheap
+    /// struct, so it is not cached as a field.
+    /// </summary>
+    protected NioBuffer buf => new NioBuffer(segment.Memory);
 
     /// <summary>
     /// Returns a view restricted to the features in this table that intersect the given

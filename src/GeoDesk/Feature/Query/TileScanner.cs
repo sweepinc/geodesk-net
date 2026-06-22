@@ -8,6 +8,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
+using GeoDesk.Common.Store;
 using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Store;
 
@@ -30,7 +31,7 @@ internal sealed class TileScanner
 {
 
     readonly FeatureStore _store;
-    readonly NioBuffer _buf;
+    readonly Segment _segment;
     readonly int _pTile;
     readonly int _bboxFlags;
     readonly int _types;
@@ -52,7 +53,7 @@ internal sealed class TileScanner
     public TileScanner(Query query, int tilePage, int bboxFlags, IFilter? filter)
     {
         _store = query.Store;
-        _buf = new NioBuffer(_store.SegmentOfPage(tilePage).Memory);
+        _segment = _store.SegmentOfPage(tilePage);
         _pTile = _store.OffsetOfPage(tilePage);
         _bboxFlags = bboxFlags;
         _types = query.Types;
@@ -101,15 +102,16 @@ internal sealed class TileScanner
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.TileQueryTask.searchRTree(int, Matcher, RTreeQueryTask)</c>.</remarks>
     void ForkBuckets(List<Task<QueryResults>> branches, int ppTree, bool nodes)
     {
-        var p = _buf.GetInt(ppTree);
+        var buf = new NioBuffer(_segment.Memory);
+        var p = buf.GetInt(ppTree);
         if (p == 0)
             return;
 
         p = ppTree + p;
         for (; ; )
         {
-            var last = _buf.GetInt(p) & 1;
-            var keyBits = _buf.GetInt(p + 4);
+            var last = buf.GetInt(p) & 1;
+            var keyBits = buf.GetInt(p + 4);
             if (_matcher.AcceptIndex(keyBits))
             {
                 var branch = p; // capture a copy — p advances in this loop
@@ -129,8 +131,8 @@ internal sealed class TileScanner
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.RTreeQueryTask.exec()</c>.</remarks>
     QueryResults SearchBranch(int p, bool nodes)
     {
-        var results = new QueryResults(_buf);
-        var ptr = _buf.GetInt(p);
+        var results = new QueryResults(_segment);
+        var ptr = new NioBuffer(_segment.Memory).GetInt(p);
         SearchTrunk(results, p + (int)((uint)ptr & 0xffff_fffc), nodes);
         return results;
     }
@@ -141,7 +143,8 @@ internal sealed class TileScanner
     /// </summary>
     bool IntersectsQueryBounds(int pBounds)
     {
-        return (_buf.GetInt(pBounds) > _maxX || _buf.GetInt(pBounds + 4) > _maxY || _buf.GetInt(pBounds + 8) < _minX || _buf.GetInt(pBounds + 12) < _minY) == false;
+        var buf = new NioBuffer(_segment.Memory);
+        return (buf.GetInt(pBounds) > _maxX || buf.GetInt(pBounds + 4) > _maxY || buf.GetInt(pBounds + 8) < _minX || buf.GetInt(pBounds + 12) < _minY) == false;
     }
 
     /// <summary>
@@ -151,9 +154,10 @@ internal sealed class TileScanner
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.RTreeQueryTask.searchTrunk(int)</c>.</remarks>
     void SearchTrunk(QueryResults results, int p, bool nodes)
     {
+        var buf = new NioBuffer(_segment.Memory);
         for (; ; )
         {
-            var ptr = _buf.GetInt(p);
+            var ptr = buf.GetInt(p);
             var last = ptr & 1;
 
             if (IntersectsQueryBounds(p + 4))
@@ -185,9 +189,10 @@ internal sealed class TileScanner
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.RTreeQueryTask.searchLeaf(int)</c>.</remarks>
     void SearchLeaf(QueryResults results, int p)
     {
+        var buf = new NioBuffer(_segment.Memory);
         for (; ; )
         {
-            var flags = _buf.GetInt(p + 16);
+            var flags = buf.GetInt(p + 16);
             if ((flags & _bboxFlags) == 0)
             {
                 if (IntersectsQueryBounds(p))
@@ -195,8 +200,8 @@ internal sealed class TileScanner
                     if (((1 << (flags >> 1)) & _types) != 0)
                     {
                         var pFeature = p + 16;
-                        if (_matcher.Accept(_buf, pFeature))
-                            if (_filter == null || _filter.Accept(_store.GetFeature(_buf, pFeature)))
+                        if (_matcher.Accept(_segment, pFeature))
+                            if (_filter == null || _filter.Accept(_store.GetFeature(_segment, pFeature)))
                                 results.Add(pFeature | (int)(((uint)flags >> 3) & 3));
                     }
                 }
@@ -215,17 +220,18 @@ internal sealed class TileScanner
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.RTreeQueryTask.Nodes.searchLeaf(int)</c>.</remarks>
     void SearchLeafNodes(QueryResults results, int p)
     {
+        var buf = new NioBuffer(_segment.Memory);
         for (; ; )
         {
-            var flags = _buf.GetInt(p + 8);
-            var x = _buf.GetInt(p);
-            var y = _buf.GetInt(p + 4);
+            var flags = buf.GetInt(p + 8);
+            var x = buf.GetInt(p);
+            var y = buf.GetInt(p + 4);
             if (!(x > _maxX || y > _maxY || x < _minX || y < _minY))
             {
                 var pFeature = p + 8;
-                if (_matcher.Accept(_buf, pFeature))
+                if (_matcher.Accept(_segment, pFeature))
                 {
-                    if (_filter == null || _filter.Accept(new StoredNode(_store, _buf, pFeature)))
+                    if (_filter == null || _filter.Accept(new StoredNode(_store, _segment, pFeature)))
                         results.Add(pFeature);
                 }
             }

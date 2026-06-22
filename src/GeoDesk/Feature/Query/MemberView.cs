@@ -6,6 +6,7 @@
  */
 
 using System.Collections.Generic;
+using GeoDesk.Common.Store;
 using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Store;
 using NioBuffer = GeoDesk.Buffers.NioBufferReader;
@@ -25,8 +26,8 @@ internal class MemberView : TableView
     /// constrained by the supplied feature types, matcher, and optional filter.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.MemberView(FeatureStore, ByteBuffer, int, int, Matcher, Filter)</c>.</remarks>
-    public MemberView(FeatureStore store, NioBuffer buf, int pTable, int types, Matcher matcher, IFilter? filter)
-        : base(store, buf, pTable, types, matcher, filter)
+    public MemberView(FeatureStore store, Segment segment, int pTable, int types, Matcher matcher, IFilter? filter)
+        : base(store, segment, pTable, types, matcher, filter)
     {
     }
 
@@ -37,7 +38,7 @@ internal class MemberView : TableView
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.MemberView.newWith(int, Matcher, Filter)</c>.</remarks>
     internal override IFeatureQuery NewWith(int types, Matcher matcher, IFilter? filter)
     {
-        return new MemberView(store, buf, ptr, types, matcher, filter);
+        return new MemberView(store, segment, pTable, types, matcher, filter);
     }
 
     /// <summary>
@@ -46,7 +47,7 @@ internal class MemberView : TableView
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.MemberView.iterator()</c>.</remarks>
     public override IEnumerator<IFeature> GetEnumerator()
     {
-        return new MemberIterator(store, buf, ptr, types, matcher, filter);
+        return new MemberIterator(store, segment, pTable, types, matcher, filter);
     }
 
 }

@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-using NioBuffer = GeoDesk.Buffers.NioBufferReader;
+using GeoDesk.Common.Store;
 
 namespace GeoDesk.Feature.Query;
 
@@ -20,7 +20,7 @@ internal class QueryResults
 
     const int DefaultBucketSize = 256;
 
-    public static readonly QueryResults Empty = new QueryResults(default, 0);
+    public static readonly QueryResults Empty = new QueryResults((Segment?)null, 0);
 
     /// <summary>
     /// Concatenates two result chains, returning the combined chain. An empty input
@@ -36,7 +36,7 @@ internal class QueryResults
         return a;
     }
 
-    internal readonly NioBuffer buf;
+    internal readonly Segment? segment;
     internal int[] pointers;
     internal int size;
     internal QueryResults? next;
@@ -47,9 +47,9 @@ internal class QueryResults
     /// <paramref name="maxSize"/> pointers.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.QueryResults(ByteBuffer, int)</c>.</remarks>
-    public QueryResults(NioBuffer buf, int maxSize)
+    public QueryResults(Segment? segment, int maxSize)
     {
-        this.buf = buf;
+        this.segment = segment;
         pointers = new int[maxSize];
         _last = this;
     }
@@ -59,8 +59,8 @@ internal class QueryResults
     /// bucket capacity.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.QueryResults(ByteBuffer)</c>.</remarks>
-    public QueryResults(NioBuffer buf)
-        : this(buf, DefaultBucketSize)
+    public QueryResults(Segment segment)
+        : this(segment, DefaultBucketSize)
     {
     }
 
@@ -69,9 +69,9 @@ internal class QueryResults
     /// when a full bucket is rolled over into the chain and a fresh array allocated.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.QueryResults(ByteBuffer, int[], int)</c>.</remarks>
-    QueryResults(NioBuffer buf, int[] pointers, int size)
+    QueryResults(Segment? segment, int[] pointers, int size)
     {
-        this.buf = buf;
+        this.segment = segment;
         this.pointers = pointers;
         this.size = size;
         _last = this;
@@ -86,7 +86,7 @@ internal class QueryResults
     {
         if (size == pointers.Length)
         {
-            _last = _last.next = new QueryResults(buf, pointers, size);
+            _last = _last.next = new QueryResults(segment, pointers, size);
             pointers = new int[pointers.Length];
             size = 0;
         }

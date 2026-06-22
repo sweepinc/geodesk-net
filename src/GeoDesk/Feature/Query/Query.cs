@@ -347,23 +347,24 @@ internal class Query : IEnumerator<IFeature>, IAsyncEnumerator<IFeature>, IBound
     /// </summary>
     void BuildFeatureAtCurrentPos()
     {
-        var buf = _currentResults.buf;
+        var segment = _currentResults.segment
+            ?? throw new InvalidOperationException("Query results have no backing segment");
         var pFeature = _currentResults.pointers[_currentPos];
         var type = pFeature & 3;
         pFeature ^= type;
 
         if (type == 1)
         {
-            _nextFeature = new StoredWay(_store, buf, pFeature);
+            _nextFeature = new StoredWay(_store, segment, pFeature);
         }
         else if (type == 0)
         {
-            _nextFeature = new StoredNode(_store, buf, pFeature);
+            _nextFeature = new StoredNode(_store, segment, pFeature);
         }
         else
         {
             System.Diagnostics.Debug.Assert(type == 2);
-            _nextFeature = new StoredRelation(_store, buf, pFeature);
+            _nextFeature = new StoredRelation(_store, segment, pFeature);
         }
     }
 

@@ -8,8 +8,7 @@
 using System.Globalization;
 
 using GeoDesk.Common.Math;
-
-using NioBuffer = GeoDesk.Buffers.NioBufferReader;
+using GeoDesk.Common.Store;
 
 namespace GeoDesk.Feature.Match;
 
@@ -44,11 +43,12 @@ internal abstract class TagMatcher : Matcher
     /// Rejects the feature if its type is not in the accepted set, otherwise runs the tag test.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagMatcher.acceptTyped(int, ByteBuffer, int)</c>.</remarks>
-    public override bool AcceptTyped(int types, NioBuffer buf, int pos)
+    public override bool AcceptTyped(int types, Segment segment, int pFeature)
     {
-        types &= 1 << ((sbyte)buf.Get(pos) >> 1);
-        if ((types & acceptedTypes) == 0) return false;
-        return Accept(buf, pos);
+        types &= 1 << ((sbyte)segment.Memory.Span[pFeature] >> 1);
+        if ((types & acceptedTypes) == 0)
+            return false;
+        return Accept(segment, pFeature);
     }
 
     /// <summary>
@@ -67,8 +67,10 @@ internal abstract class TagMatcher : Matcher
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagMatcher.doubleToString(double)</c>.</remarks>
     protected static string DoubleToString(double d)
     {
-        if (d == (long)d) return ((long)d).ToString(CultureInfo.InvariantCulture);
-        return d.ToString("R", CultureInfo.InvariantCulture);
+        if (d == (long)d)
+            return ((long)d).ToString(CultureInfo.InvariantCulture);
+        else
+            return d.ToString("R", CultureInfo.InvariantCulture);
     }
 
     /// <summary>

@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Globalization;
 
 using GeoDesk.Common.Math;
+using GeoDesk.Common.Store;
 using GeoDesk.Common.Util;
 using GeoDesk.Geom;
 
@@ -29,21 +30,31 @@ internal abstract class StoredFeature : IFeature
 {
 
     protected readonly FeatureStore store;
-    protected readonly NioBuffer buf;
-    protected readonly int ptr;
+    protected readonly Segment segment;
+    protected readonly int pFeature;
     protected string? role;
 
     /// <summary>
-    /// Creates a stored feature backed by the given store, buffer, and pointer to its
-    /// record.
+    /// Creates a stored feature backed by the given store, segment, and pointer to its record.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature(FeatureStore, ByteBuffer, int)</c>.</remarks>
-    public StoredFeature(FeatureStore store, NioBuffer buf, int ptr)
+    public StoredFeature(FeatureStore store, Segment segment, int pFeature)
     {
         this.store = store;
-        this.buf = buf;
-        this.ptr = ptr;
+        this.segment = segment;
+        this.pFeature = pFeature;
     }
+
+    /// <summary>
+    /// The mapped segment that contains this feature's record. This is what the matcher operates on.
+    /// </summary>
+    public Segment Segment => segment;
+
+    /// <summary>
+    /// A reader over this feature's segment for the type-specific byte reads. Derived from the
+    /// <see cref="Segment"/> on demand — <see cref="NioBuffer"/> is a cheap struct, so it is not cached.
+    /// </summary>
+    protected NioBuffer buf => new NioBuffer(segment.Memory);
 
     /// <summary>
     /// The feature store this feature was read from.
@@ -66,22 +77,22 @@ internal abstract class StoredFeature : IFeature
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.pointer()</c>.</remarks>
     public int Pointer()
     {
-        return ptr;
+        return pFeature;
     }
 
     /// <summary>
     /// The OSM identifier of this feature.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.id()</c>.</remarks>
-    public long Id => IdAt(buf, ptr);
+    public long Id => IdAt(buf, pFeature);
 
     /// <summary>
     /// Decodes the OSM identifier from the feature record at the given buffer position.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.id(ByteBuffer, int)</c>.</remarks>
-    public static long IdAt(NioBuffer buf, int ptr)
+    public static long IdAt(NioBuffer buf, int pFeature)
     {
-        return (long)((ulong)buf.GetLong(ptr) >> 12);
+        return (long)((ulong)buf.GetLong(pFeature) >> 12);
     }
 
     /// <summary>
@@ -89,9 +100,9 @@ internal abstract class StoredFeature : IFeature
     /// position.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.typeCode(ByteBuffer, int)</c>.</remarks>
-    public static int TypeCode(NioBuffer buf, int ptr)
+    public static int TypeCode(NioBuffer buf, int pFeature)
     {
-        return (buf.GetInt(ptr) >> 3) & 3;
+        return (buf.GetInt(pFeature) >> 3) & 3;
     }
 
     /// <summary>
@@ -100,7 +111,7 @@ internal abstract class StoredFeature : IFeature
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.flags()</c>.</remarks>
     public int Flags()
     {
-        return buf.GetInt(ptr);
+        return buf.GetInt(pFeature);
     }
 
     /// <summary>
@@ -113,13 +124,13 @@ internal abstract class StoredFeature : IFeature
     /// The representative X coordinate, the midpoint of the feature's bounding box.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.x()</c>.</remarks>
-    public virtual int X => (buf.GetInt(ptr - 16) + buf.GetInt(ptr - 8)) / 2;
+    public virtual int X => (buf.GetInt(pFeature - 16) + buf.GetInt(pFeature - 8)) / 2;
 
     /// <summary>
     /// The representative Y coordinate, the midpoint of the feature's bounding box.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.y()</c>.</remarks>
-    public virtual int Y => (buf.GetInt(ptr - 12) + buf.GetInt(ptr - 4)) / 2;
+    public virtual int Y => (buf.GetInt(pFeature - 12) + buf.GetInt(pFeature - 4)) / 2;
 
     /// <summary>
     /// Two features are equal when they have the same type and id.
@@ -175,7 +186,7 @@ internal abstract class StoredFeature : IFeature
     protected long GetKeyValue(string keyString)
     {
         var key = store.CodeFromString(keyString);
-        var ppTags = ptr + 8;
+        var ppTags = pFeature + 8;
         var pTags = buf.GetInt(ppTags);
         var uncommonKeysFlag = pTags & 1;
         pTags = ppTags + (pTags ^ uncommonKeysFlag);
@@ -435,7 +446,7 @@ internal abstract class StoredFeature : IFeature
     /// True if this feature is an area (a closed way or area relation).
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.isArea()</c>.</remarks>
-    public bool IsArea => (buf.GetInt(ptr) & FeatureFlags.AREA_FLAG) != 0;
+    public bool IsArea => (buf.GetInt(pFeature) & FeatureFlags.AREA_FLAG) != 0;
 
     /// <summary>
     /// The feature's bounding box, read from the four extent words preceding its
@@ -443,8 +454,8 @@ internal abstract class StoredFeature : IFeature
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.bounds()</c>.</remarks>
     public virtual Box Bounds => new Box(
-        buf.GetInt(ptr - 16), buf.GetInt(ptr - 12),
-        buf.GetInt(ptr - 8), buf.GetInt(ptr - 4));
+        buf.GetInt(pFeature - 16), buf.GetInt(pFeature - 12),
+        buf.GetInt(pFeature - 8), buf.GetInt(pFeature - 4));
 
     /// <summary>
     /// The role this feature plays within a relation, or null when not viewed as a
@@ -490,7 +501,7 @@ internal abstract class StoredFeature : IFeature
             if (!IsArea)
                 return 0;
 
-            var avgY = (buf.GetInt(ptr - 12) + buf.GetInt(ptr - 4)) / 2;
+            var avgY = (buf.GetInt(pFeature - 12) + buf.GetInt(pFeature - 4)) / 2;
             var scale = Mercator.MetersAtY(avgY);
             return ToGeometry().Area * scale * scale;
         }
@@ -517,12 +528,12 @@ internal abstract class StoredFeature : IFeature
     // --- Internal hooks used by TagCollection / TagCollection.Enumerator to walk and decode tags. ---
 
     /// <summary>The buffer pointer to this feature's record.</summary>
-    internal int Ptr => ptr;
+    internal int Ptr => pFeature;
 
     /// <summary>True if this feature has no tags (O(1) empty-table-marker check).</summary>
     internal bool HasNoTags()
     {
-        var ppTags = ptr + 8;
+        var ppTags = pFeature + 8;
         var rawTagsPtr = buf.GetInt(ppTags);
         var uncommonKeysFlag = rawTagsPtr & 1;
         var pTagTable = (rawTagsPtr ^ uncommonKeysFlag) + ppTags;
@@ -548,7 +559,7 @@ internal abstract class StoredFeature : IFeature
     /// True if this feature is a member of at least one relation.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.belongsToRelation()</c>.</remarks>
-    public bool BelongsToRelation => (buf.GetInt(ptr) & FeatureFlags.RELATION_MEMBER_FLAG) != 0;
+    public bool BelongsToRelation => (buf.GetInt(pFeature) & FeatureFlags.RELATION_MEMBER_FLAG) != 0;
 
     /// <summary>
     /// Returns a query over the relations this feature belongs to, or an empty view
@@ -558,7 +569,7 @@ internal abstract class StoredFeature : IFeature
     public virtual IFeatureQuery Parents()
     {
         return BelongsToRelation ?
-            new Query.ParentRelationView(store, buf, GetRelationTablePtr()) : Query.EmptyView.Any;
+            new Query.ParentRelationView(store, segment, GetRelationTablePtr()) : Query.EmptyView.Any;
     }
 
     /// <summary>
@@ -575,7 +586,7 @@ internal abstract class StoredFeature : IFeature
             {
                 // PORT: faithful to the Java source, which constructs this view but does
                 // not return it (the method always falls through to EmptyView.Any).
-                _ = new Query.ParentRelationView(store, buf, GetRelationTablePtr(),
+                _ = new Query.ParentRelationView(store, segment, GetRelationTablePtr(),
                     matcher.                    AcceptedTypes, matcher, null);
             }
         }
@@ -586,7 +597,7 @@ internal abstract class StoredFeature : IFeature
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.getRelationTablePtr()</c>.</remarks>
     public virtual int GetRelationTablePtr()
     {
-        var ppBody = ptr + 12;
+        var ppBody = pFeature + 12;
         var pBody = buf.GetInt(ppBody) + ppBody;
         var ppRelTable = pBody - 4;
         return buf.GetInt(ppRelTable) + ppRelTable;
@@ -598,7 +609,7 @@ internal abstract class StoredFeature : IFeature
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredFeature.matches(Matcher)</c>.</remarks>
     public bool Matches(Match.Matcher filter)
     {
-        return filter.Accept(buf, ptr);
+        return filter.Accept(segment, pFeature);
     }
 
     /// <summary>

@@ -6,6 +6,7 @@
  */
 
 using System.Collections.Generic;
+using GeoDesk.Common.Store;
 using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Store;
 using NioBuffer = GeoDesk.Buffers.NioBufferReader;
@@ -26,9 +27,9 @@ internal class NodeParentView : ParentRelationView
     /// by the supplied types, matcher, and optional filter.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.NodeParentView(FeatureStore, ByteBuffer, StoredNode, int, int, Matcher, Filter)</c>.</remarks>
-    public NodeParentView(FeatureStore store, NioBuffer buf, StoredNode node, int pRelations, int types,
+    public NodeParentView(FeatureStore store, Segment segment, StoredNode node, int pRelations, int types,
         Matcher matcher, IFilter? filter)
-        : base(store, buf, pRelations, types, matcher, filter)
+        : base(store, segment, pRelations, types, matcher, filter)
     {
         this.node = node;
     }
@@ -48,9 +49,9 @@ internal class NodeParentView : ParentRelationView
         else if ((types & TypeBits.WAYS) == 0)
         {
             // view has been restricted to relations only
-            return new ParentRelationView(store, buf, ptr, types, matcher, filter);
+            return new ParentRelationView(store, segment, pTable, types, matcher, filter);
         }
-        return new NodeParentView(store, buf, node, ptr, types, matcher, filter);
+        return new NodeParentView(store, segment, node, pTable, types, matcher, filter);
     }
 
     /// <summary>

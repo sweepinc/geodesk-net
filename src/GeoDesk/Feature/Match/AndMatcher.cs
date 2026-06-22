@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-using NioBuffer = GeoDesk.Buffers.NioBufferReader;
+using GeoDesk.Common.Store;
 
 namespace GeoDesk.Feature.Match;
 
@@ -35,18 +35,18 @@ internal class AndMatcher : Matcher
     /// Accepts the feature only if both child matchers accept it.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.AndMatcher.accept(ByteBuffer, int)</c>.</remarks>
-    public override bool Accept(NioBuffer buf, int pos)
+    public override bool Accept(Segment segment, int pFeature)
     {
-        return _a.Accept(buf, pos) && _b.Accept(buf, pos);
+        return _a.Accept(segment, pFeature) && _b.Accept(segment, pFeature);
     }
 
     /// <summary>
     /// Accepts the typed feature only if both child matchers accept it.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.AndMatcher.acceptTyped(int, ByteBuffer, int)</c>.</remarks>
-    public override bool AcceptTyped(int types, NioBuffer buf, int pos)
+    public override bool AcceptTyped(int types, Segment segment, int pFeature)
     {
-        return _a.AcceptTyped(types, buf, pos) && _b.AcceptTyped(types, buf, pos);
+        return _a.AcceptTyped(types, segment, pFeature) && _b.AcceptTyped(types, segment, pFeature);
     }
 
     /// <summary>

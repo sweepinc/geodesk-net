@@ -306,20 +306,20 @@ internal class FeatureStore : FreeStore
     /// record at the given buffer position, dispatching on its type bits.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.getFeature(ByteBuffer, int)</c>.</remarks>
-    public StoredFeature GetFeature(NioBuffer buf, int p)
+    public StoredFeature GetFeature(Segment segment, int pFeature)
     {
-        var flags = buf.GetInt(p);
+        var flags = segment.Memory.Span.GetIntLE(pFeature);
         var type = (flags >> 3) & 3;
         if (type == 1)
         {
-            return new StoredWay(this, buf, p);
+            return new StoredWay(this, segment, pFeature);
         }
         if (type == 0)
         {
-            return new StoredNode(this, buf, p);
+            return new StoredNode(this, segment, pFeature);
         }
         System.Diagnostics.Debug.Assert(type == 2);
-        return new StoredRelation(this, buf, p);
+        return new StoredRelation(this, segment, pFeature);
     }
 
     // TODO: create an awaitOperations() method

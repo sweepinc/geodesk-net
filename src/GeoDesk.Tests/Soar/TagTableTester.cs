@@ -8,14 +8,14 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.IO.MemoryMappedFiles;
 
 using Clarisma.Common.Soar;
 
 using GeoDesk.Common.Fab;
 using GeoDesk.Common.Parser;
+using GeoDesk.Common.Store;
 using GeoDesk.Gol.Compiler;
-
-using NioBuffer = GeoDesk.Buffers.NioBufferReader;
 
 namespace GeoDesk.Feature.Query;
 
@@ -90,7 +90,7 @@ public class TagTableTester
         return tags;
     }
 
-    internal NioBuffer MakeCase(string name, int maxRandomTags, ISet<string>? excludeTags)
+    internal Segment MakeCase(string name, int maxRandomTags, ISet<string>? excludeTags)
     {
         Dictionary<string, object?>? tags = GetTags(name);
         if (tags == null)
@@ -98,6 +98,21 @@ public class TagTableTester
 
         var archive = new TagTestArchive(TagsAsStringArray(tags), stringTable);
         return archive.Create(name);
+    }
+
+    /// <summary>
+    /// Wraps a byte array in a <see cref="Segment"/> backed by an anonymous (memory-only)
+    /// memory-mapped file, so synthetic tag tables can be fed to matchers that expect a Segment.
+    /// </summary>
+    internal static Segment SegmentFromBytes(byte[] data)
+    {
+        int length = Math.Max(data.Length, 1);
+        var file = MemoryMappedFile.CreateNew(null, length);
+        var view = file.CreateViewAccessor(0, length);
+        if (data.Length > 0)
+            view.WriteArray(0, data, 0, data.Length);
+
+        return new Segment(file, view, length);
     }
 
     sealed class TagTestArchive : Archive
@@ -114,12 +129,12 @@ public class TagTableTester
                 Place(str);
         }
 
-        public NioBuffer Create(string name)
+        public Segment Create(string name)
         {
             using var baos = new MemoryStream();
             var @out = new StructOutputStream(baos);
             @out.WriteChain(Header());
-            return new NioBuffer(baos.ToArray());
+            return SegmentFromBytes(baos.ToArray());
         }
 
     }

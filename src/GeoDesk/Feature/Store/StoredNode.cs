@@ -8,6 +8,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
+using GeoDesk.Common.Store;
 using GeoDesk.Feature.Filters;
 using GeoDesk.Feature.Match;
 using GeoDesk.Feature.Query;
@@ -32,8 +33,8 @@ internal class StoredNode : StoredFeature, INode
     /// node's record.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode(FeatureStore, ByteBuffer, int)</c>.</remarks>
-    public StoredNode(FeatureStore store, NioBuffer buf, int ptr)
-        : base(store, buf, ptr)
+    public StoredNode(FeatureStore store, Segment segment, int pFeature)
+        : base(store, segment, pFeature)
     {
     }
 
@@ -62,13 +63,13 @@ internal class StoredNode : StoredFeature, INode
     /// The node's X coordinate in the library's projection, read from the record.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.x()</c>.</remarks>
-    public override int X => buf.GetInt(ptr - 8);
+    public override int X => buf.GetInt(pFeature - 8);
 
     /// <summary>
     /// The node's Y coordinate in the library's projection, read from the record.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.y()</c>.</remarks>
-    public override int Y => buf.GetInt(ptr - 4);
+    public override int Y => buf.GetInt(pFeature - 4);
 
     /// <summary>
     /// The bounding box of the node: a degenerate box at its coordinate, or an empty
@@ -125,7 +126,7 @@ internal class StoredNode : StoredFeature, INode
     public override int GetRelationTablePtr()
     {
         // A Node's body pointer is the pointer to its reltable
-        int ppBody = ptr + 12;
+        int ppBody = pFeature + 12;
         return buf.GetInt(ppBody) + ppBody;
     }
 
@@ -153,16 +154,16 @@ internal class StoredNode : StoredFeature, INode
     {
         int acceptedFlags = ((types & TypeBits.RELATIONS) != 0) ? FeatureFlags.RELATION_MEMBER_FLAG : 0;
         acceptedFlags |= ((types & TypeBits.WAYS) != 0) ? FeatureFlags.WAYNODE_FLAG : 0;
-        int flags = buf.GetInt(ptr) & acceptedFlags;
+        int flags = buf.GetInt(pFeature) & acceptedFlags;
 
         if (flags == FeatureFlags.WAYNODE_FLAG)
             return ParentWays(types, matcher, filter);
 
         if (flags == FeatureFlags.RELATION_MEMBER_FLAG)
-            return new ParentRelationView(store, buf, GetRelationTablePtr(), types & TypeBits.RELATIONS, matcher, filter);
+            return new ParentRelationView(store, segment, GetRelationTablePtr(), types & TypeBits.RELATIONS, matcher, filter);
 
         if (flags == (FeatureFlags.WAYNODE_FLAG | FeatureFlags.RELATION_MEMBER_FLAG))
-            return new NodeParentView(store, buf, this, GetRelationTablePtr(), types, matcher, filter);
+            return new NodeParentView(store, segment, this, GetRelationTablePtr(), types, matcher, filter);
 
         return EmptyView.Any;
     }

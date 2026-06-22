@@ -17,8 +17,6 @@ using GeoDesk.Feature.Query;
 using Xunit;
 using Xunit.Abstractions;
 
-using NioBuffer = GeoDesk.Buffers.NioBufferReader;
-
 namespace GeoDesk.Tests.Feature.Query;
 
 /// <summary>
@@ -128,7 +126,7 @@ public class MatcherCompilerTest
 
             foreach (KeyValuePair<string, bool> e in qtc.expected)
             {
-                NioBuffer tags = tester.MakeCase(e.Key, 0, null);
+                using var tags = tester.MakeCase(e.Key, 0, null);
                 bool result = matcher.Accept(tags, 0);
                 if (result != e.Value)
                 {
