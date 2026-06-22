@@ -12,6 +12,12 @@ namespace GeoDesk.Feature.Match;
 /// <summary>
 /// A matcher that first restricts candidates to an accepted set of feature types (read from the
 /// feature flags) and then delegates the remaining test to a wrapped inner matcher.
+///
+/// <para>
+/// NOT CURRENTLY USED — its only constructor calls are inside <see cref="MatcherSet"/>, which is itself
+/// unused (see its remarks: polyform is disabled in upstream geodesk). This faithfully mirrors upstream
+/// and is not port drift.
+/// </para>
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.match.TypeMatcher</c>.</remarks>
 internal class TypeMatcher : Matcher

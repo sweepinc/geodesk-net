@@ -46,13 +46,11 @@ internal class FeatureStore : FreeStore
     int _zoomSteps;
     NioBuffer _tileIndexBuf;
     int _tileIndexOfs;
-    Dictionary<string, int> _stringsToCodes = new Dictionary<string, int>();
-    string[] _codesToStrings = Array.Empty<string>();
+    GlobalStringTable _globalStrings = GlobalStringTable.Empty;
     Dictionary<int, int> _keysToCategories = new Dictionary<int, int>();
     MatcherCompiler? _matchers;
     GeometryFactory? _geometryFactory;
     int _maxPendingTiles;
-    readonly object _matchersLock = new object();
 
     // PORT: replaces the shared ForkJoinPool. Query producers run on the ThreadPool; the store
     // tracks them so Close() can cancel and wait for in-flight tile scans before unmapping buffers.
@@ -119,20 +117,22 @@ internal class FeatureStore : FreeStore
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.readStringTable()</c>.</remarks>
     void ReadStringTable()
     {
-        var p = BaseMapping.Memory.Span.GetIntLE(STRING_TABLE_PTR_OFS);
-        var count = BaseMapping.Memory.Span.GetIntLE(p) & 0xffff;
-        var reader = new PbfDecoder(new NioBuffer(BaseMapping.Memory), p + 2);
-        _codesToStrings = new string[count];
-        var stringMap = new Dictionary<string, int>(count + (count >> 1));
+        var mem = BaseMapping.Memory;
+        var p = mem.Span.GetIntLE(STRING_TABLE_PTR_OFS);
+        var count = mem.Span.GetIntLE(p) & 0xffff;
+        var reader = new PbfDecoder(new NioBuffer(mem), p + 2);
 
+        // Zero-copy: each entry is a slice into the mapped store (UTF-8, no length prefix). Nothing is
+        // decoded to a string here — GlobalStringTable does that lazily, only for codes a query touches.
+        var utf8 = new ReadOnlyMemory<byte>[count];
         for (var i = 0; i < count; i++)
         {
-            var s = reader.ReadString();
-            _codesToStrings[i] = s;
-            stringMap[s] = i;
+            var len = (int)reader.ReadVarint();
+            utf8[i] = mem.Slice(reader.Pos, len);
+            reader.Skip(len);
         }
 
-        _stringsToCodes = stringMap;
+        _globalStrings = new GlobalStringTable(utf8);
     }
 
     /// <summary>
@@ -162,7 +162,7 @@ internal class FeatureStore : FreeStore
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.enableQueries()</c>.</remarks>
     void EnableQueries()
     {
-        _matchers = new MatcherCompiler(_stringsToCodes, _codesToStrings, _keysToCategories);
+        _matchers = new MatcherCompiler(_globalStrings, _keysToCategories);
         _maxPendingTiles = Environment.ProcessorCount * 2;
         _geometryFactory = new GeometryFactory();
     }
@@ -262,7 +262,7 @@ internal class FeatureStore : FreeStore
     {
         try
         {
-            return _codesToStrings[code];
+            return _globalStrings.Text(code);
         }
         catch (IndexOutOfRangeException)
         {
@@ -275,7 +275,7 @@ internal class FeatureStore : FreeStore
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.codeFromString(String)</c>.</remarks>
     public int CodeFromString(string s)
     {
-        return _stringsToCodes.TryGetValue(s, out var v) ? v : -1;
+        return _globalStrings.TryGetCode(s, out var v) ? v : -1;
     }
 
     /// <summary>
@@ -295,10 +295,8 @@ internal class FeatureStore : FreeStore
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.getMatcher(String)</c>.</remarks>
     public Matcher GetMatcher(string query)
     {
-        lock (_matchersLock)
-        {
-            return (_matchers ?? throw new InvalidOperationException("Queries are not enabled")).GetMatcher(query);
-        }
+        // MatcherCompiler.GetMatcher is itself thread-safe, so no external lock is needed.
+        return (_matchers ?? throw new InvalidOperationException("Queries are not enabled")).GetMatcher(query);
     }
 
     /// <summary>
@@ -360,21 +358,16 @@ internal class FeatureStore : FreeStore
     }
 
     /// <summary>
-    /// Returns the map from global strings to their codes.
-    /// </summary>
-    /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.stringsToCodes()</c>.</remarks>
-    public IReadOnlyDictionary<string, int> StringsToCodes()
-    {
-        return _stringsToCodes;
-    }
-
-    /// <summary>
     /// Returns the array mapping global string codes to their strings.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.FeatureStore.codesToStrings()</c>.</remarks>
     public string[] CodesToStrings()
     {
-        return _codesToStrings;
+        // Cold path (no hot-path callers): materializes the whole table to UTF-16.
+        var a = new string[_globalStrings.Count];
+        for (var i = 0; i < a.Length; i++)
+            a[i] = _globalStrings.Text(i);
+        return a;
     }
 
 }

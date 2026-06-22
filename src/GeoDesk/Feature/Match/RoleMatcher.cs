@@ -12,6 +12,14 @@ namespace GeoDesk.Feature.Match;
 /// <summary>
 /// A matcher that accepts relation members holding a specific role, identified by its global string
 /// code resolved from the feature store.
+///
+/// <para>
+/// NOT CONSTRUCTED in production (only in tests) — and the same is true of upstream geodesk, whose
+/// <c>main</c> sources never instantiate <c>RoleMatcher</c> either, so role-filtered member queries
+/// appear unfinished upstream. The <see cref="Matcher.AcceptRole"/> plumbing it overrides <em>is</em>
+/// exercised (via <c>MemberIterator</c>), but always through the base "return this". Kept to mirror
+/// upstream; this is not port drift.
+/// </para>
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.match.RoleMatcher</c>.</remarks>
 internal class RoleMatcher : Matcher

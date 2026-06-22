@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.IO;
 
 using GeoDesk.Feature.Match;
+using GeoDesk.Feature.Store;
 
 using Xunit;
 
@@ -17,27 +18,21 @@ namespace GeoDesk.Tests.Feature.Query;
 
 public class QueryParserTest
 {
-    private readonly MatcherParser parser;
-    private readonly Dictionary<string, int> stringsToCodes;
+    private readonly QueryParser parser;
+    private readonly GlobalStringTable globalStrings;
 
     public QueryParserTest()
     {
-        stringsToCodes = LoadStrings();
-        parser = new MatcherParser(stringsToCodes, null);
+        globalStrings = LoadStrings();
+        parser = new QueryParser(globalStrings, null);
     }
 
-    private static Dictionary<string, int> LoadStrings()
+    private static GlobalStringTable LoadStrings()
     {
-        var map = new Dictionary<string, int>();
         string path = Path.Combine(AppContext.BaseDirectory, "TestResources", "feature", "strings.txt");
-        // 1-based index (entry 0 is the empty string)
-        int i = 1;
-        foreach (string s in File.ReadLines(path))
-        {
-            map[s] = i;
-            i++;
-        }
-        return map;
+        var list = new List<string> { "" }; // entry 0 is the empty string
+        list.AddRange(File.ReadLines(path));
+        return GlobalStringTable.FromStrings(list.ToArray());
     }
 
     private static int CountSelectors(Selector? first)

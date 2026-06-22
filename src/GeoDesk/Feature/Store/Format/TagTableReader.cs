@@ -52,7 +52,7 @@ namespace GeoDesk.Feature.Store.Format;
 /// </code>
 /// <para>
 /// Port-only cursor: encapsulates the tag-table traversal that the Java <c>MatcherCoder</c> emits as
-/// bytecode and that <c>InterpretedMatcher</c> previously inlined.
+/// bytecode and that <c>AstTagMatcher</c> previously inlined.
 /// </para>
 /// </remarks>
 internal ref struct TagTableReader
@@ -82,6 +82,9 @@ internal ref struct TagTableReader
     /// <summary>The current tag's value as raw UTF-8 bytes, when it is a local string; otherwise empty.</summary>
     public ReadOnlySpan<byte> ValueBytes;
 
+    /// <summary>The absolute position of the current tag's local-string value, when it is a local string; otherwise 0.</summary>
+    public int ValueStringPos;
+
     /// <summary>
     /// Positions the cursor before the first tag of the feature whose anchor (flags word) is at
     /// <paramref name="pFeature"/> within the segment span <paramref name="segment"/>.
@@ -102,6 +105,7 @@ internal ref struct TagTableReader
         Kind = 0;
         ValueCode = 0;
         ValueBytes = default;
+        ValueStringPos = 0;
     }
 
     /// <summary>
@@ -115,6 +119,7 @@ internal ref struct TagTableReader
         Kind = 0;
         ValueCode = 0;
         ValueBytes = default;
+        ValueStringPos = 0;
 
         if (_done)
             return false;
@@ -146,7 +151,10 @@ internal ref struct TagTableReader
         {
             var w = _segment.GetIntLE(_p + 2);
             if (Kind == TagValues.LOCAL_STRING)
-                ValueBytes = Bytes.ReadUtf8String(_segment, (_p + 2) + w);
+            {
+                ValueStringPos = (_p + 2) + w;
+                ValueBytes = Bytes.ReadUtf8String(_segment, ValueStringPos);
+            }
             else
                 ValueCode = w;
             next = _p + 6;
@@ -177,7 +185,10 @@ internal ref struct TagTableReader
         {
             var w = _segment.GetIntLE(valuePos);
             if (Kind == TagValues.LOCAL_STRING)
-                ValueBytes = Bytes.ReadUtf8String(_segment, valuePos + w);
+            {
+                ValueStringPos = valuePos + w;
+                ValueBytes = Bytes.ReadUtf8String(_segment, ValueStringPos);
+            }
             else
                 ValueCode = w;
         }

@@ -5,7 +5,6 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-using GeoDesk.Feature;
 using GeoDesk.Feature.Store;
 using GeoDesk.Geom;
 

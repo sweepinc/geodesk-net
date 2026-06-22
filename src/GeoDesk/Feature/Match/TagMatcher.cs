@@ -9,6 +9,7 @@ using System.Globalization;
 
 using GeoDesk.Common.Math;
 using GeoDesk.Common.Store;
+using GeoDesk.Feature.Store;
 
 namespace GeoDesk.Feature.Match;
 
@@ -21,7 +22,7 @@ namespace GeoDesk.Feature.Match;
 internal abstract class TagMatcher : Matcher
 {
 
-    protected readonly string[] globalStrings;
+    protected readonly GlobalStringTable globalStrings;
     protected readonly int keyMask;
     protected readonly int keyMin;
 
@@ -31,13 +32,21 @@ internal abstract class TagMatcher : Matcher
     /// index range used for fast index rejection.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.TagMatcher(int, String[], int, int)</c>.</remarks>
-    protected TagMatcher(int types, string[] globalStrings, int keyMask, int keyMin)
+    protected TagMatcher(int types, GlobalStringTable globalStrings, int keyMask, int keyMin)
         : base(types)
     {
         this.globalStrings = globalStrings;
         this.keyMask = keyMask;
         this.keyMin = keyMin;
     }
+
+    /// <summary>
+    /// The store's global string table. Exposed so a compiled <see cref="ExpressionTagMatcher"/>'s delegate
+    /// can read it through its <c>self</c> receiver instead of baking it into the tree as a constant — the
+    /// way a real instance method reads <c>this.globalStrings</c>.
+    /// </summary>
+    /// <remarks>Port-only accessor (no Java counterpart): Java's generated matcher reads the inherited field directly.</remarks>
+    public GlobalStringTable GlobalStrings => globalStrings;
 
     /// <summary>
     /// Rejects the feature if its type is not in the accepted set, otherwise runs the tag test.
@@ -91,7 +100,7 @@ internal abstract class TagMatcher : Matcher
     {
         try
         {
-            return globalStrings[code];
+            return globalStrings.Text(code);
         }
         catch (System.IndexOutOfRangeException)
         {

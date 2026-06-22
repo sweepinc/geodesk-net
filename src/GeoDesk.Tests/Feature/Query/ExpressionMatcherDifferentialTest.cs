@@ -21,18 +21,19 @@ using Xunit.Abstractions;
 namespace GeoDesk.Tests.Feature.Query;
 
 /// <summary>
-/// Tests the Query Matcher against feature/queries.fab (query → expected results per object),
-/// feature/tags.fab (objects and their tags) and feature/strings.txt (the global string table).
-/// Uses <see cref="AstTagMatcher"/> in place of the bytecode-compiled matcher.
+/// Differential test for the compiled matcher: for every query the <see cref="ExpressionMatcherCoder"/>
+/// can compile, asserts the <see cref="ExpressionTagMatcher"/> produces the same result as the
+/// <see cref="AstTagMatcher"/> oracle on every tag case in the corpus. Queries the builder does not
+/// support are skipped here (they remain covered by <see cref="MatcherCompilerTest"/>).
 /// </summary>
-public class MatcherCompilerTest
+public class ExpressionMatcherDifferentialTest
 {
     private readonly ITestOutputHelper output;
     private readonly string[] globalStrings;
     private readonly Dictionary<string, int> stringsToCodes;
     private readonly GlobalStringTable globalStringTable;
 
-    public MatcherCompilerTest(ITestOutputHelper output)
+    public ExpressionMatcherDifferentialTest(ITestOutputHelper output)
     {
         this.output = output;
         (globalStrings, stringsToCodes) = LoadStrings();
@@ -57,8 +58,7 @@ public class MatcherCompilerTest
     private sealed class QueryTestCase
     {
         public string query = "";
-        public string? error;
-        public readonly List<KeyValuePair<string, bool>> expected = new List<KeyValuePair<string, bool>>();
+        public readonly List<string> tagCases = new List<string>();
     }
 
     private sealed class QueryReader : FabReader
@@ -79,13 +79,8 @@ public class MatcherCompilerTest
 
         protected override void KeyValue(string key, string value)
         {
-            if (testCase == null) return;
-            if (key == "error")
-            {
-                testCase.error = value;
-                return;
-            }
-            testCase.expected.Add(new KeyValuePair<string, bool>(key, bool.Parse(value)));
+            if (testCase == null || key == "error") return;
+            testCase.tagCases.Add(key);
         }
     }
 
@@ -97,15 +92,16 @@ public class MatcherCompilerTest
     }
 
     [Fact]
-    public void Test()
+    public void CompiledMatchesInterpreted()
     {
         var tester = new TagTableTester();
-        List<QueryTestCase> cases = LoadQueries();
-        output.WriteLine($"Testing {cases.Count} queries");
+        var cases = LoadQueries();
 
         var failures = new StringBuilder();
-        int passed = 0;
-        foreach (QueryTestCase qtc in cases)
+        int compiledQueries = 0;
+        int checks = 0;
+
+        foreach (var qtc in cases)
         {
             Selector? sel;
             var parser = new QueryParser(globalStringTable, null);
@@ -116,32 +112,32 @@ public class MatcherCompilerTest
             }
             catch (QueryException)
             {
-                if (qtc.error == null)
-                {
-                    failures.AppendLine($"Unexpected parse error for: {qtc.query}");
-                }
-                continue;
+                continue; // parse-error cases are the interpreter test's concern
             }
 
             if (sel == null) continue;
-            var matcher = new AstTagMatcher(sel, globalStringTable);
 
-            foreach (KeyValuePair<string, bool> e in qtc.expected)
+            var compiled = ExpressionMatcherCoder.TryCompile(sel, globalStringTable);
+            if (compiled == null) continue; // shape not yet supported by the emitter
+
+            compiledQueries++;
+            var interpreted = new AstTagMatcher(sel, globalStringTable);
+
+            foreach (var tagCase in qtc.tagCases)
             {
-                using var tags = tester.MakeCase(e.Key, 0, null);
-                bool result = matcher.Accept(tags, 0);
-                if (result != e.Value)
+                using var tags = tester.MakeCase(tagCase, 0, null);
+                var expected = interpreted.Accept(tags, 0);
+                var actual = compiled.Accept(tags, 0);
+                checks++;
+                if (actual != expected)
                 {
-                    failures.AppendLine($"Tags '{e.Key}' for query [{qtc.query}]: expected {e.Value}, got {result}");
-                }
-                else
-                {
-                    passed++;
+                    failures.AppendLine(
+                        $"Tags '{tagCase}' for query [{qtc.query}]: interpreted={expected}, compiled={actual}");
                 }
             }
         }
 
-        output.WriteLine($"Passed {passed} object/query checks");
+        output.WriteLine($"Compiled {compiledQueries} queries, {checks} compiled/interpreted comparisons");
         Assert.True(failures.Length == 0, "\n" + failures);
     }
 }

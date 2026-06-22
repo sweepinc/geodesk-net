@@ -22,7 +22,7 @@ namespace GeoDesk.Feature.Match;
 /// expressions. Resolves key and value strings against the store's global-string and category tables.
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherParser</c>.</remarks>
-internal class MatcherParser : Parser
+internal class QueryParser : Parser
 {
 
     const string Comma = ",";
@@ -48,18 +48,18 @@ internal class MatcherParser : Parser
     const int OP_EQUAL = 16;
     const int OP_EXACT = 32;
 
-    readonly IReadOnlyDictionary<string, int> _stringsToCodes;
+    readonly GlobalStringTable _globalStrings;
     readonly IReadOnlyDictionary<int, int> _keysToCategories;
 
     /// <summary>
-    /// Creates a parser that resolves value strings via <paramref name="stringsToCodes"/> (the store's
-    /// global-string table) and key categories via <paramref name="keysToCategories"/>. Either map may be
-    /// null, in which case an empty map is used.
+    /// Creates a parser that resolves key/value strings against <paramref name="globalStrings"/> (the store's
+    /// global-string table, byte-keyed) and key categories via <paramref name="keysToCategories"/>. Either may
+    /// be null, in which case an empty table/map is used.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherParser(ObjectIntMap, IntIntMap)</c>.</remarks>
-    public MatcherParser(IReadOnlyDictionary<string, int>? stringsToCodes, IReadOnlyDictionary<int, int>? keysToCategories)
+    public QueryParser(GlobalStringTable? globalStrings, IReadOnlyDictionary<int, int>? keysToCategories)
     {
-        _stringsToCodes = stringsToCodes ?? new Dictionary<string, int>();
+        _globalStrings = globalStrings ?? GlobalStringTable.Empty;
         _keysToCategories = keysToCategories ?? new Dictionary<int, int>();
         AddTokens(Comma, Star, Colon, ExclamationMark, LBracket, RBracket,
             Operator.EQ, Operator.NE, Operator.GT, Operator.GE, Operator.LT,
@@ -127,7 +127,7 @@ internal class MatcherParser : Parser
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherParser.stringCode(String)</c>.</remarks>
     int StringCode(string key)
     {
-        return _stringsToCodes.TryGetValue(key, out var v) ? v : 0;
+        return _globalStrings.TryGetCode(key, out var v) ? v : 0;
     }
 
     /// <summary>

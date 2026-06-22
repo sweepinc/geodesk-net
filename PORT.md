@@ -6,9 +6,12 @@ port covers, what it deliberately leaves out, and how it differs from the origin
 
 - **Upstream source:** `ext/geodesk` submodule, **v2.0.0** (`com.geodesk` + `com.clarisma.common`).
 - **Upstream integration tests:** `ext/geodesk-tests` submodule (`com.geodesk.tests`).
-- **Port goal:** a *faithful, near 1:1 mirror* of the Java code — same class/method structure,
-  same algorithms — adjusted only where the JVM construct has no direct .NET equivalent. .NET-specific
-  performance optimizations were explicitly **not** pursued in this pass.
+- **Port goal:** originally a *faithful, near 1:1 mirror* of the Java code. That 1:1-mirror rule was
+  **dropped (2026-06)** in favour of idiomatic .NET — ported code is refactored freely where a cleaner
+  or faster .NET shape exists, and .NET-specific performance work *is* now pursued (the compiled
+  matcher, byte-level tag matching, zero-copy global strings, etc.). **Provenance annotations are
+  kept**: every type/method still names its nearest Java origin, so the port stays auditable and
+  re-syncable even where the code no longer maps 1:1.
 
 ## Layout
 
@@ -23,9 +26,9 @@ Namespaces follow the Java packages, PascalCased: `com.geodesk.feature` → `Geo
 `com.clarisma.common.store` → `Clarisma.Common.Store`. Folder layout mirrors namespaces.
 
 Shims for the **Java standard library** live under `src/GeoDesk/Java/` in matching `Java.*`
-namespaces — e.g. `java.nio.ByteBuffer` → `Java.Nio.ByteBuffer`, and the `java.util.concurrent`
-types → `Java.Util.Concurrent`. These are faithful API stand-ins backed by .NET primitives, kept
-separate from the genuine `com.clarisma.common` ports under `Clarisma.*`.
+namespaces — e.g. the `java.util.concurrent` types → `Java.Util.Concurrent`. These are faithful API
+stand-ins backed by .NET primitives, kept separate from the genuine `com.clarisma.common` ports under
+`Clarisma.*`. (The former `Java.Nio.ByteBuffer` shim has been removed — see *Buffers* below.)
 
 **Target framework:** `net10.0`, nullable reference types enabled.
 
@@ -49,8 +52,11 @@ against a real `monaco.gol`.
 
 - **`Clarisma.Common`** — `util`, `text`, `math`, `pbf`, `xml`, `parser`, `fab`, `ast`, and the
   memory-mapped `store` layer (`Store`, `FreeStore`, `BlobStore`, `BlobStoreChecker`, `Downloader`).
-- **`Java.Nio`** — a `ByteBuffer` abstraction standing in for `java.nio.ByteBuffer`
-  (`HeapByteBuffer` over `byte[]`, `MappedByteBuffer` over a memory-mapped view).
+- **Buffers** — the store and feature layers read/write directly over `ReadOnlyMemory<byte>` /
+  `Memory<byte>` (zero-copy slices into the memory-mapped file) plus little-endian span/Memory accessor
+  extensions. The earlier `Java.Nio.ByteBuffer` shim (`HeapByteBuffer`/`MappedByteBuffer`) and
+  `ByteOrder` have been **removed**; a thin `GeoDesk.Buffers` reader/writer remains over the same
+  `Memory<byte>` and is being folded into typed cursor structs.
 - **`Java.Util.Concurrent`** — faithful API shims for `ForkJoinPool`, `ForkJoinTask`,
   `ExecutorService`, `BlockingQueue`/`LinkedBlockingQueue`, `TimeUnit`, `InterruptedException`,
   backed by .NET threads.
@@ -64,9 +70,13 @@ against a real `monaco.gol`.
   `WayNodeView`, `MemberView`, `ParentRelationView`, `NodeParentView`, `EmptyView`), and the
   concurrent tile-query machinery (`Query`, `QueryTask`, `TileQueryTask`, `RTreeQueryTask`,
   `QueryResults`, `TileIndexWalker`).
-- **GOQL matcher** (`GeoDesk.Feature.Match`) — `MatcherParser`, `Selector`, `TagClause`, `TypeBits`,
-  the runtime matchers (`TagMatcher`, `TypeMatcher`, `AndMatcher`, `IdMatcher`, `RoleMatcher`,
-  `MatcherSet`), and `MatcherCompiler` wired to **`InterpretedMatcher`** (see *Differences* below).
+- **GOQL matcher** (`GeoDesk.Feature.Match`) — `QueryParser`, `Selector`, `TagClause`, `TypeBits`;
+  the per-store cache/orchestrator `MatcherCompiler`; and **two interchangeable `TagMatcher`
+  implementations** behind it — `ExpressionTagMatcher` (query compiled to a delegate via a LINQ
+  expression tree, built by `ExpressionMatcherCoder`) and `AstTagMatcher` (AST interpreter, also the
+  Native-AOT fallback) — sharing leaf ops in `MatcherOps` and the zero-copy `GlobalStringTable`. The
+  combinator matchers (`AndMatcher`, `TypeMatcher`, `IdMatcher`, `RoleMatcher`, `MatcherSet`) are
+  present and faithful to upstream, but most are dead in Java too (see *Differences*).
 - **Spatial filters** (`GeoDesk.Feature.Filters`) — the DE-9IM relate filters (`IntersectsFilter`,
   `WithinFilter`, `ContainsFilter`, `CoveredByFilter`, `CrossesFilter`, `DisjointFilter`,
   `OverlapsFilter`, `TouchesFilter`) over NTS prepared geometry, plus `ContainsPointFilter`,
@@ -87,43 +97,41 @@ against a real `monaco.gol`.
 These fall into three buckets: **deliberate substitutions**, **faithful upstream stubs**, and
 **out-of-scope**.
 
-### Bytecode-generated matcher → AST interpreter (substitution)
-This is the single largest structural departure from upstream.
+### Bytecode-generated matcher → LINQ expression-tree compiler (substitution)
+This is the single largest structural departure from upstream — but it is now a *built, optimized*
+substitution, not a placeholder.
 
-Java compiles each GOQL query to a **JVM bytecode `Matcher` subclass at runtime** via ASM
+Java compiles each GOQL query to a **JVM bytecode `TagMatcher` subclass at runtime** via ASM
 (`MatcherCoder`, `bytecode/Coder`, `ast/ExpressionCoder`): the query's `Selector`/`TagClause` AST is
 emitted as a purpose-built class whose `accept()` method is straight-line bytecode over the feature's
-tag table. There is no JVM to emit into, so this port does **not** reproduce the code generator:
+tag table. There is no JVM to emit into, so the port substitutes a .NET runtime-codegen path with two
+interchangeable implementations behind `MatcherCompiler`:
 
-- `MatcherCoder` and `MatcherXmlWriter` are **not ported** (no `.cs` file).
-- `ExpressionCoder` is present but throws (`PORT-BLOCKED`).
+- **`ExpressionMatcherCoder`** ≙ Java `MatcherCoder`: walks the parsed query and builds a
+  `System.Linq.Expressions` tree, then `.Compile()`s it to a delegate. The branching (selectors OR'd,
+  clauses AND'd, value AND/OR/NOT) lives in the tree; the concrete tag-table/value operations are
+  calls into the shared **`MatcherOps`**. The compiled delegate is the open-instance
+  `(self, segment, pFeature)` form of `Accept`, wrapped by **`ExpressionTagMatcher`**. (.NET can emit
+  a *method body* via expression trees but not a whole type, so the matcher class is hand-written and
+  the compiled delegate is plugged into it — versus Java emitting the entire subclass.)
+- **`AstTagMatcher`** interprets the same `Selector`/`TagClause` AST over the same `MatcherOps`. It is
+  a *complete* implementation, used as the fallback when dynamic code generation is unavailable (e.g.
+  Native AOT, where `Expression.Compile()` cannot run) — not a degraded subset. A differential test
+  asserts the compiled and interpreted matchers agree on every query/tag case in the corpus.
+- **`MatcherCompiler`** ≙ Java `MatcherCompiler` (parse + cache + orchestrate). It hands back an
+  `ExpressionTagMatcher` when codegen is available, else an `AstTagMatcher`; callers are unaware of
+  the difference. Compiled matchers are cached per store with a recency-pinned strong-ref ring (the
+  hot working set, default 256) plus a weak-reference overflow.
 
-In their place, **`InterpretedMatcher`** (`GeoDesk.Feature.Match.InterpretedMatcher`) walks the
-parsed `Selector`/`TagClause` AST directly against a feature's tag table at runtime — no codegen.
-It is wired in behind `MatcherCompiler.GetMatcher(...)`, so the seam where Java would hand back a
-generated class is exactly where this port hands back an interpreter. **Callers are unaware of the
-difference.** It is functionally complete for the supported (single-type) query grammar.
+What is *not* ported: `MatcherCoder`/`MatcherXmlWriter` as such (the role of `MatcherCoder` is filled
+by `ExpressionMatcherCoder`), and `ExpressionCoder` (the generic Java AST→bytecode base) remains a
+throwing stub — the matcher path uses `ExpressionMatcherCoder` directly rather than that base.
 
-The trade-off is performance: Java's per-query generated class avoids interpretation overhead and
-lets the JIT specialize each query; the interpreter re-walks the AST and does dictionary/branch work
-per feature. For the read/query workloads exercised so far this has been acceptable, but it is the
-obvious hotspot if query throughput ever matters.
-
-**Future work — replace the interpreter with a runtime compiler.** The intent is to keep
-`InterpretedMatcher` as the reference implementation and add a compiling matcher behind the same
-`MatcherCompiler.GetMatcher` seam, validated for equivalence against the interpreter. The codegen
-mechanism is **not yet decided** — the two candidates are:
-
-- **`System.Linq.Expressions`** — build an expression tree per query and `Compile()` it to a
-  delegate. Higher-level and safer (the runtime handles IL generation and verification), at the cost
-  of less control over the emitted code and some compile-time overhead per query.
-- **`System.Reflection.Emit.DynamicMethod`** — emit IL directly, the closest analog to Java's ASM
-  approach. Maximum control and the tightest generated code, but verbose and error-prone to author
-  and maintain.
-
-The choice will likely come down to measured per-query compile cost vs. steady-state matching speed,
-and how much emitted-code control the tag-table access patterns actually need. Until then, the
-interpreter is the shipping implementation.
+**Performance is genuinely optimized**, not deferred: the compiled delegate avoids per-feature
+interpretation and lets the JIT specialize each query; tag values are compared as **UTF-8 bytes** (no
+string materialization — local and global strings handled symmetrically) via `MatcherOps`; and the
+global string table loads **zero-copy** and decodes to UTF-16 only on demand (`GlobalStringTable`,
+e.g. for regex matching). A `~`/`!~` regex clause is the one path that still materializes a string.
 
 ### Faithful upstream stubs (Java throws here too)
 These mirror methods that are **unfinished in GeoDesk 2.0.0 itself** — the port throws exactly where
@@ -179,12 +187,12 @@ Faithful in structure, but the following adaptations were unavoidable or idiomat
 | JTS `org.locationtech.jts` | **NetTopologySuite** (1:1 C# port of JTS) |
 | Eclipse Collections (primitive maps) | BCL generics (`Dictionary<int,int>`, `HashSet<int>`) |
 | `MappedByteBuffer` / `FileChannel` | `MemoryMappedFile` + `MemoryMappedViewAccessor` |
-| `java.nio.ByteBuffer` | `Java.Nio.ByteBuffer` abstraction |
+| `java.nio.ByteBuffer` | `ReadOnlyMemory<byte>`/`Memory<byte>` + little-endian accessor extensions (ByteBuffer shim removed) |
 | `ForkJoinPool` / `ExecutorService` / `LinkedBlockingQueue` | `Java.Util.Concurrent` shims over .NET threads |
 | `java.util.zip` `InflaterInputStream` | `System.IO.Compression.ZLibStream` |
 | `java.net.URLConnection` | `System.Net.Http.HttpClient` |
 | `java.util.zip.CRC32` | `System.IO.Hashing.Crc32` (and a small inline CRC32 in `Downloader`) |
-| `org.ow2.asm` (bytecode) | *none* — replaced by `InterpretedMatcher` |
+| `org.ow2.asm` (bytecode) | `System.Linq.Expressions` (`ExpressionMatcherCoder` → compiled `ExpressionTagMatcher`; `AstTagMatcher` AOT fallback) |
 | `org.xml.sax` | *none* — `SaxFabReader` left as a stub |
 | JUnit 4 | xUnit |
 
@@ -281,9 +289,9 @@ the benchmark-harness methods, and the two polyform tests (faithful upstream gap
 |---|---|
 | Read/query a local `.gol` | ✅ Complete & validated against `monaco.gol` |
 | Remote GOL download | ✅ `Downloader` ported (HttpClient + ZLibStream) |
-| GOQL parsing + single-type matching | ✅ Complete (via `InterpretedMatcher`) |
+| GOQL parsing + single-type matching | ✅ Complete (compiled `ExpressionTagMatcher`, `AstTagMatcher` fallback) |
 | Polyform (multi-type) queries | ⛔ Faithful gap — throws, as in Java 2.0.0 |
-| Bytecode-compiled matcher | 🔁 Substituted by an AST interpreter |
+| Bytecode-compiled matcher | ✅ Substituted by a LINQ expression-tree compiler (AST interpreter = AOT fallback) |
 | OSM PBF import (build GOLs) | ⏭️ Out of scope |
 | Orphan utility classes (`SaxFabReader`, `MatcherXmlWriter`, `ExpressionCoder`) | ⏭️ Stubbed (unused upstream) |
 

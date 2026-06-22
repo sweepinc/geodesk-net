@@ -14,6 +14,15 @@ namespace GeoDesk.Feature.Match;
 /// relation members) together with the overall accepted-type bitmask. Supports combining sets with
 /// logical AND while keeping the type partitioning, used to compile a query into type-specialized
 /// matchers.
+///
+/// <para>
+/// NOT CURRENTLY USED — and that faithfully mirrors upstream, it is not port drift. This is the vehicle
+/// for polyform (multi-type) queries, which are disabled in geodesk itself: the only thing that builds a
+/// <c>MatcherSet</c> is <c>createPolyformMatchers</c>, whose sole caller is commented out in upstream
+/// <c>MatcherCompiler</c>, which throws "Polyform queries are not supported." instead — exactly as
+/// <c>MatcherCompiler.CreateMatcher</c> does here. Kept (together with <see cref="TypeMatcher"/>) so the
+/// scaffolding is in place if polyform is ever finished, matching upstream.
+/// </para>
 /// </summary>
 /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherSet</c>.</remarks>
 internal class MatcherSet
