@@ -179,6 +179,29 @@ internal static class Bytes
         return Encoding.UTF8.GetString(buf.Slice(p, len));
     }
 
+    /// <summary>
+    /// Returns the raw UTF-8 bytes of a length-prefixed string at the given position, without decoding
+    /// to a <see cref="string"/>. The length prefix uses the same one- or two-byte multi-byte encoding as
+    /// <see cref="ReadString(ReadOnlySpan{byte}, int)"/>; only lengths up to 32K are supported.
+    /// </summary>
+    /// <remarks>Port-only: the allocation-free counterpart of <see cref="ReadString(ReadOnlySpan{byte}, int)"/>.</remarks>
+    public static ReadOnlySpan<byte> ReadUtf8String(ReadOnlySpan<byte> buf, int p)
+    {
+        int len = buf.GetCharLE(p);
+        if ((len & 0x80) != 0)
+        {
+            len = (len & 0x7f) | (len >> 1) & 0xff80;
+            p += 2;
+        }
+        else
+        {
+            len &= 0x7f;
+            p++;
+        }
+
+        return buf.Slice(p, len);
+    }
+
     /// <summary>Compares an ASCII string stored in a buffer to a match string.</summary>
     /// <remarks>Ported from Java <c>com.clarisma.common.util.Bytes.stringEqualsAscii(ByteBuffer, int, String)</c>.</remarks>
     public static bool StringEqualsAscii(NioBufferReader buf, int p, string s)

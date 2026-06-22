@@ -31,12 +31,13 @@ internal class MatcherCompiler
     /// code for the special value <c>"no"</c> (which must be present) and building the query parser.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherCompiler(ObjectIntMap, String[], IntIntMap)</c>.</remarks>
-    public MatcherCompiler(IReadOnlyDictionary<string, int> stringsToCodes, string[] codesToStrings,
-        IReadOnlyDictionary<int, int> keysToCategories)
+    public MatcherCompiler(IReadOnlyDictionary<string, int> stringsToCodes, string[] codesToStrings, IReadOnlyDictionary<int, int> keysToCategories)
     {
         _codesToStrings = codesToStrings;
         _valueNo = stringsToCodes.TryGetValue("no", out var v) ? v : 0;
-        if (_valueNo == 0) throw new QueryException("String table must include \"no\"");
+        if (_valueNo == 0)
+            throw new QueryException("String table must include \"no\"");
+
         _parser = new MatcherParser(stringsToCodes, keysToCategories);
     }
 
@@ -47,7 +48,8 @@ internal class MatcherCompiler
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherCompiler.getMatcher(String)</c>.</remarks>
     public Matcher GetMatcher(string query)
     {
-        if (_matchers.TryGetValue(query, out var matcher)) return matcher;
+        if (_matchers.TryGetValue(query, out var matcher))
+            return matcher;
         matcher = CreateMatcher(query);
         _matchers[query] = matcher;
         return matcher;

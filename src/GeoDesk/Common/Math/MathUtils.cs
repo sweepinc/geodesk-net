@@ -75,6 +75,50 @@ internal static class MathUtils
     }
 
     /// <summary>
+    /// UTF-8 overload of <see cref="DoubleFromString(string)"/>: leniently parses a leading number from
+    /// a UTF-8 byte span, skipping leading whitespace and stopping at the first non-numeric byte. The
+    /// sign, digits, decimal point, and whitespace are all single ASCII bytes, so the logic matches the
+    /// string version exactly. Returns <see cref="double.NaN"/> if no digits are found.
+    /// </summary>
+    /// <remarks>Port-only: the allocation-free counterpart of <see cref="DoubleFromString(string)"/>.</remarks>
+    public static double DoubleFromString(System.ReadOnlySpan<byte> s)
+    {
+        var len = s.Length;
+        var i = 0;
+        for (; i < len; i++) if (s[i] > 32) break;
+        if (i >= len) return double.NaN;
+        var negative = false;
+        var seenDigit = false;
+        var decimalPos = -1;
+        double value = 0;
+        if (s[i] == (byte)'-')
+        {
+            negative = true;
+            i++;
+        }
+        for (; i < len; i++)
+        {
+            var ch = s[i];
+            if (ch >= (byte)'0' && ch <= (byte)'9')
+            {
+                value = value * 10 + (ch - '0');
+                seenDigit = true;
+                continue;
+            }
+            if (ch == (byte)'.')
+            {
+                if (decimalPos >= 0) break;
+                decimalPos = i;
+                continue;
+            }
+            break;
+        }
+        if (!seenDigit) return double.NaN;
+        if (negative) value = -value;
+        return decimalPos < 0 ? value : (value / Pow10(i - decimalPos - 1));
+    }
+
+    /// <summary>
     /// Counts the number of characters in the given string that
     /// represent a valid number.
     ///

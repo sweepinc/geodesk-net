@@ -59,34 +59,44 @@ internal class PbfDecoder
         {
             b = (sbyte)_buf.Get(_pos++);
             val = b & 0x7f;
-            if (b >= 0) return val;
+            if (b >= 0)
+                return val;
             b = (sbyte)_buf.Get(_pos++);
             val |= (long)(b & 0x7f) << 7;
-            if (b >= 0) return val;
+            if (b >= 0)
+                return val;
             b = (sbyte)_buf.Get(_pos++);
             val |= (long)(b & 0x7f) << 14;
-            if (b >= 0) return val;
+            if (b >= 0)
+                return val;
             b = (sbyte)_buf.Get(_pos++);
             val |= (long)(b & 0x7f) << 21;
-            if (b >= 0) return val;
+            if (b >= 0)
+                return val;
             b = (sbyte)_buf.Get(_pos++);
             val |= (long)(b & 0x7f) << 28;
-            if (b >= 0) return val;
+            if (b >= 0)
+                return val;
             b = (sbyte)_buf.Get(_pos++);
             val |= (long)(b & 0x7f) << 35;
-            if (b >= 0) return val;
+            if (b >= 0)
+                return val;
             b = (sbyte)_buf.Get(_pos++);
             val |= (long)(b & 0x7f) << 42;
-            if (b >= 0) return val;
+            if (b >= 0)
+                return val;
             b = (sbyte)_buf.Get(_pos++);
             val |= (long)(b & 0x7f) << 49;
-            if (b >= 0) return val;
+            if (b >= 0)
+                return val;
             b = (sbyte)_buf.Get(_pos++);
             val |= (long)(b & 0x7f) << 56;
-            if (b >= 0) return val;
+            if (b >= 0)
+                return val;
             b = (sbyte)_buf.Get(_pos++);
             val |= (long)(b & 0x7f) << 63;
-            if (b >= 0) return val;
+            if (b >= 0)
+                return val;
             throw new PbfException("Bad VarInt format.");
         }
         catch (IndexOutOfRangeException)
@@ -110,34 +120,44 @@ internal class PbfDecoder
         long val;
         b = (sbyte)@in.ReadByte();
         val = b & 0x7f;
-        if (b >= 0) return val;
+        if (b >= 0)
+            return val;
         b = (sbyte)@in.ReadByte();
         val |= (long)(b & 0x7f) << 7;
-        if (b >= 0) return val;
+        if (b >= 0)
+            return val;
         b = (sbyte)@in.ReadByte();
         val |= (long)(b & 0x7f) << 14;
-        if (b >= 0) return val;
+        if (b >= 0)
+            return val;
         b = (sbyte)@in.ReadByte();
         val |= (long)(b & 0x7f) << 21;
-        if (b >= 0) return val;
+        if (b >= 0)
+            return val;
         b = (sbyte)@in.ReadByte();
         val |= (long)(b & 0x7f) << 28;
-        if (b >= 0) return val;
+        if (b >= 0)
+            return val;
         b = (sbyte)@in.ReadByte();
         val |= (long)(b & 0x7f) << 35;
-        if (b >= 0) return val;
+        if (b >= 0)
+            return val;
         b = (sbyte)@in.ReadByte();
         val |= (long)(b & 0x7f) << 42;
-        if (b >= 0) return val;
+        if (b >= 0)
+            return val;
         b = (sbyte)@in.ReadByte();
         val |= (long)(b & 0x7f) << 49;
-        if (b >= 0) return val;
+        if (b >= 0)
+            return val;
         b = (sbyte)@in.ReadByte();
         val |= (long)(b & 0x7f) << 56;
-        if (b >= 0) return val;
+        if (b >= 0)
+            return val;
         b = (sbyte)@in.ReadByte();
         val |= (long)(b & 0x7f) << 63;
-        if (b >= 0) return val;
+        if (b >= 0)
+            return val;
         throw new PbfException("Bad VarInt format.");
     }
 
@@ -186,9 +206,8 @@ internal class PbfDecoder
         var len = (int)ReadVarint();
         var bytes = new byte[len];
         for (var i = 0; i < len; i++)
-        {
             bytes[i] = _buf.Get(_pos++);
-        }
+
         return Encoding.UTF8.GetString(bytes);
     }
 
