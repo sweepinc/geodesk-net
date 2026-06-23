@@ -16,8 +16,6 @@ using GeoDesk.Geom;
 
 using NetTopologySuite.Geometries;
 
-using NioBuffer = GeoDesk.Buffers.NioBufferReader;
-
 namespace GeoDesk.Feature.Store;
 
 /// <summary>
@@ -83,10 +81,8 @@ internal class StoredNode : StoredFeature, INode
             int x = X;
             int y = Y;
             if ((x | y) == 0)
-            {
-                // If coordinates are 0/0, return an empty bbox (missing nodes)
-                return new Box();
-            }
+                return new Box(); // If coordinates are 0/0, return an empty bbox (missing nodes)
+
             return new Box(x, y);
         }
     }
@@ -97,7 +93,7 @@ internal class StoredNode : StoredFeature, INode
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredNode.toXY()</c>.</remarks>
     public override int[] ToXY()
     {
-        return new int[] { X, Y };
+        return [X, Y];
     }
 
     /// <summary>

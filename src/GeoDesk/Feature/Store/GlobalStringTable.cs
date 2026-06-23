@@ -41,9 +41,11 @@ internal sealed class GlobalStringTable
         var utf8 = new ReadOnlyMemory<byte>[strings.Length];
         for (var i = 0; i < strings.Length; i++)
             utf8[i] = Encoding.UTF8.GetBytes(strings[i]);
+
         var table = new GlobalStringTable(utf8);
         for (var i = 0; i < strings.Length; i++)
             table._text[i] = strings[i];
+
         return table;
     }
 
@@ -56,13 +58,13 @@ internal sealed class GlobalStringTable
     /// indexing them for the reverse (bytes → code) lookup. The string cache starts empty; entries are decoded
     /// lazily by <see cref="Text"/>.
     /// </summary>
-    public GlobalStringTable(ReadOnlyMemory<byte>[] utf8)
+    public GlobalStringTable(ReadOnlyMemory<byte>[] strings)
     {
-        _utf8 = utf8;
-        _text = new string?[utf8.Length];
-        _codes = new Dictionary<ReadOnlyMemory<byte>, int>(utf8.Length, Utf8Comparer.Instance);
-        for (var i = 0; i < utf8.Length; i++)
-            _codes[utf8[i]] = i; // global strings are unique; on the off chance they aren't, last wins
+        _utf8 = strings;
+        _text = new string?[strings.Length];
+        _codes = new Dictionary<ReadOnlyMemory<byte>, int>(strings.Length, Utf8Comparer.Instance);
+        for (var i = 0; i < strings.Length; i++)
+            _codes[strings[i]] = i; // global strings are unique; on the off chance they aren't, last wins
     }
 
     /// <summary>

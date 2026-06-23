@@ -193,7 +193,7 @@ internal class Query : IEnumerator<IFeature>, IAsyncEnumerator<IFeature>, IBound
                 new ParallelOptions { MaxDegreeOfParallelism = _store.MaxPendingTiles, CancellationToken = ct },
                 async (tile, ct2) =>
                 {
-                    var results = await new TileScanner(this, tile.Page, tile.Flags, tile.Filter).ScanAsync();
+                    var results = await new TileScanner(this, tile.Page, tile.Flags, tile.Filter).ScanAsync(ct2);
                     await _channel.Writer.WriteAsync(results, ct2);
                 }).ConfigureAwait(false);
 
@@ -215,6 +215,7 @@ internal class Query : IEnumerator<IFeature>, IAsyncEnumerator<IFeature>, IBound
     IEnumerable<TileRef> EnumerateTiles(IFilter? filter)
     {
         _tileWalker.Start(this, filter);
+
         do
         {
             var entry = _store.TileIndexEntry(_tileWalker.Tip());

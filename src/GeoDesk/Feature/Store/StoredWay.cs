@@ -65,9 +65,10 @@ internal class StoredWay : StoredFeature, IWay
     /// body. For area ways the first coordinate is repeated as the closing point.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.XYIterator</c>.</remarks>
-    public class XYIterator : PbfDecoder
+    public class XYIterator
     {
 
+        PbfDecoder _dec;
         int _x;
         int _y;
         internal int remaining;
@@ -81,13 +82,15 @@ internal class StoredWay : StoredFeature, IWay
         /// seeded with the preceding X/Y and flags, and reads the first coordinate.
         /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.feature.store.StoredWay.XYIterator(ByteBuffer, int, int, int, int)</c>.</remarks>
-        public XYIterator(NioBuffer buf, int pos, int prevX, int prevY, int flags) :
-            base(buf, pos)
+        public XYIterator(NioBuffer buf, int pos, int prevX, int prevY, int flags)
         {
+            _dec = new PbfDecoder(buf.Memory, pos);
             _x = prevX;
             _y = prevY;
             _flags = flags;
-            remaining = (int)ReadVarint();
+            _firstX = 0;
+            _firstY = 0;
+            remaining = (int)_dec.ReadVarint();
             if ((flags & FeatureFlags.AREA_FLAG) != 0)
             {
                 remaining++;
@@ -117,8 +120,8 @@ internal class StoredWay : StoredFeature, IWay
                 _duplicatedLastCoord--;
                 return;
             }
-            _x += (int)ReadSignedVarint();
-            _y += (int)ReadSignedVarint();
+            _x += (int)_dec.ReadSignedVarint();
+            _y += (int)_dec.ReadSignedVarint();
         }
 
         /// <summary>

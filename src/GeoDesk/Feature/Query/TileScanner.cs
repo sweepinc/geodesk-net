@@ -6,6 +6,7 @@
  */
 
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 using GeoDesk.Common.Store;
@@ -74,23 +75,29 @@ internal sealed class TileScanner
     /// no buckets are accepted.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.TileQueryTask.exec()</c>.</remarks>
-    public async ValueTask<QueryResults> ScanAsync()
+    public async ValueTask<QueryResults> ScanAsync(CancellationToken ct)
     {
+        ct.ThrowIfCancellationRequested();
+
         // Fork one task per accepted index bucket across the requested type categories...
         var branches = new List<Task<QueryResults>>();
         if ((_types & TypeBits.NODES) != 0)
-            ForkBuckets(branches, _pTile + 8, nodes: true);
+            ForkBuckets(branches, _pTile + 8, nodes: true, ct);
         if ((_types & TypeBits.NONAREA_WAYS) != 0)
-            ForkBuckets(branches, _pTile + 12, nodes: false);
+            ForkBuckets(branches, _pTile + 12, nodes: false, ct);
         if ((_types & TypeBits.AREAS) != 0)
-            ForkBuckets(branches, _pTile + 16, nodes: false);
+            ForkBuckets(branches, _pTile + 16, nodes: false, ct);
         if ((_types & TypeBits.NONAREA_RELATIONS) != 0)
-            ForkBuckets(branches, _pTile + 20, nodes: false);
+            ForkBuckets(branches, _pTile + 20, nodes: false, ct);
 
         // ...then await them in order, merging (each branch produced its own QueryResults).
         var res = QueryResults.Empty;
         foreach (var t in branches)
+        {
+            ct.ThrowIfCancellationRequested();
             res = QueryResults.Merge(res, await t);
+        }
+
         return res;
     }
 
@@ -100,7 +107,7 @@ internal sealed class TileScanner
     /// into <paramref name="branches"/> to be awaited and merged.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.TileQueryTask.searchRTree(int, Matcher, RTreeQueryTask)</c>.</remarks>
-    void ForkBuckets(List<Task<QueryResults>> branches, int ppTree, bool nodes)
+    void ForkBuckets(List<Task<QueryResults>> branches, int ppTree, bool nodes, CancellationToken ct)
     {
         var buf = new NioBuffer(_segment.Memory);
         var p = buf.GetInt(ppTree);
@@ -115,7 +122,7 @@ internal sealed class TileScanner
             if (_matcher.AcceptIndex(keyBits))
             {
                 var branch = p; // capture a copy — p advances in this loop
-                branches.Add(Task.Run(() => SearchBranch(branch, nodes)));
+                branches.Add(Task.Run(() => SearchBranch(branch, nodes, ct), ct));
             }
             if (last != 0)
                 break;
@@ -129,11 +136,11 @@ internal sealed class TileScanner
     /// root trunk and collecting matching features into a fresh <see cref="QueryResults"/>.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.RTreeQueryTask.exec()</c>.</remarks>
-    QueryResults SearchBranch(int p, bool nodes)
+    QueryResults SearchBranch(int p, bool nodes, CancellationToken ct)
     {
         var results = new QueryResults(_segment);
         var ptr = new NioBuffer(_segment.Memory).GetInt(p);
-        SearchTrunk(results, p + (int)((uint)ptr & 0xffff_fffc), nodes);
+        SearchTrunk(results, p + (int)((uint)ptr & 0xffff_fffc), nodes, ct);
         return results;
     }
 
@@ -152,11 +159,12 @@ internal sealed class TileScanner
     /// intersect the query box and recursing into child trunks or scanning leaf nodes for the rest.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.RTreeQueryTask.searchTrunk(int)</c>.</remarks>
-    void SearchTrunk(QueryResults results, int p, bool nodes)
+    void SearchTrunk(QueryResults results, int p, bool nodes, CancellationToken ct)
     {
         var buf = new NioBuffer(_segment.Memory);
         for (; ; )
         {
+            ct.ThrowIfCancellationRequested();
             var ptr = buf.GetInt(p);
             var last = ptr & 1;
 
@@ -165,13 +173,13 @@ internal sealed class TileScanner
                 if ((ptr & 2) != 0)
                 {
                     if (nodes)
-                        SearchLeafNodes(results, p + (ptr ^ 2 ^ last));
+                        SearchLeafNodes(results, p + (ptr ^ 2 ^ last), ct);
                     else
-                        SearchLeaf(results, p + (ptr ^ 2 ^ last));
+                        SearchLeaf(results, p + (ptr ^ 2 ^ last), ct);
                 }
                 else
                 {
-                    SearchTrunk(results, p + (ptr ^ last), nodes);
+                    SearchTrunk(results, p + (ptr ^ last), nodes, ct);
                 }
             }
             if (last != 0)
@@ -187,11 +195,13 @@ internal sealed class TileScanner
     /// results.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.RTreeQueryTask.searchLeaf(int)</c>.</remarks>
-    void SearchLeaf(QueryResults results, int p)
+    void SearchLeaf(QueryResults results, int p, CancellationToken ct)
     {
         var buf = new NioBuffer(_segment.Memory);
         for (; ; )
         {
+            ct.ThrowIfCancellationRequested();
+
             var flags = buf.GetInt(p + 16);
             if ((flags & _bboxFlags) == 0)
             {
@@ -206,6 +216,7 @@ internal sealed class TileScanner
                     }
                 }
             }
+
             if ((flags & 1) != 0)
                 break;
 
@@ -218,11 +229,13 @@ internal sealed class TileScanner
     /// and then the matcher and optional filter, and adding the survivors to the results.
     /// </summary>
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.RTreeQueryTask.Nodes.searchLeaf(int)</c>.</remarks>
-    void SearchLeafNodes(QueryResults results, int p)
+    void SearchLeafNodes(QueryResults results, int p, CancellationToken ct)
     {
         var buf = new NioBuffer(_segment.Memory);
         for (; ; )
         {
+            ct.ThrowIfCancellationRequested();
+
             var flags = buf.GetInt(p + 8);
             var x = buf.GetInt(p);
             var y = buf.GetInt(p + 4);

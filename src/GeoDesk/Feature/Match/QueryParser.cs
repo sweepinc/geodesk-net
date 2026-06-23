@@ -86,19 +86,23 @@ internal class QueryParser : Parser
             switch (ch)
             {
                 case 'n':
-                    if ((types & TypeBits.NODES) == TypeBits.NODES) return 0;
+                    if ((types & TypeBits.NODES) == TypeBits.NODES)
+                        return 0;
                     types |= TypeBits.NODES;
                     break;
                 case 'w':
-                    if ((types & TypeBits.NONAREA_WAYS) == TypeBits.NONAREA_WAYS) return 0;
+                    if ((types & TypeBits.NONAREA_WAYS) == TypeBits.NONAREA_WAYS)
+                        return 0;
                     types |= TypeBits.NONAREA_WAYS;
                     break;
                 case 'a':
-                    if ((types & TypeBits.AREAS) == TypeBits.AREAS) return 0;
+                    if ((types & TypeBits.AREAS) == TypeBits.AREAS)
+                        return 0;
                     types |= TypeBits.AREAS;
                     break;
                 case 'r':
-                    if ((types & TypeBits.NONAREA_RELATIONS) == TypeBits.NONAREA_RELATIONS) return 0;
+                    if ((types & TypeBits.NONAREA_RELATIONS) == TypeBits.NONAREA_RELATIONS)
+                        return 0;
                     types |= TypeBits.NONAREA_RELATIONS;
                     break;
                 default:
@@ -144,7 +148,8 @@ internal class QueryParser : Parser
         }
         else
         {
-            if (!Accept(STRING)) return null;
+            if (!Accept(STRING))
+                return null;
             key = UnquotedStringValue();
         }
         NextToken();
@@ -159,7 +164,8 @@ internal class QueryParser : Parser
     string? ExpectKey()
     {
         var key = Key();
-        if (key != null) return key;
+        if (key != null)
+            return key;
         ErrorExpected("key");
         return null;
     }
@@ -273,9 +279,11 @@ internal class QueryParser : Parser
     static bool IsNumericString(string s)
     {
         var len = s.Length;
-        if (len == 0) return false;
+        if (len == 0)
+            return false;
         var ch = s[0];
-        if ((ch < '0' || ch > '9') && ch != '-') return false;
+        if ((ch < '0' || ch > '9') && ch != '-')
+            return false;
         return MathUtils.CountNumberChars(s) == len;
     }
 
@@ -287,7 +295,8 @@ internal class QueryParser : Parser
     /// <remarks>Ported from Java <c>com.geodesk.feature.match.MatcherParser.tagClause()</c>.</remarks>
     TagClause? TagClause()
     {
-        if (!Accept(LBracket)) return null;
+        if (!Accept(LBracket))
+            return null;
         // change the identifier pattern to support colons in keys
         SetIdentifierPattern(KeyIdentifierPattern);
         NextToken();
@@ -299,20 +308,22 @@ internal class QueryParser : Parser
         if (AcceptAndConsume(ExclamationMark))
         {
             key = ExpectKey();
-            if (key == null) return null;
-            flags = Match.TagClause.VALUE_GLOBAL_STRING;
+            if (key == null)
+                return null;
+
             // [!k] requires global key because we need to check for "no"
+            flags = Match.TagClause.VALUE_GLOBAL_STRING;
         }
         else
         {
             key = ExpectKey();
-            if (key == null) return null;
+            if (key == null)
+                return null;
             var op = OperatorTok();
             if (op == null)
             {
-                flags = Match.TagClause.KEY_REQUIRED_EXPLICITLY |
-                    Match.TagClause.VALUE_GLOBAL_STRING;
                 // [k] requires global key because we need to check for "no"
+                flags = Match.TagClause.KEY_REQUIRED_EXPLICITLY | Match.TagClause.VALUE_GLOBAL_STRING;
             }
             else
             {
@@ -326,7 +337,8 @@ internal class QueryParser : Parser
                     Expression term;
                     var negate = false;
                     var val = ComparisonValue(opFlags);
-                    if (val == null) return null;
+                    if (val == null)
+                        return null;
 
                     var effectiveOp = op;
                     if (val is double)
@@ -354,19 +366,18 @@ internal class QueryParser : Parser
                                         effectiveOp = ENDS_WITH;
                                         val = s.Substring(1);
                                     }
-                                    flags |= Match.TagClause.VALUE_LOCAL_STRING |
-                                        Match.TagClause.VALUE_ANY_STRING;
+                                    flags |= Match.TagClause.VALUE_LOCAL_STRING | Match.TagClause.VALUE_ANY_STRING;
                                 }
                                 else if (s[len - 1] == '*')
                                 {
                                     negate = (opFlags & OP_EQUAL) == 0;
                                     effectiveOp = STARTS_WITH;
                                     val = s.Substring(0, len - 1);
-                                    flags |= Match.TagClause.VALUE_LOCAL_STRING |
-                                        Match.TagClause.VALUE_ANY_STRING;
+                                    flags |= Match.TagClause.VALUE_LOCAL_STRING | Match.TagClause.VALUE_ANY_STRING;
                                 }
                             }
                         }
+
                         if (effectiveOp == Operator.EQ || effectiveOp == Operator.NE)
                         {
                             var code = StringCode(s);
@@ -386,27 +397,34 @@ internal class QueryParser : Parser
                             }
                         }
                     }
+
                     term = new BinaryExpression(effectiveOp, new Variable(key), new Literal(val));
-                    if (negate) term = new UnaryExpression(Operator.NOT, term);
-                    exp = exp == null ? term : new BinaryExpression(
-                        (opFlags & OP_EQUAL) == 0 ? Operator.AND : Operator.OR, exp, term);
-                    if (!AcceptAndConsume(Comma)) break;
+                    if (negate)
+                        term = new UnaryExpression(Operator.NOT, term);
+
+                    exp = exp == null ? term : new BinaryExpression((opFlags & OP_EQUAL) == 0 ? Operator.AND : Operator.OR, exp, term);
+
+                    if (!AcceptAndConsume(Comma))
+                        break;
+
                     if ((opFlags & OP_LIST) == 0)
                     {
-                        Error(string.Format(CultureInfo.InvariantCulture,
-                            "Multiple values are not allowed for {0}", op));
+                        Error(string.Format(CultureInfo.InvariantCulture, "Multiple values are not allowed for {0}", op));
                         return null;
                     }
                 }
+
                 if (op == Operator.MATCH || op == Operator.NOT_MATCH)
                 {
                     flags |= Match.TagClause.VALUE_ANY_STRING | Match.TagClause.VALUE_LOCAL_STRING;
                 }
             }
         }
+
         Expect(RBracket);
         SetIdentifierPattern(DEFAULT_IDENTIFIER_PATTERN);
         NextToken();
+
         var keyCode = KeyCode(key);
         var category = _keysToCategories.TryGetValue(keyCode, out var cat) ? cat : 0;
         return new TagClause(flags, key, keyCode, category, exp);
@@ -429,15 +447,19 @@ internal class QueryParser : Parser
         else
         {
             types = FeatureTypes();
-            if (types == 0) return null;
+            if (types == 0)
+                return null;
         }
+
         var sel = new Selector(types);
         for (; ; )
         {
             var clause = TagClause();
-            if (clause == null) break;
+            if (clause == null)
+                break;
             sel.Add(clause);
         }
+
         return sel;
     }
 
@@ -453,7 +475,8 @@ internal class QueryParser : Parser
         for (; ; )
         {
             var sel = SelectorTok();
-            if (sel == null) break;
+            if (sel == null)
+                break;
             if (prev == null)
             {
                 first = sel;
@@ -463,7 +486,8 @@ internal class QueryParser : Parser
                 prev.SetNext(sel);
             }
             prev = sel;
-            if (!AcceptAndConsume(Comma)) break;
+            if (!AcceptAndConsume(Comma))
+                break;
         }
         Expect(END);
         return first;

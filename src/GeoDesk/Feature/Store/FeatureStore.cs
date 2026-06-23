@@ -120,19 +120,13 @@ internal class FeatureStore : FreeStore
         var mem = BaseMapping.Memory;
         var p = mem.Span.GetIntLE(STRING_TABLE_PTR_OFS);
         var count = mem.Span.GetIntLE(p) & 0xffff;
-        var reader = new PbfDecoder(new NioBuffer(mem), p + 2);
 
-        // Zero-copy: each entry is a slice into the mapped store (UTF-8, no length prefix). Nothing is
-        // decoded to a string here — GlobalStringTable does that lazily, only for codes a query touches.
-        var utf8 = new ReadOnlyMemory<byte>[count];
+        var pbf = new PbfDecoder(mem, p + 2);
+        var utf = new ReadOnlyMemory<byte>[count];
         for (var i = 0; i < count; i++)
-        {
-            var len = (int)reader.ReadVarint();
-            utf8[i] = mem.Slice(reader.Pos, len);
-            reader.Skip(len);
-        }
+            utf[i] = pbf.ReadString();
 
-        _globalStrings = new GlobalStringTable(utf8);
+        _globalStrings = new GlobalStringTable(utf);
     }
 
     /// <summary>
