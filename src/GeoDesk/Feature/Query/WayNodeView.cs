@@ -111,6 +111,7 @@ internal class WayNodeView : TableView
         /// </summary>
         /// <remarks>Ported from Java <c>com.geodesk.feature.query.WayNodeView.AllNodesIter(int)</c>.</remarks>
         public AllNodesIter(WayNodeView owner, int pBody)
+            : base(owner.buf, pBody, owner.buf.GetInt(owner.pTable - 16), owner.buf.GetInt(owner.pTable - 12), owner._flags)
         {
             _owner = owner;
             if ((owner._flags & FeatureFlags.WAYNODE_FLAG) != 0)

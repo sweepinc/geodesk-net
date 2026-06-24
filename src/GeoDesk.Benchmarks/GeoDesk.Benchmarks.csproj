@@ -1,0 +1,108 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Nullable>enable</Nullable>
+    <!-- BenchmarkDotNet only produces meaningful numbers from an optimized build; it refuses to
+         run (with a warning) from a Debug build. Always run with `dotnet run -c Release`. -->
+    <Optimize Condition="'$(Configuration)' == 'Release'">true</Optimize>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.15.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GeoDesk\GeoDesk.csproj" />
+  </ItemGroup>
+
+  <!--
+      ===========================================================================================
+      GOL benchmark fixture
+      ===========================================================================================
+      The benchmarks run against a real, country-scale dataset. As in the test project, no .gol is
+      committed (multi-GB, regenerable). The fixture below is built ON DEMAND with the GOL Tool 2.0
+      (`gol`, https://github.com/clarisma/geodesk-gol) from a Geofabrik .osm.pbf extract. Generated
+      artifacts live in the intermediate (obj) dir; a second target registers them as None items
+      copied to Fixtures\ in the output, where GolFixture.Resolve() finds them.
+
+      WARNING: the Germany extract is large (~4 GB .pbf; building the .gol needs substantial time,
+      RAM, and disk). The download + build happens on the first build and is then cached.
+
+      - `gol` is assumed to be installed and on PATH (override with -p:GolTool=...).
+      - Built only when missing/stale (Inputs/Outputs). If generation is enabled but the .gol is
+        not produced (tool missing, download failed), the build ERRORS.
+      - Disable with -p:GenerateGolFixtures=false (e.g. to point GEODESK_GOL at an existing .gol).
+    -->
+  <PropertyGroup>
+    <GolTool Condition="'$(GolTool)' == ''">gol</GolTool>
+    <GenerateGolFixtures Condition="'$(GenerateGolFixtures)' == ''">true</GenerateGolFixtures>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The GOL fixture the benchmarks run against. -->
+    <GolFixture Include="germany">
+      <PbfUrl>https://download.geofabrik.de/europe/germany-latest.osm.pbf</PbfUrl>
+    </GolFixture>
+  </ItemGroup>
+
+  <!--
+      Resolves GolFixtureDir (the intermediate/obj dir for generated fixtures). Done in a target,
+      not a body PropertyGroup, because IntermediateOutputPath isn't set until the SDK targets run.
+      Both GOL targets depend on this, so it's evaluated after IntermediateOutputPath is known.
+    -->
+  <Target Name="_InitGolFixtureDir">
+    <PropertyGroup>
+      <GolFixtureDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\$(IntermediateOutputPath)golfixtures'))</GolFixtureDir>
+    </PropertyGroup>
+  </Target>
+
+  <!--
+      Target 1: build any missing GOL fixtures into the intermediate (obj) dir.
+      Incremental: skipped unless an output .gol is missing or older than the project (Inputs/Outputs).
+    -->
+  <Target Name="GenerateGolFixtures" Condition="'$(GenerateGolFixtures)' == 'true'" DependsOnTargets="_InitGolFixtureDir" Inputs="$(MSBuildProjectFullPath)" Outputs="@(GolFixture->'$(GolFixtureDir)\%(Identity).gol')">
+    <MakeDir Directories="$(GolFixtureDir)" />
+
+    <Message Importance="high" Condition="!Exists('$(GolFixtureDir)\%(GolFixture.Identity).gol')" Text="GOL fixture: building '%(GolFixture.Identity).gol' (download PBF + '$(GolTool) build'); the Germany extract is large and may take a while..." />
+
+    <!-- 1. Download the .osm.pbf extract (once) -->
+    <DownloadFile SourceUrl="%(GolFixture.PbfUrl)" DestinationFolder="$(GolFixtureDir)" DestinationFileName="%(GolFixture.Identity).osm.pbf" SkipUnchangedFiles="true" ContinueOnError="true" Condition="!Exists('$(GolFixtureDir)\%(GolFixture.Identity).gol') And !Exists('$(GolFixtureDir)\%(GolFixture.Identity).osm.pbf')" />
+
+    <!--
+        2. Build the GOL (`gol build <name> <pbf>` writes <name>.gol into the working dir).
+        The .pbf is passed as a bare filename relative to WorkingDirectory: MSBuild hands the
+        Command string to the shell verbatim (it does NOT normalize separators inside it), so
+        embedding an absolute "$(GolFixtureDir)\..." path would leak a literal backslash on Linux.
+    -->
+    <Exec Command="&quot;$(GolTool)&quot; build %(GolFixture.Identity) &quot;%(GolFixture.Identity).osm.pbf&quot;" WorkingDirectory="$(GolFixtureDir)" ContinueOnError="true" Condition="!Exists('$(GolFixtureDir)\%(GolFixture.Identity).gol') And Exists('$(GolFixtureDir)\%(GolFixture.Identity).osm.pbf')" />
+
+    <Error Condition="!Exists('$(GolFixtureDir)\%(GolFixture.Identity).gol')" Text="Could not generate %(GolFixture.Identity).gol. Install GOL Tool 2.0 (https://github.com/clarisma/geodesk-gol) so '$(GolTool)' is on PATH (or place the file in Fixtures\ manually). Set -p:GenerateGolFixtures=false to skip fixture generation entirely." />
+  </Target>
+
+  <!--
+      Target 2: register the generated GOL fixtures (in obj) as None items copied to Fixtures\ in
+      the output dir. Depends on Target 1 and runs before AssignTargetPaths so a freshly built GOL
+      is copied in the same build. Collect into an intermediate item group FIRST, then transform it
+      into None items — this scopes the %(Filename) metadata batch to those files and avoids
+      cross-batching against the project's other copy items.
+    -->
+  <Target Name="AddGolFixturesToOutput" DependsOnTargets="_InitGolFixtureDir;GenerateGolFixtures" BeforeTargets="AssignTargetPaths">
+    <ItemGroup>
+      <_GolFixtureFile Include="$(GolFixtureDir)\**\*.gol" />
+    </ItemGroup>
+    <ItemGroup>
+      <None Include="@(_GolFixtureFile)">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        <Link>Fixtures\%(Filename)%(Extension)</Link>
+      </None>
+    </ItemGroup>
+  </Target>
+
+</Project>

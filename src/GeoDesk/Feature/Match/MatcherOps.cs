@@ -28,6 +28,7 @@ namespace GeoDesk.Feature.Match;
 /// </summary>
 internal sealed class MatchLiteral
 {
+
     public readonly string Text;
     public readonly byte[] Utf8;
     public readonly int GlobalCode; // the literal's global-string code, or -1 if it is not a global string
@@ -38,6 +39,7 @@ internal sealed class MatchLiteral
         Utf8 = Encoding.UTF8.GetBytes(text);
         GlobalCode = globalCode;
     }
+
 }
 
 /// <summary>
@@ -74,22 +76,35 @@ internal readonly struct TagMatch
 internal static class MatcherOps
 {
 
-    /// <summary>Finds the tag with the given global key code, projecting its value to scalars + value memory.</summary>
+    /// <summary>
+    /// Finds the tag with the given global key code, projecting its value to scalars + value memory.
+    /// </summary>
     public static TagMatch FindTagGlobal(Segment segment, int pFeature, int keyCode)
     {
         var reader = new TagTableReader(segment.Memory.Span, pFeature);
         while (reader.MoveNext())
         {
-            if (reader.KeyCode == keyCode)
+            var k = reader.KeyCode;
+            if (k == keyCode)
             {
                 var value = reader.Kind == TagValues.LOCAL_STRING ? segment.Memory.Slice(reader.ValueStringPos) : default;
                 return new TagMatch(true, reader.Kind, reader.ValueCode, value);
             }
+
+            // Common (global-key) tags are stored in ascending key-code order; once a larger code is
+            // seen the target cannot follow. The reader then transitions to local keys (KeyCode == 0),
+            // which can never carry a global key either. Either way, stop — mirrors the forward scan in
+            // the Java MatcherCoder.scanGlobalKeys, which halts at the first key >= the clause key.
+            if (k == 0 || k > keyCode)
+                break;
         }
+
         return default;
     }
 
-    /// <summary>Finds the tag with the given local (uncommon) key name (precomputed UTF-8), projecting its value.</summary>
+    /// <summary>
+    /// Finds the tag with the given local (uncommon) key name (precomputed UTF-8), projecting its value.
+    /// </summary>
     public static TagMatch FindTagLocal(Segment segment, int pFeature, byte[] keyNameUtf8)
     {
         var reader = new TagTableReader(segment.Memory.Span, pFeature);
@@ -101,10 +116,13 @@ internal static class MatcherOps
                 return new TagMatch(true, reader.Kind, reader.ValueCode, value);
             }
         }
+
         return default;
     }
 
-    /// <summary>Decodes a located tag value as a double (numeric kinds directly, strings leniently).</summary>
+    /// <summary>
+    /// Decodes a located tag value as a double (numeric kinds directly, strings leniently).
+    /// </summary>
     public static double TagDouble(ReadOnlyMemory<byte> value, int kind, int valueCode, GlobalStringTable globalStrings)
     {
         switch (kind)
@@ -120,7 +138,9 @@ internal static class MatcherOps
         }
     }
 
-    /// <summary>Tests a located tag value for ordinal equality with a literal.</summary>
+    /// <summary>
+    /// Tests a located tag value for ordinal equality with a literal.
+    /// </summary>
     public static bool TagValueEquals(ReadOnlyMemory<byte> value, int kind, int valueCode, GlobalStringTable globalStrings, MatchLiteral literal)
     {
         switch (kind)
@@ -139,7 +159,9 @@ internal static class MatcherOps
         }
     }
 
-    /// <summary>Tests whether a located tag value starts with a literal (ordinal).</summary>
+    /// <summary>
+    /// Tests whether a located tag value starts with a literal (ordinal).
+    /// </summary>
     public static bool TagValueStartsWith(ReadOnlyMemory<byte> value, int kind, int valueCode, GlobalStringTable globalStrings, MatchLiteral literal)
     {
         switch (kind)
@@ -154,7 +176,9 @@ internal static class MatcherOps
         }
     }
 
-    /// <summary>Tests whether a located tag value ends with a literal (ordinal).</summary>
+    /// <summary>
+    /// Tests whether a located tag value ends with a literal (ordinal).
+    /// </summary>
     public static bool TagValueEndsWith(ReadOnlyMemory<byte> value, int kind, int valueCode, GlobalStringTable globalStrings, MatchLiteral literal)
     {
         switch (kind)
@@ -169,7 +193,9 @@ internal static class MatcherOps
         }
     }
 
-    /// <summary>Tests whether a located tag value contains a literal (ordinal).</summary>
+    /// <summary>
+    /// Tests whether a located tag value contains a literal (ordinal).
+    /// </summary>
     public static bool TagValueContains(ReadOnlyMemory<byte> value, int kind, int valueCode, GlobalStringTable globalStrings, MatchLiteral literal)
     {
         switch (kind)
@@ -184,7 +210,9 @@ internal static class MatcherOps
         }
     }
 
-    /// <summary>Tests a located tag value against a regex (Java <c>Pattern.matches()</c> full-string semantics).</summary>
+    /// <summary>
+    /// Tests a located tag value against a regex (Java <c>Pattern.matches()</c> full-string semantics).
+    /// </summary>
     public static bool TagValueMatches(ReadOnlyMemory<byte> value, int kind, int valueCode, GlobalStringTable globalStrings, Regex regex)
     {
         if (kind == TagValues.GLOBAL_STRING)
@@ -212,7 +240,9 @@ internal static class MatcherOps
         return RegexFull(regex, FormatNumber(kind, valueCode, nb));
     }
 
-    /// <summary>Formats a narrow/wide number into the supplied span (mirrors the TagValues string forms).</summary>
+    /// <summary>
+    /// Formats a narrow/wide number into the supplied span (mirrors the TagValues string forms).
+    /// </summary>
     static ReadOnlySpan<char> FormatNumber(int kind, int valueCode, Span<char> buf)
     {
         if (kind == TagValues.NARROW_NUMBER)
@@ -235,11 +265,14 @@ internal static class MatcherOps
         return buf.Slice(0, nn);
     }
 
-    /// <summary>Full-string regex match (Java's <c>Pattern.matches()</c>) over a char span.</summary>
+    /// <summary>
+    /// Full-string regex match (Java's <c>Pattern.matches()</c>) over a char span.
+    /// </summary>
     static bool RegexFull(Regex rx, ReadOnlySpan<char> input)
     {
         foreach (var m in rx.EnumerateMatches(input))
             return m.Index == 0 && m.Length == input.Length;
+
         return false;
     }
 

@@ -46,6 +46,95 @@ namespace GeoDesk.Feature.Match;
 /// instead. A node or operator the emitter cannot build is a bug, not a fallback case: it throws.
 /// </para>
 /// <para>Ported from Java <c>com.geodesk.feature.match.MatcherCoder</c>.</para>
+/// <para>
+/// The notes below are ported from <c>MatcherCoder</c>. They describe the tag-table layout this matcher
+/// reads and the order in which a query's clauses are arranged; in particular, global-key tags are stored
+/// in ascending key order, which is what lets <see cref="MatcherOps.FindTagGlobal"/> stop scanning once it
+/// passes the key it is looking for.
+/// </para>
+/// <para><b>1. Layout of Tag Tables</b></para>
+/// <para>
+/// Tag Tables must follow the layout described in the Tile File Format Specification. To recap, tags are
+/// stored as key/value combos. Tags with a frequently used key (found in the Global String Table) are
+/// Global-Key Tags, which are stored in ascending order of their numeric key value, starting at the anchor
+/// address of the Tag Table. Tags with uncommon key values use a pointer to locally-stored UTF-8 string
+/// (Local-Key Tags), and are placed in reverse alphabetical order ahead of the Tag Table's anchor point.
+/// </para>
+/// <para>
+/// Each tag has a value, which takes up 2 or 4 bytes, accommodating four different types: narrow string (a
+/// number from 1 to 64K-1 which refers to an entry in the Global String Table), wide string (a pointer to a
+/// local string), narrow number (-256 to ~64K), or wide number (a decimal with a mantissa -256 to ~1M, and
+/// 0 to 3 digits after the decimal point). Numerical values that cannot be represented as narrow or wide
+/// numbers are stored as strings.
+/// </para>
+/// <para>
+/// Values of Global-Key Tags are stored immediately after their key, values of Local-Key Tags are stored
+/// ahead of their key (this allows us to scan the Tag Table from the Tag-Table Pointer -- forward for
+/// global, backward for local).
+/// </para>
+/// <code>
+///          String pointer                          Global string value
+///          or wide number                          or narrow number
+///          │                                       │
+///          │         Local key      Local key      │    Global key
+///          │         │              │              │    │
+///       ═╦═════════╤═════════╦════╤═════════╦════╤════╦════╤═════════╦═
+///     ...║ XX ╎ XX │  "dog"  ║ XX │ "apple" ║ 13 │ XX ║ 42 │ XX ╎ XX ║...
+///       ═╩═════════╧═════════╩════╧═════════╩════╧════╩════╧═════════╩═
+///                              │              ┃              │
+///                      Global string value    Global key     String pointer
+///                      or narrow number       ┃              or wide number
+///                                             ┃
+///                                             Tag-table pointer
+///                                             points here
+///
+///                 ⯇── keys increase backward  ┆  keys increase forward ──⯈
+/// </code>
+/// <para>Global Keys are 16 bits wide and have the following format:</para>
+/// <code>
+///     ┏━━━━┳━━━━━━┳━━━┳━━━┓
+///     ┃ 15 ┃ 2-14 ┃ 1 ┃ 0 ┃
+///     ┗━━┯━┻━━━┯━━┻━┯━┻━┯━┛
+///        │     │    │   ╰── type bit: 1 = string, 0 = number
+///        │     │    ╰────── size bit: 1 = wide, 0 = narrow
+///        │     ╰─────────── entry in the Global String Table (first 8K entries)
+///        ╰───────────────── 1 = last global-key tag
+/// </code>
+/// <para>Local Keys are 32 bits wide and have the following format:</para>
+/// <code>
+///     ┏━━━━━━┳━━━┳━━━┳━━━┓
+///     ┃ 3-31 ┃ 2 ┃ 1 ┃ 0 ┃
+///     ┗━━━┯━━┻━┯━┻━┯━┻━┯━┛
+///         │    │   │   ╰── type bit: 1 = string, 0 = number
+///         │    │   ╰────── size bit: 1 = wide, 0 = narrow
+///         │    ╰────────── 1 = last local-key tag
+///         ╰─────────────── relative pointer to the key string (see note)
+/// </code>
+/// <para>
+/// Since we only have 29 bits to represent the string pointer, it can only refer to 4-byte aligned strings
+/// inside a 1-GB tile file. However, Tag Tables (and hence the position of a Local Key) are only guaranteed
+/// to be 2-byte aligned, so we use a little trick: we don't base the pointer off the address where it is
+/// stored (as we do for all other pointers), but we add it to the address of the Tag Table, with its lower
+/// 2 bits set to zero.
+/// </para>
+/// <para>If a Tag Table contains Local-Key Tags, bit 0 of the Tag-Table Pointer is set to 1.</para>
+/// <para><b>2. Queries</b></para>
+/// <para>
+/// A Query is composed of one or more Selectors. A Selector applies to one or more feature types (node,
+/// way, area, relation) and contains one or more Tag Clauses. Tag Clauses are ordered: global keys, in
+/// ascending order, then local keys, in ascending alphabetical order (this allows scanning of keys in the
+/// same order in which they are laid out in the Tag Table). There is never more than one Tag Clause per key
+/// (multiple clauses in a query string, such as <c>[maxspeed&gt;20][maxspeed&lt;70]</c>, are consolidated by
+/// the Query Parser).
+/// </para>
+/// <para>
+/// A Tag Clause is "Positive" if its key must be present and not be "no". A Tag Clause is "Negative" if its
+/// key can (or must) be absent, or be "no".
+/// </para>
+/// <para>
+/// A Tag Clause can contain an Expression used to check a tag's value (without an Expression, the generated
+/// TagFilter merely checks for presence or absence of a key).
+/// </para>
 /// </remarks>
 internal sealed class ExpressionMatcherCoder : IAstVisitor<Expression>
 {
