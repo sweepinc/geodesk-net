@@ -238,14 +238,25 @@ internal class Query : IEnumerator<IFeature>, IAsyncEnumerator<IFeature>, IBound
     /// <remarks>Ported from Java <c>com.geodesk.feature.query.Query.take()</c>.</remarks>
     QueryResults? TakeBatch()
     {
-        try
+        // Drain with TryRead + WaitToReadAsync rather than ReadAsync. ReadAsync throws a
+        // ChannelClosedException on every normal completion — i.e. once per query — which is expensive
+        // for workloads of many small queries. WaitToReadAsync signals normal completion by returning
+        // false (no exception); a producer fault still surfaces as the exception it throws.
+        var reader = _channel.Reader;
+        for (; ; )
         {
-            return _channel.Reader.ReadAsync().AsTask().GetAwaiter().GetResult();
-        }
-        catch (ChannelClosedException e)
-        {
-            _error = e.InnerException;
-            return null;
+            if (reader.TryRead(out var results))
+                return results;
+            try
+            {
+                if (!reader.WaitToReadAsync().AsTask().GetAwaiter().GetResult())
+                    return null;
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                _error = e;
+                return null;
+            }
         }
     }
 
@@ -256,14 +267,23 @@ internal class Query : IEnumerator<IFeature>, IAsyncEnumerator<IFeature>, IBound
     /// </summary>
     async ValueTask<QueryResults?> TakeBatchAsync(CancellationToken ct)
     {
-        try
+        // See TakeBatch: drain with TryRead + WaitToReadAsync to avoid a per-query ChannelClosedException
+        // on normal completion. Cancellation (OperationCanceledException) propagates as before.
+        var reader = _channel.Reader;
+        for (; ; )
         {
-            return await _channel.Reader.ReadAsync(ct).ConfigureAwait(false);
-        }
-        catch (ChannelClosedException e)
-        {
-            _error = e.InnerException;
-            return null;
+            if (reader.TryRead(out var results))
+                return results;
+            try
+            {
+                if (!await reader.WaitToReadAsync(ct).ConfigureAwait(false))
+                    return null;
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                _error = e;
+                return null;
+            }
         }
     }
 
